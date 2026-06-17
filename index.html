@@ -30,23 +30,15 @@
 
         body::before {
             content: '';
-            position: fixed;
-            inset: 0;
+            position: fixed; inset: 0;
             pointer-events: none;
             z-index: 9998;
-            background: repeating-linear-gradient(
-                to bottom,
-                rgba(0,0,0,0) 0px,
-                rgba(0,0,0,0) 2px,
-                rgba(93,255,163,0.035) 3px
-            );
+            background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(93,255,163,0.035) 3px);
             animation: scanroll 7s linear infinite;
         }
-
         body::after {
             content: '';
-            position: fixed;
-            inset: 0;
+            position: fixed; inset: 0;
             pointer-events: none;
             z-index: 9997;
             box-shadow: inset 0 0 160px 40px rgba(0,0,0,0.65);
@@ -54,611 +46,649 @@
 
         @keyframes scanroll { from { background-position: 0 0; } to { background-position: 0 120px; } }
         @keyframes crtFlicker {
-            0%, 100% { opacity: 1; }
-            92% { opacity: 1; }
-            93% { opacity: 0.95; }
-            94% { opacity: 1; }
-            96% { opacity: 0.97; }
+            0%,100% { opacity:1; } 92% { opacity:1; } 93% { opacity:0.95; } 94% { opacity:1; } 96% { opacity:0.97; }
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            position: relative;
-        }
+        .container { max-width: 1400px; margin: 0 auto; position: relative; }
 
         header {
             border-bottom: 1px solid var(--border);
-            padding-bottom: 16px;
-            margin-bottom: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding-bottom: 16px; margin-bottom: 24px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-
-        h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            letter-spacing: 2px;
-            color: var(--danger);
-        }
-
+        h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; color: var(--danger); }
         .blink-cursor {
-            display: inline-block;
-            width: 0.55em;
-            background: var(--danger);
-            margin-left: 4px;
+            display: inline-block; width: 0.55em;
+            background: var(--danger); margin-left: 4px;
             animation: blink 1s step-end infinite;
         }
         @keyframes blink { 50% { opacity: 0; } }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 24px;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
 
         .map-span {
             grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 24px;
+            display: grid; grid-template-columns: 2fr 1fr; gap: 24px;
         }
-
-        @media (max-width: 900px) {
-            .map-span { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 900px) { .map-span { grid-template-columns: 1fr; } }
 
         .card {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            border-radius: 4px; padding: 24px;
+            display: flex; flex-direction: column; justify-content: space-between;
             position: relative;
         }
-
         .card::before, .card::after {
-            content: '';
-            position: absolute;
-            width: 14px;
-            height: 14px;
-            opacity: 0.65;
-            pointer-events: none;
+            content: ''; position: absolute; width: 14px; height: 14px;
+            opacity: 0.65; pointer-events: none;
         }
-        .card::before { top: -1px; left: -1px; border-top: 2px solid var(--text-light); border-left: 2px solid var(--text-light); }
-        .card::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--text-light); border-right: 2px solid var(--text-light); }
+        .card::before { top:-1px; left:-1px; border-top:2px solid var(--text-light); border-left:2px solid var(--text-light); }
+        .card::after  { bottom:-1px; right:-1px; border-bottom:2px solid var(--text-light); border-right:2px solid var(--text-light); }
 
         .card h2 {
-            margin-top: 0;
-            font-size: 0.95rem;
-            color: var(--text-dark);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
-            margin-bottom: 16px;
+            margin-top: 0; font-size: 0.95rem; color: var(--text-dark);
+            text-transform: uppercase; letter-spacing: 1px;
+            border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;
         }
-
-        .card-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .sector-label { color: var(--text-dark); font-size: 0.75rem; text-transform: none; letter-spacing: 0; }
-        .feed-status { font-size: 0.7rem; letter-spacing: 0.5px; white-space: nowrap; }
-        .status-online { color: var(--success); }
-        .status-offline { color: var(--danger); }
+        .card-header-row { display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; }
+        .sector-label { color:var(--text-dark); font-size:0.75rem; text-transform:none; letter-spacing:0; }
+        .feed-status { font-size:0.7rem; letter-spacing:0.5px; white-space:nowrap; }
+        .status-online { color:var(--success); }
+        .status-offline { color:var(--danger); }
 
         h1, h2, .metric, .feed-status { text-shadow: 0 0 6px currentColor; }
+        .metric { font-size:3.5rem; font-weight:800; text-align:center; margin:16px 0; font-family:monospace; }
+        .description { color:var(--text-dark); font-size:0.9rem; text-align:center; line-height:1.4; }
 
-        .metric {
-            font-size: 3.5rem;
-            font-weight: 800;
-            text-align: center;
-            margin: 16px 0;
-            font-family: monospace;
+        /* MAP LEGEND */
+        .map-legend {
+            position: absolute; bottom: 12px; left: 12px; z-index: 1000;
+            background: rgba(8,31,16,0.92);
+            border: 1px solid var(--border);
+            border-radius: 3px; padding: 10px 14px;
+            font-size: 0.72rem; font-family: monospace;
+            color: var(--text-light);
+            pointer-events: none;
         }
+        .legend-row { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
+        .legend-row:last-child { margin-bottom:0; }
+        .legend-dot { font-size:13px; line-height:1; }
 
-        .description {
-            color: var(--text-dark);
-            font-size: 0.9rem;
-            text-align: center;
-            line-height: 1.4;
+        /* MAP LAYER TOGGLE */
+        .map-controls {
+            display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
         }
-
-        /* ── VECTOR BREAKDOWN (replaces sliders) ── */
-        .vector-row {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
+        .layer-btn {
+            font-family: monospace; font-size: 0.72rem;
+            padding: 4px 10px;
+            border-radius: 2px; cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-main); color: var(--text-dark);
+            letter-spacing: 0.5px; text-transform: uppercase;
+            transition: all 0.15s;
         }
+        .layer-btn.active-danger  { border-color:var(--danger);  color:var(--danger);  background:rgba(255,59,59,0.08); text-shadow:0 0 5px var(--danger); }
+        .layer-btn.active-warning { border-color:var(--warning); color:var(--warning); background:rgba(255,176,0,0.08);  text-shadow:0 0 5px var(--warning); }
+        .layer-btn.active-safe    { border-color:var(--success); color:var(--success); background:rgba(57,255,20,0.06);  text-shadow:0 0 5px var(--success); }
 
-        .vector-item {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .vector-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            font-size: 0.85rem;
-        }
-
-        .vector-name { color: var(--text-light); }
-
-        .vector-value {
-            font-size: 1rem;
-            font-weight: 700;
-            font-family: monospace;
-        }
-
-        .vector-source {
-            font-size: 0.68rem;
-            color: var(--text-dark);
-            font-style: italic;
-        }
-
-        .vector-bar-track {
-            width: 100%;
-            height: 6px;
-            background: #0d2e16;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .vector-bar-fill {
-            height: 100%;
-            border-radius: 2px;
-            box-shadow: 0 0 6px currentColor;
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .bar-danger  { background: var(--danger);  color: var(--danger); }
-        .bar-warning { background: var(--warning); color: var(--warning); }
-        .bar-green   { background: var(--text-light); color: var(--text-light); }
-
-        .vector-lock-note {
-            margin-top: 20px;
-            font-size: 0.72rem;
-            color: var(--text-dark);
-            border-top: 1px solid var(--border);
-            padding-top: 12px;
-            text-align: center;
-            letter-spacing: 0.5px;
-        }
-
-        /* Map */
+        /* MAP WRAPPER */
         .map-wrapper {
-            position: relative;
-            width: 100%;
-            height: 450px;
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            background: #000;
+            position: relative; width: 100%; height: 430px;
+            border-radius: 4px; overflow: hidden;
+            border: 1px solid var(--border); background: #000;
         }
+        #globalMap { width:100%; height:100%; background:#04130a; }
+        #globalMap .leaflet-tile-pane { filter: grayscale(1) brightness(0.75) sepia(0.4) hue-rotate(70deg) saturate(3) contrast(1.15); }
+        #globalMap .leaflet-control-zoom a { background:var(--bg-card); color:var(--text-light); border:1px solid var(--border); }
+        #globalMap .leaflet-control-attribution { background:rgba(8,31,16,0.8); color:var(--text-dark); }
+        #globalMap .leaflet-popup-content-wrapper, #globalMap .leaflet-popup-tip { background:var(--bg-card); color:var(--text-light); border:1px solid var(--border); }
 
-        #globalMap { width: 100%; height: 100%; background: #04130a; }
+        /* MARKERS */
+        .pipboy-marker       { color:var(--text-light);  font-size:14px; text-align:center; line-height:16px; text-shadow:0 0 6px var(--text-light); }
+        .pipboy-marker-hot   { color:var(--danger);      font-size:15px; text-align:center; line-height:16px; text-shadow:0 0 8px var(--danger); animation: pulseRed 1.8s infinite; }
+        .pipboy-marker-safe  { color:var(--success);     font-size:14px; text-align:center; line-height:16px; text-shadow:0 0 8px var(--success); animation: pulseSafe 2.5s infinite; }
+        .pipboy-marker-user  { color:var(--warning);     font-size:16px; text-shadow:0 0 8px var(--warning); animation:pulseUser 1.6s infinite; }
 
-        #globalMap .leaflet-tile-pane {
-            filter: grayscale(1) brightness(0.75) sepia(0.4) hue-rotate(70deg) saturate(3) contrast(1.15);
-        }
-        #globalMap .leaflet-control-zoom a {
-            background: var(--bg-card);
-            color: var(--text-light);
-            border: 1px solid var(--border);
-        }
-        #globalMap .leaflet-control-attribution {
-            background: rgba(8,31,16,0.8);
-            color: var(--text-dark);
-        }
-        #globalMap .leaflet-popup-content-wrapper,
-        #globalMap .leaflet-popup-tip {
-            background: var(--bg-card);
-            color: var(--text-light);
-            border: 1px solid var(--border);
-        }
-        .pipboy-marker {
-            color: var(--text-light);
-            font-size: 14px;
-            text-align: center;
-            line-height: 16px;
-            text-shadow: 0 0 6px var(--text-light);
-        }
-        .pipboy-marker-user {
-            color: var(--warning);
-            font-size: 16px;
-            text-shadow: 0 0 8px var(--warning);
-            animation: pulseUser 1.6s infinite;
-        }
-        @keyframes pulseUser { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+        @keyframes pulseRed  { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+        @keyframes pulseSafe { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
+        @keyframes pulseUser { 0%,100%{opacity:1;transform:scale(1);}  50%{opacity:0.5;transform:scale(1.3);} }
 
-        .news-ticker {
-            height: 450px;
-            overflow-y: auto;
-            padding-right: 8px;
+        /* SAFE ZONE POPUP STYLE */
+        .safe-popup { font-size:0.78rem; line-height:1.5; }
+        .safe-popup .sp-title { color:var(--success); font-weight:700; font-size:0.85rem; display:block; margin-bottom:4px; text-shadow:0 0 5px var(--success); }
+        .safe-popup .sp-score { color:var(--warning); font-size:0.8rem; display:block; margin-bottom:6px; }
+        .safe-popup .sp-reason { color:var(--text-light); }
+        .safe-popup .sp-caveat { color:var(--text-dark); font-size:0.7rem; display:block; margin-top:5px; font-style:italic; }
+
+        /* DEFCON legend */
+        .defcon-legend { margin-top:16px; display:flex; flex-direction:column; gap:5px; }
+        .defcon-row { display:flex; align-items:center; gap:8px; font-size:0.72rem; color:var(--text-dark); padding:4px 6px; border-radius:2px; transition:background 0.2s; }
+        .defcon-row.active        { background:rgba(93,255,163,0.06);  color:var(--text-light); }
+        .defcon-row.active-danger { background:rgba(255,59,59,0.08);   color:var(--danger); }
+        .defcon-row.active-warning{ background:rgba(255,176,0,0.07);   color:var(--warning); }
+        .defcon-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .dot-d { background:var(--danger);  box-shadow:0 0 4px var(--danger); }
+        .dot-w { background:var(--warning); box-shadow:0 0 4px var(--warning); }
+        .dot-g { background:var(--success); box-shadow:0 0 4px var(--success); }
+
+        /* VECTOR BREAKDOWN */
+        .vector-row { display:flex; flex-direction:column; gap:18px; }
+        .vector-item { display:flex; flex-direction:column; gap:6px; }
+        .vector-meta { display:flex; justify-content:space-between; align-items:baseline; font-size:0.85rem; }
+        .vector-name { color:var(--text-light); }
+        .vector-value { font-size:1rem; font-weight:700; font-family:monospace; }
+        .vector-source { font-size:0.68rem; color:var(--text-dark); font-style:italic; }
+        .vector-bar-track { width:100%; height:6px; background:#0d2e16; border-radius:2px; overflow:hidden; }
+        .vector-bar-fill  { height:100%; border-radius:2px; box-shadow:0 0 6px currentColor; }
+        .bar-danger  { background:var(--danger);  color:var(--danger); }
+        .bar-warning { background:var(--warning); color:var(--warning); }
+        .vector-lock-note { margin-top:20px; font-size:0.72rem; color:var(--text-dark); border-top:1px solid var(--border); padding-top:12px; text-align:center; letter-spacing:0.5px; }
+
+        /* ALARM TICKER */
+        .news-ticker { height:390px; overflow-y:auto; padding-right:8px; }
+        .news-alarm { padding:12px; background:rgba(93,255,163,0.03); border-radius:2px; border-left:4px solid var(--border); margin-bottom:12px; font-size:0.85rem; animation:fadeIn 0.5s ease-out; }
+        .news-alarm.flash-red    { border-left-color:var(--danger);  background:rgba(255,59,59,0.05); }
+        .news-alarm.flash-orange { border-left-color:var(--warning); background:rgba(255,176,0,0.04); }
+        .news-time { font-family:monospace; font-size:0.75rem; color:var(--text-dark); display:block; margin-bottom:4px; }
+
+        @keyframes fadeIn { from{opacity:0;transform:translateY(-5px);} to{opacity:1;transform:translateY(0);} }
+
+        /* SAFE ZONE CARD */
+        .safezone-grid { display:flex; flex-direction:column; gap:10px; }
+        .safezone-item {
+            display:flex; align-items:flex-start; gap:10px;
+            padding:10px 12px;
+            background:rgba(57,255,20,0.03);
+            border:1px solid #1d4428;
+            border-left:3px solid var(--success);
+            border-radius:2px;
+            font-size:0.8rem;
         }
-
-        .news-alarm {
-            padding: 12px;
-            background: rgba(93,255,163,0.03);
-            border-radius: 2px;
-            border-left: 4px solid var(--border);
-            margin-bottom: 12px;
-            font-size: 0.85rem;
-            animation: fadeIn 0.5s ease-out;
+        .safezone-rank {
+            font-size:1.1rem; font-weight:800; font-family:monospace;
+            color:var(--success); text-shadow:0 0 6px var(--success);
+            min-width:28px; text-align:center; line-height:1.2;
         }
-
-        .news-alarm.flash-red { border-left-color: var(--danger); background: rgba(255,59,59,0.05); }
-        .news-alarm.flash-orange { border-left-color: var(--warning); background: rgba(255,176,0,0.04); }
-
-        .news-time {
-            font-family: monospace;
-            font-size: 0.75rem;
-            color: var(--text-dark);
-            display: block;
-            margin-bottom: 4px;
+        .safezone-name { color:var(--text-light); font-weight:700; display:block; margin-bottom:2px; }
+        .safezone-score {
+            display:inline-block; font-size:0.7rem; font-family:monospace;
+            color:var(--warning); margin-bottom:4px;
         }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .safezone-why { color:var(--text-dark); line-height:1.4; }
+        .safezone-caveat { color:#1d4428; font-style:italic; font-size:0.68rem; display:block; margin-top:3px; }
+        .safezone-disclaimer {
+            margin-top:14px; font-size:0.7rem; color:var(--text-dark);
+            border-top:1px solid var(--border); padding-top:10px;
+            text-align:center; font-style:italic;
+        }
     </style>
 </head>
 <body>
+<div class="container">
+    <header>
+        <h1>QUANTUM RISK DESK v2026.3<span class="blink-cursor">&nbsp;</span></h1>
+        <div style="font-family:monospace;font-size:0.9rem;color:var(--warning);text-shadow:0 0 6px var(--warning);">[ SIMULATOR ACTIVE — JUNE 2026 ]</div>
+    </header>
 
-    <div class="container">
-        <header>
-            <h1>QUANTUM RISK DESK v2026.3<span class="blink-cursor">&nbsp;</span></h1>
-            <div style="font-family: monospace; font-size: 0.9rem; color: var(--warning); text-shadow: 0 0 6px var(--warning);">[ SIMULATOR ACTIVE ]</div>
-        </header>
+    <!-- MAP + ALARMS -->
+    <div class="map-span">
+        <div class="card">
+            <h2>Global Sector Map — Threat &amp; Survival Overlay</h2>
 
-        <div class="map-span">
-            <div class="card">
-                <h2>Global Sector Map — Interactive</h2>
-                <div class="map-wrapper">
-                    <div id="globalMap"></div>
-                </div>
+            <!-- Layer toggle buttons -->
+            <div class="map-controls">
+                <button class="layer-btn active-warning" id="btn-conflict"  onclick="toggleLayer('conflict')">&#9670; Conflict Hotspots</button>
+                <button class="layer-btn active-danger"  id="btn-targets"   onclick="toggleLayer('targets')">&#9888; Primary Targets</button>
+                <button class="layer-btn active-safe"    id="btn-safezones" onclick="toggleLayer('safezones')">&#10003; Safe Zones</button>
             </div>
 
-            <div class="card">
-                <h2 class="card-header-row">
-                    <span>Active Operational Alarms</span>
-                    <span id="globalFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
-                </h2>
-                <div class="news-ticker" id="newsTicker"></div>
+            <div class="map-wrapper">
+                <div id="globalMap"></div>
+                <div class="map-legend">
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9670;</span> Conflict / OSINT Hotspot</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9888;</span> Primary Nuclear Target</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--success)">&#10022;</span> Probable Safe Zone</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9737;</span> Your Position</div>
+                </div>
             </div>
         </div>
 
-        <div class="grid" style="margin-top: 24px;">
-            <div class="card">
-                <h2>Predictive Military Posture</h2>
-                <div class="metric" id="defconMetric">DEFCON --</div>
-                <div class="description" id="defconDesc">Awaiting telemetry streams...</div>
-            </div>
-
-            <div class="card">
-                <h2>Doomsday Clock Status</h2>
-                <div class="clock-container" style="display:flex; justify-content:center; align-items:center; margin-bottom:16px;">
-                    <svg width="140" height="140" viewBox="0 0 200 200">
-                        <circle cx="100" cy="100" r="95" fill="none" stroke="#1d4428" stroke-width="6"/>
-                        <path d="M 100 15 A 85 85 0 0 1 185 100" fill="none" stroke="#ff3b3b" stroke-width="4" stroke-dasharray="4,4"/>
-                        <line x1="100" y1="100" x2="100" y2="45" stroke="#2f6b46" stroke-width="6" stroke-linecap="round"/>
-                        <line id="clockHand" x1="100" y1="100" x2="100" y2="25" stroke="#ff3b3b" stroke-width="4" stroke-linecap="round" style="transform-origin:100px 100px; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);"/>
-                        <circle cx="100" cy="100" r="6" fill="#5dffa3"/>
-                    </svg>
-                </div>
-                <div class="metric" id="clockMetric" style="color: var(--danger); margin: 0 0 8px 0; font-size: 2.5rem;">--s</div>
-                <div class="description">Time remaining until Midnight. Derived from cascading ecological, technological, and tactical vectors.</div>
-            </div>
-
-            <!-- STATIC VECTOR BREAKDOWN — replaces interactive sliders -->
-            <div class="card">
-                <h2>Global Vector Weights</h2>
-                <div class="vector-row">
-
-                    <div class="vector-item">
-                        <div class="vector-meta">
-                            <span class="vector-name">Nuclear Threat Profile</span>
-                            <span class="vector-value" style="color: var(--danger);">90%</span>
-                        </div>
-                        <div class="vector-bar-track">
-                            <div class="vector-bar-fill bar-danger" style="width: 90%;"></div>
-                        </div>
-                        <span class="vector-source">Source: Bulletin of Atomic Scientists — Doomsday Clock 2024 (89s to midnight, closest ever recorded)</span>
-                    </div>
-
-                    <div class="vector-item">
-                        <div class="vector-meta">
-                            <span class="vector-name">Geopolitical Friction Index</span>
-                            <span class="vector-value" style="color: var(--danger);">82%</span>
-                        </div>
-                        <div class="vector-bar-track">
-                            <div class="vector-bar-fill bar-danger" style="width: 82%;"></div>
-                        </div>
-                        <span class="vector-source">Source: ACLED 2024 — active conflict zones at post-Cold War peak; Ukraine, Middle East, Taiwan Strait escalation</span>
-                    </div>
-
-                    <div class="vector-item">
-                        <div class="vector-meta">
-                            <span class="vector-name">Climate Multiplier State</span>
-                            <span class="vector-value" style="color: var(--warning);">78%</span>
-                        </div>
-                        <div class="vector-bar-track">
-                            <div class="vector-bar-fill bar-warning" style="width: 78%;"></div>
-                        </div>
-                        <span class="vector-source">Source: IPCC AR6 — accelerating resource scarcity compounding geopolitical and humanitarian risk</span>
-                    </div>
-
-                </div>
-                <p class="vector-lock-note">&#9632; VECTORS LOCKED — calibrated to latest published threat assessments. Read-only.</p>
-            </div>
-        </div>
-
-        <div class="card" style="margin-top: 24px;">
+        <div class="card">
             <h2 class="card-header-row">
-                <span>Local Sector News <span id="localSectorLabel" class="sector-label">— ACQUIRING LOCATION...</span></span>
-                <span id="localFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
+                <span>Active Operational Alarms</span>
+                <span id="globalFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
             </h2>
-            <div class="news-ticker" id="localTicker" style="height: 240px;"></div>
+            <div class="news-ticker" id="newsTicker"></div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-    <script>
-        // ============================================================
-        // FIXED VECTOR VALUES — locked for all users, not user-adjustable
-        // ============================================================
-        const FIXED_VECTORS = { nuke: 90, geo: 82, climate: 78 };
+    <!-- DEFCON + CLOCK + VECTORS -->
+    <div class="grid" style="margin-top:24px;">
 
-        // ============================================================
-        // DOOMSDAY CLOCK CONSTANTS
-        // ============================================================
-        const DEGREES_PER_SECOND = 0.1;
-        const SCORE_MIN = 0;
-        const SCORE_MAX = 100;
-        const SECONDS_AT_MIN_SCORE = 600;
-        const SECONDS_AT_MAX_SCORE = 0;
+        <div class="card">
+            <h2>Predictive Military Posture</h2>
+            <div class="metric" id="defconMetric">DEFCON --</div>
+            <div class="description" id="defconDesc">Awaiting telemetry streams...</div>
+            <div class="defcon-legend">
+                <div class="defcon-row" id="legend-1"><div class="defcon-dot dot-d"></div><span><strong>DEFCON 1</strong> — COCKED PISTOL. Nuclear war imminent or underway. Never officially declared.</span></div>
+                <div class="defcon-row" id="legend-2"><div class="defcon-dot dot-d"></div><span><strong>DEFCON 2</strong> — FAST PACE. Armed forces ready within 6 hours. Highest ever reached (Cuba 1962).</span></div>
+                <div class="defcon-row" id="legend-3"><div class="defcon-dot dot-w"></div><span><strong>DEFCON 3</strong> — ROUND HOUSE. Air Force ready in 15 min. Raised twice in history (1973, 2001).</span></div>
+                <div class="defcon-row" id="legend-4"><div class="defcon-dot dot-w"></div><span><strong>DEFCON 4</strong> — DOUBLE TAKE. Heightened intelligence watch. Analyst consensus for current global posture.</span></div>
+                <div class="defcon-row" id="legend-5"><div class="defcon-dot dot-g"></div><span><strong>DEFCON 5</strong> — FADE OUT. Peacetime baseline. Normal readiness.</span></div>
+            </div>
+        </div>
 
-        const breakingAlarms = [
-            { source: "OSINT-EUR", text: "Air space safety alerts initialized across eastern corridors. Sub-radar interference noted.", type: "flash-red" },
-            { source: "PACIFIC-MONITOR", text: "Task force formations track tactical transits inside contested maritime sectors.", type: "flash-orange" },
-            { source: "UN-CLIMATE", text: "Accelerating water scarcity triggers regional resource mobilization orders.", type: "flash-orange" },
-            { source: "CYBER-ALARM", text: "Malicious framework injections target multi-point energy distribution relays.", type: "flash-red" },
-            { source: "MIDEAST-SIG", text: "Tactical air surveillance defense grids transition into active sweep configurations.", type: "flash-red" }
-        ];
+        <div class="card">
+            <h2>Doomsday Clock Status</h2>
+            <div class="clock-container" style="display:flex;justify-content:center;align-items:center;margin-bottom:16px;">
+                <svg width="140" height="140" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="95" fill="none" stroke="#1d4428" stroke-width="6"/>
+                    <path d="M 100 15 A 85 85 0 0 1 185 100" fill="none" stroke="#ff3b3b" stroke-width="4" stroke-dasharray="4,4"/>
+                    <line x1="100" y1="100" x2="100" y2="45" stroke="#2f6b46" stroke-width="6" stroke-linecap="round"/>
+                    <line id="clockHand" x1="100" y1="100" x2="100" y2="25" stroke="#ff3b3b" stroke-width="4" stroke-linecap="round" style="transform-origin:100px 100px;transition:transform 0.5s cubic-bezier(0.4,0,0.2,1);"/>
+                    <circle cx="100" cy="100" r="6" fill="#5dffa3"/>
+                </svg>
+            </div>
+            <div class="metric" id="clockMetric" style="color:var(--danger);margin:0 0 8px 0;font-size:2.5rem;">--s</div>
+            <div class="description">
+                Official reading: <strong style="color:var(--danger);">85 seconds</strong> to midnight — set Jan 27 2026 by the Bulletin of Atomic Scientists. Closest in history.<br><br>
+                Simulator value derived from weighted threat vectors.
+            </div>
+        </div>
 
-        const localMockAlarms = [
-            { source: "LOCAL-SIM", text: "Regional infrastructure monitoring nominal. No anomalies detected in local sector.", type: "flash-orange" },
-            { source: "LOCAL-SIM", text: "Civil-defense channels report routine status for this sector.", type: "flash-orange" },
-            { source: "LOCAL-SIM", text: "No live local feed available — displaying simulated placeholder traffic.", type: "flash-orange" }
-        ];
+        <div class="card">
+            <h2>Global Vector Weights — June 2026</h2>
+            <div class="vector-row">
+                <div class="vector-item">
+                    <div class="vector-meta"><span class="vector-name">Nuclear Threat Profile</span><span class="vector-value" style="color:var(--warning);">72%</span></div>
+                    <div class="vector-bar-track"><div class="vector-bar-fill bar-warning" style="width:72%;"></div></div>
+                    <span class="vector-source">Bulletin BAS Jan 2026: 85s to midnight. New START expired. All 9 nuclear states modernizing. Elevated but stable — no active nuclear crisis. (DNI ATA 2026)</span>
+                </div>
+                <div class="vector-item">
+                    <div class="vector-meta"><span class="vector-name">Geopolitical Friction Index</span><span class="vector-value" style="color:var(--warning);">68%</span></div>
+                    <div class="vector-bar-track"><div class="vector-bar-fill bar-warning" style="width:68%;"></div></div>
+                    <span class="vector-source">40+ active armed conflicts (ACLED/UCDP 2026). Three escalation pathways: Russia-NATO, Iran-Israel-Gulf, China-Taiwan. No direct great-power war. (Warmonit CII; Chatham House 2026)</span>
+                </div>
+                <div class="vector-item">
+                    <div class="vector-meta"><span class="vector-name">Climate Multiplier State</span><span class="vector-value" style="color:var(--warning);">65%</span></div>
+                    <div class="vector-bar-track"><div class="vector-bar-fill bar-warning" style="width:65%;"></div></div>
+                    <span class="vector-source">CRI 2026 (Germanwatch): compounding losses; 1.5°C targets out of reach (OECD CAM 2025). Force multiplier on conflict — not yet standalone crisis driver.</span>
+                </div>
+            </div>
+            <p class="vector-lock-note">&#9632; VECTORS LOCKED — calibrated to latest published threat assessments as of June 2026. Read-only.</p>
+        </div>
 
-        function runRiskCalculations() {
-            const n = FIXED_VECTORS.nuke;
-            const g = FIXED_VECTORS.geo;
-            const c = FIXED_VECTORS.climate;
+    </div><!-- /grid -->
 
-            const climateImpactModifier = c * 0.18;
-            const absoluteThreatScore = (n * 0.40) + ((g + climateImpactModifier) * 0.35) + (c * 0.25);
+    <!-- SAFE ZONES CARD — full width -->
+    <div class="card" style="margin-top:24px;">
+        <h2>&#10022; Probable Nuclear Survival Zones — Analysis Based on June 2026 Intelligence</h2>
+        <div class="safezone-grid" id="safezoneList"></div>
+        <p class="safezone-disclaimer">
+            &#9888; Analysis based on open-source targeting doctrine, geographic isolation, agricultural capacity, and fallout modeling. No location is categorically safe from nuclear winter, supply chain collapse, or secondary humanitarian cascades. Treat as relative survivability assessment only.
+            Sources: Bulletin of Atomic Scientists 2026, SIPRI 2025, DEFCON Warning System, Princeton Science &amp; Global Security, Global Peace Index 2025.
+        </p>
+    </div>
 
-            const clampedScore = Math.min(SCORE_MAX, Math.max(SCORE_MIN, absoluteThreatScore));
-            let secondsToMidnight = Math.round(
-                SECONDS_AT_MIN_SCORE - (clampedScore / SCORE_MAX) * (SECONDS_AT_MIN_SCORE - SECONDS_AT_MAX_SCORE)
-            );
-            secondsToMidnight = Math.max(0, secondsToMidnight);
-            document.getElementById('clockMetric').innerText = secondsToMidnight + 's';
+    <!-- LOCAL NEWS -->
+    <div class="card" style="margin-top:24px;">
+        <h2 class="card-header-row">
+            <span>Local Sector News <span id="localSectorLabel" class="sector-label">— ACQUIRING LOCATION...</span></span>
+            <span id="localFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
+        </h2>
+        <div class="news-ticker" id="localTicker" style="height:240px;"></div>
+    </div>
 
-            const handRotationAngle = -(secondsToMidnight * DEGREES_PER_SECOND);
-            document.getElementById('clockHand').style.transform = `rotate(${handRotationAngle}deg)`;
+</div><!-- /container -->
 
-            let defcon = 5;
-            let desc = "FADE OUT. Normal peacetime posture. Standard intelligence monitoring loops active.";
-            let color = "var(--success)";
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+// ============================================================
+// FIXED VECTORS
+// ============================================================
+const FIXED_VECTORS = { nuke: 72, geo: 68, climate: 65 };
 
-            if (absoluteThreatScore > 85) { defcon = 1; desc = "COCKED PISTOL. Maximum force deployment options verified. Strategic nuclear theater engagement predicted."; color = "var(--danger)"; }
-            else if (absoluteThreatScore > 68) { defcon = 2; desc = "FAST PACE. High asset mobilization state. Combat units ordered to deploy ready configurations under 6 hours."; color = "var(--danger)"; }
-            else if (absoluteThreatScore > 48) { defcon = 3; desc = "ROUND HOUSE. Fleet defense boundaries extended. Air supremacy assets initialized for 15-minute quick launch loops."; color = "var(--warning)"; }
-            else if (absoluteThreatScore > 25) { defcon = 4; desc = "DOUBLE TAKE. Intelligence monitoring thresholds expanded. Cryptographic communication parameters intensified."; color = "var(--warning)"; }
+const DEFCON_THRESHOLDS = [
+    { level:1, minScore:95, label:'COCKED PISTOL', color:'var(--danger)',  legendClass:'active-danger'  },
+    { level:2, minScore:68, label:'FAST PACE',     color:'var(--danger)',  legendClass:'active-danger'  },
+    { level:3, minScore:50, label:'ROUND HOUSE',   color:'var(--warning)', legendClass:'active-warning' },
+    { level:4, minScore:28, label:'DOUBLE TAKE',   color:'var(--warning)', legendClass:'active-warning' },
+    { level:5, minScore:0,  label:'FADE OUT',      color:'var(--success)', legendClass:'active'         }
+];
+const DEFCON_DESCRIPTIONS = {
+    1: "COCKED PISTOL. Nuclear conflict imminent or underway. Maximum force deployment. This threshold has never been officially declared in US history.",
+    2: "FAST PACE. Armed forces ready for combat within 6 hours. Highest DEFCON ever officially reached — Cuban Missile Crisis, October 1962. Current vectors place the simulator here.",
+    3: "ROUND HOUSE. Air Force ready to mobilize within 15 minutes. Declared twice: 1973 Yom Kippur War, September 11 2001.",
+    4: "DOUBLE TAKE. Heightened intelligence watch and strengthened security measures. Analyst consensus for real-world US posture as of June 2026.",
+    5: "FADE OUT. Normal peacetime readiness. Standard intelligence monitoring loops active."
+};
 
-            const dMetric = document.getElementById('defconMetric');
-            dMetric.innerText = "DEFCON " + defcon;
-            dMetric.style.color = color;
-            document.getElementById('defconDesc').innerText = desc;
+// ============================================================
+// MAP DATA
+// ============================================================
+const conflictHotspots = [
+    { name:'Eastern Corridor Watch',  lat:50.45, lng:30.52,  note:'Russia-Ukraine active front — OSINT-EUR monitoring' },
+    { name:'Pacific Maritime Sector', lat:16.0,  lng:114.0,  note:'Taiwan Strait / South China Sea — PLA naval activity' },
+    { name:'Mideast Signal Relay',    lat:32.0,  lng:35.0,   note:'Iran-Israel theater — active strike exchange monitoring' },
+    { name:'Arctic Approach',         lat:71.0,  lng:25.0,   note:'NATO-Russia northern flank proximity watch' },
+    { name:'Gulf Sector',             lat:29.5,  lng:47.8,   note:'US-Iran ceasefire compliance — Kuwait projectile interceptions ongoing' }
+];
+
+// Primary nuclear target zones — sourced from open-source targeting doctrine
+const primaryTargets = [
+    { name:'Washington D.C.',        lat:38.89,  lng:-77.03, note:'National command authority. Pentagon. Top priority counterforce + countervalue target.' },
+    { name:'New York City',          lat:40.71,  lng:-74.00, note:'Largest US population center. Financial hub. High-priority countervalue target.' },
+    { name:'Los Angeles',            lat:34.05,  lng:-118.24,note:'Major port, industry, population. Secondary priority target.' },
+    { name:'Chicago',                lat:41.87,  lng:-87.63, note:'Rail/industrial hub. High-priority countervalue.' },
+    { name:'Minot AFB / ND Silos',   lat:48.41,  lng:-101.35,note:'Minuteman III ICBM silo belt. North Dakota / Montana / Wyoming. First-wave counterforce priority.' },
+    { name:'Norfolk Naval Station',  lat:36.94,  lng:-76.32, note:'Largest US naval base. Fleet Forces Command HQ. Top counterforce target.' },
+    { name:'Offutt AFB / STRATCOM',  lat:41.12,  lng:-95.91, note:'US Strategic Command HQ. High-priority C2 decapitation target.' },
+    { name:'Moscow',                 lat:55.75,  lng:37.61,  note:'Russian national command authority. Kremlin. Top US countervalue target.' },
+    { name:'Beijing',                lat:39.90,  lng:116.40, note:'Chinese NCA. PLA General Staff HQ. US countervalue target in extended scenario.' },
+    { name:'London',                 lat:51.50,  lng:-0.12,  note:'UK NCA. NATO nuclear partner. Russian counterforce target in escalation scenario.' },
+    { name:'Paris',                  lat:48.85,  lng:2.35,   note:'French NCA. NATO nuclear partner. Independent deterrent command.' },
+    { name:'Pyongyang',              lat:39.01,  lng:125.74, note:'DPRK NCA. US/ROK first-strike priority in peninsula scenario.' }
+];
+
+// Safe zones — grounded in survivability analysis
+const safeZones = [
+    {
+        name:'Patagonia, Argentina',
+        lat:-46.5, lng:-71.5,
+        rank:1, score:'HIGH',
+        why:'Remote Southern Hemisphere. No strategic value. Strong agricultural base. Prevailing winds push Northern Hemisphere fallout away. Low population density. Argentina has no nuclear alliance obligations.',
+        caveat:'Nuclear winter food disruption remains a risk globally. Argentine urban centers still exposed.'
+    },
+    {
+        name:'South Island, New Zealand',
+        lat:-44.5, lng:170.0,
+        rank:2, score:'HIGH',
+        why:'Extreme geographic isolation. No nuclear targets on island. Strong food/water self-sufficiency. Southern Pacific location minimizes fallout from Northern Hemisphere exchanges. Stable governance.',
+        caveat:'Nuclear soot stratospheric injection could still reduce NZ crop yields 20–40%.'
+    },
+    {
+        name:'Iceland',
+        lat:64.9,  lng:-18.5,
+        rank:3, score:'HIGH',
+        why:'Geothermal energy independence. No nuclear weapons or hosting obligations. Remote North Atlantic. Limited strategic value. ~370,000 population — manageable resource load. NATO member but no deployed assets.',
+        caveat:'Proximity to Northern Hemisphere fallout corridors. Ocean currents may carry contamination.'
+    },
+    {
+        name:'Uruguay',
+        lat:-32.5, lng:-56.0,
+        rank:4, score:'MODERATE-HIGH',
+        why:'Small, politically stable, no military alliances. Southern Hemisphere. Strong agricultural output. No nuclear target value. Low population density in interior regions.',
+        caveat:'Proximity to Argentine and Brazilian urban centers creates secondary risk.'
+    },
+    {
+        name:'Tasmania, Australia',
+        lat:-42.0, lng:146.5,
+        rank:5, score:'MODERATE-HIGH',
+        why:'Island geography. Remote from Northern Hemisphere exchanges. Australia has no nuclear weapons. Strong food production. Low population. Prevailing southern winds favorable.',
+        caveat:'Australia\'s alliance with US (ANZUS) may make mainland bases targets, not Tasmania directly.'
+    },
+    {
+        name:'Paraguay Interior',
+        lat:-22.0, lng:-58.0,
+        rank:6, score:'MODERATE',
+        why:'Landlocked, no strategic military value. Southern Hemisphere. Agricultural capacity. Geographic buffer from coastal exposure. No nuclear alliance.',
+        caveat:'Limited medical infrastructure. River systems could carry contamination from regional fallout.'
+    },
+    {
+        name:'Ireland',
+        lat:53.1,  lng:-8.1,
+        rank:7, score:'MODERATE',
+        why:'Neutral state — not a NATO member, no nuclear hosting. No strategic military targets. Self-sufficient food production. English-speaking, stable institutions.',
+        caveat:'Proximity to UK (primary target) and Northern Europe fallout corridor is a significant risk factor.'
+    }
+];
+
+// ============================================================
+// SAFE ZONE CARD — render into DOM
+// ============================================================
+function renderSafeZoneCard() {
+    const container = document.getElementById('safezoneList');
+    container.innerHTML = safeZones.map(z => `
+        <div class="safezone-item">
+            <div class="safezone-rank">#${z.rank}</div>
+            <div>
+                <span class="safezone-name">${z.name}</span>
+                <span class="safezone-score">SURVIVABILITY: ${z.score}</span>
+                <span class="safezone-why">${z.why}</span>
+                <span class="safezone-caveat">&#9888; ${z.caveat}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ============================================================
+// RISK CALCULATIONS
+// ============================================================
+function highlightDefconLegend(level) {
+    for (let i = 1; i <= 5; i++) {
+        const el = document.getElementById('legend-' + i);
+        if (!el) continue;
+        el.className = 'defcon-row';
+        if (i === level) {
+            const t = DEFCON_THRESHOLDS.find(d => d.level === level);
+            el.classList.add(t ? t.legendClass : 'active');
         }
+    }
+}
 
-        function injectAlarm(tickerId, getPool) {
-            const ticker = document.getElementById(tickerId);
-            if (!ticker) return;
-            const pool = getPool();
-            if (!pool.length) return;
+function runRiskCalculations() {
+    const n = FIXED_VECTORS.nuke, g = FIXED_VECTORS.geo, c = FIXED_VECTORS.climate;
+    const climateImpactModifier = c * 0.18;
+    const absoluteThreatScore = (n * 0.40) + ((g + climateImpactModifier) * 0.35) + (c * 0.25);
+    const clampedScore = Math.min(100, Math.max(0, absoluteThreatScore));
+    let s2m = Math.max(0, Math.round(600 - (clampedScore / 100) * 600));
+    document.getElementById('clockMetric').innerText = s2m + 's';
+    document.getElementById('clockHand').style.transform = `rotate(${-(s2m * 0.1)}deg)`;
 
-            const alertData = pool[Math.floor(Math.random() * pool.length)];
-            const timestamp = new Date().toLocaleTimeString();
+    let matched = DEFCON_THRESHOLDS[DEFCON_THRESHOLDS.length - 1];
+    for (const t of DEFCON_THRESHOLDS) { if (absoluteThreatScore >= t.minScore) { matched = t; break; } }
+    const dMetric = document.getElementById('defconMetric');
+    dMetric.innerText = 'DEFCON ' + matched.level;
+    dMetric.style.color = matched.color;
+    dMetric.style.textShadow = '0 0 16px ' + matched.color;
+    document.getElementById('defconDesc').innerText = DEFCON_DESCRIPTIONS[matched.level];
+    highlightDefconLegend(matched.level);
+}
 
-            const element = document.createElement('div');
-            element.className = `news-alarm ${alertData.type}`;
-            element.innerHTML = `<span class="news-time">[${timestamp}] - INTEL SOURCE: ${alertData.source}</span>${alertData.text}`;
+// ============================================================
+// MAP — LAYER GROUPS + TOGGLE
+// ============================================================
+const layerState = { conflict: true, targets: true, safezones: true };
+const layerGroups = {};
 
-            ticker.insertBefore(element, ticker.firstChild);
-            if (ticker.childNodes.length > 8) {
-                ticker.removeChild(ticker.lastChild);
-            }
-        }
+function toggleLayer(name) {
+    layerState[name] = !layerState[name];
+    const btn = document.getElementById('btn-' + name);
+    if (layerState[name]) {
+        layerGroups[name].addTo(window.pipboyMap);
+        btn.style.opacity = '1';
+    } else {
+        window.pipboyMap.removeLayer(layerGroups[name]);
+        btn.style.opacity = '0.35';
+    }
+}
 
-        function setFeedStatus(badgeId, isLive) {
-            const badge = document.getElementById(badgeId);
-            if (!badge) return;
-            badge.textContent = isLive ? '\u25CF ONLINE' : '\u25CF OFFLINE — SIMULATED';
-            badge.className = 'feed-status ' + (isLive ? 'status-online' : 'status-offline');
-        }
+function initGlobalMap() {
+    if (typeof L === 'undefined') { console.warn('Leaflet not loaded'); return; }
+    const map = L.map('globalMap', { worldCopyJump: true }).setView([20, 10], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    window.pipboyMap = map;
 
-        const RSS_TO_JSON_ENDPOINT = 'https://api.rss2json.com/v1/api.json?rss_url=';
-        const GLOBAL_RSS_FEED_URL = 'https://feeds.bbci.co.uk/news/world/rss.xml';
-        const FETCH_INTERVAL_MS = 5 * 60 * 1000;
+    // — Conflict hotspots layer
+    const conflictGroup = L.layerGroup();
+    const conflictIcon = L.divIcon({ className: 'pipboy-marker', html: '&#9670;', iconSize: [16,16] });
+    conflictHotspots.forEach(s => {
+        L.marker([s.lat, s.lng], { icon: conflictIcon }).addTo(conflictGroup)
+            .bindPopup(`<strong>${s.name}</strong><br>${s.note}`);
+    });
+    conflictGroup.addTo(map);
+    layerGroups.conflict = conflictGroup;
 
-        function classifyAlarmSeverity(text) {
-            const redFlags = ['strike', 'attack', 'missile', 'nuclear', 'invasion', 'war'];
-            const lowered = text.toLowerCase();
-            return redFlags.some(word => lowered.includes(word)) ? 'flash-red' : 'flash-orange';
-        }
+    // — Primary targets layer
+    const targetGroup = L.layerGroup();
+    const targetIcon  = L.divIcon({ className: 'pipboy-marker-hot', html: '&#9888;', iconSize: [16,16] });
+    primaryTargets.forEach(t => {
+        L.marker([t.lat, t.lng], { icon: targetIcon }).addTo(targetGroup)
+            .bindPopup(`<strong style="color:#ff3b3b">&#9888; ${t.name}</strong><br><span style="font-size:0.8rem">${t.note}</span>`);
+    });
+    targetGroup.addTo(map);
+    layerGroups.targets = targetGroup;
 
-        async function fetchRssAsAlarms(rssUrl, sourceOverride) {
-            try {
-                const response = await fetch(RSS_TO_JSON_ENDPOINT + encodeURIComponent(rssUrl));
-                if (!response.ok) throw new Error(`RSS proxy responded with status ${response.status}`);
-                const data = await response.json();
-                if (data.status !== 'ok' || !Array.isArray(data.items)) throw new Error('Unexpected RSS-to-JSON payload shape');
-                return data.items.slice(0, 8).map(item => ({
-                    source: sourceOverride || (data.feed && data.feed.title) || 'LIVE-FEED',
-                    text: item.title,
-                    type: classifyAlarmSeverity(item.title)
-                }));
-            } catch (err) {
-                console.warn('RSS fetch failed for', rssUrl, '\u2014', err);
-                return null;
-            }
-        }
+    // — Safe zones layer
+    const safeGroup = L.layerGroup();
+    const safeIcon  = L.divIcon({ className: 'pipboy-marker-safe', html: '&#10022;', iconSize: [16,16] });
+    safeZones.forEach(z => {
+        L.marker([z.lat, z.lng], { icon: safeIcon }).addTo(safeGroup)
+            .bindPopup(`
+                <div class="safe-popup">
+                    <span class="sp-title">&#10022; #${z.rank} — ${z.name}</span>
+                    <span class="sp-score">SURVIVABILITY: ${z.score}</span>
+                    <span class="sp-reason">${z.why}</span>
+                    <span class="sp-caveat">&#9888; ${z.caveat}</span>
+                </div>
+            `);
+    });
+    safeGroup.addTo(map);
+    layerGroups.safezones = safeGroup;
 
-        let liveAlarmCache = [];
+    // — User position marker
+    const userIcon = L.divIcon({ className: 'pipboy-marker-user', html: '&#9737;', iconSize:[18,18] });
+    window.pipboyUserMarker = L.marker([0,0], { icon: userIcon, opacity:0 }).addTo(map);
 
-        async function refreshLiveAlarmCache() {
-            const liveItems = await fetchRssAsAlarms(GLOBAL_RSS_FEED_URL);
-            if (liveItems && liveItems.length) {
-                liveAlarmCache = liveItems;
-                setFeedStatus('globalFeedStatus', true);
-            } else {
-                setFeedStatus('globalFeedStatus', false);
-            }
-        }
+    setTimeout(() => map.invalidateSize(), 200);
+}
 
-        let detectedLocationLabel = null;
-        let localAlarmCache = [];
+// ============================================================
+// ALARM TICKER
+// ============================================================
+const breakingAlarms = [
+    { source:"OSINT-EUR",       text:"Air space safety alerts initialized across eastern corridors. Sub-radar interference noted.",               type:"flash-red"    },
+    { source:"PACIFIC-MONITOR", text:"Task force formations track tactical transits inside contested maritime sectors.",                          type:"flash-orange" },
+    { source:"UN-CLIMATE",      text:"Accelerating water scarcity triggers regional resource mobilization orders.",                               type:"flash-orange" },
+    { source:"CYBER-ALARM",     text:"Malicious framework injections target multi-point energy distribution relays.",                             type:"flash-red"    },
+    { source:"MIDEAST-SIG",     text:"Tactical air surveillance defense grids transition into active sweep configurations.",                      type:"flash-red"    },
+    { source:"ARMS-CTRL",       text:"New START expiration leaves zero active US-Russia bilateral nuclear verification protocols.",               type:"flash-red"    },
+    { source:"GULF-INTEL",      text:"US-Iran ceasefire compliance monitoring ongoing — Iranian projectile activity in Gulf sector unconfirmed.", type:"flash-orange" }
+];
+const localMockAlarms = [
+    { source:"LOCAL-SIM", text:"Regional infrastructure monitoring nominal. No anomalies detected in local sector.",  type:"flash-orange" },
+    { source:"LOCAL-SIM", text:"Civil-defense channels report routine status for this sector.",                        type:"flash-orange" },
+    { source:"LOCAL-SIM", text:"No live local feed available — displaying simulated placeholder traffic.",             type:"flash-orange" }
+];
 
-        function getBrowserCoords() {
-            return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) return reject(new Error('Geolocation API not supported'));
-                navigator.geolocation.getCurrentPosition(
-                    pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-                    err => reject(err),
-                    { timeout: 8000 }
-                );
-            });
-        }
+function injectAlarm(tickerId, getPool) {
+    const ticker = document.getElementById(tickerId);
+    if (!ticker) return;
+    const pool = getPool(); if (!pool.length) return;
+    const a = pool[Math.floor(Math.random() * pool.length)];
+    const el = document.createElement('div');
+    el.className = `news-alarm ${a.type}`;
+    el.innerHTML = `<span class="news-time">[${new Date().toLocaleTimeString()}] - INTEL SOURCE: ${a.source}</span>${a.text}`;
+    ticker.insertBefore(el, ticker.firstChild);
+    if (ticker.childNodes.length > 8) ticker.removeChild(ticker.lastChild);
+}
 
-        async function reverseGeocode(lat, lon) {
-            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
-            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-            if (!res.ok) throw new Error('Reverse geocode failed: ' + res.status);
-            const data = await res.json();
-            const addr = data.address || {};
-            const city = addr.city || addr.town || addr.village || addr.county;
-            const label = [city, addr.country].filter(Boolean).join(', ');
-            if (!label) throw new Error('Reverse geocode returned no usable address');
-            return { label, lat, lon };
-        }
+function setFeedStatus(id, live) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = live ? '\u25CF ONLINE' : '\u25CF OFFLINE — SIMULATED';
+    el.className = 'feed-status ' + (live ? 'status-online' : 'status-offline');
+}
 
-        async function ipBasedLocation() {
-            const res = await fetch('https://ipapi.co/json/');
-            if (!res.ok) throw new Error('IP geolocation failed: ' + res.status);
-            const data = await res.json();
-            const label = [data.city, data.country_name].filter(Boolean).join(', ');
-            if (!label) throw new Error('IP geolocation returned no usable location');
-            return { label, lat: data.latitude, lon: data.longitude };
-        }
+// ============================================================
+// RSS / LIVE FEEDS
+// ============================================================
+const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
+const GLOBAL_RSS = 'https://feeds.bbci.co.uk/news/world/rss.xml';
+const POLL_MS = 5 * 60 * 1000;
 
-        async function detectUserLocation() {
-            try {
-                const coords = await getBrowserCoords();
-                return await reverseGeocode(coords.lat, coords.lon);
-            } catch (err) {
-                console.warn('Precise geolocation unavailable:', err);
-            }
-            try {
-                return await ipBasedLocation();
-            } catch (err) {
-                console.warn('IP-based geolocation also failed:', err);
-            }
-            return null;
-        }
+function sev(text) {
+    return ['strike','attack','missile','nuclear','invasion','war','ceasefire','explosion']
+        .some(w => text.toLowerCase().includes(w)) ? 'flash-red' : 'flash-orange';
+}
+async function fetchRss(url, src) {
+    try {
+        const r = await fetch(RSS2JSON + encodeURIComponent(url));
+        if (!r.ok) throw new Error(r.status);
+        const d = await r.json();
+        if (d.status !== 'ok' || !Array.isArray(d.items)) throw new Error('bad payload');
+        return d.items.slice(0,8).map(i => ({ source: src || d.feed?.title || 'LIVE-FEED', text: i.title, type: sev(i.title) }));
+    } catch(e) { console.warn('RSS fail', url, e); return null; }
+}
 
-        async function refreshLocalAlarmCache() {
-            if (!detectedLocationLabel) {
-                const loc = await detectUserLocation();
-                const labelEl = document.getElementById('localSectorLabel');
-                if (loc) {
-                    detectedLocationLabel = loc.label;
-                    if (labelEl) labelEl.textContent = '— TRACKING: ' + loc.label.toUpperCase();
-                    if (loc.lat && loc.lon && window.pipboyUserMarker) {
-                        window.pipboyUserMarker.setLatLng([loc.lat, loc.lon]).setOpacity(1)
-                            .bindPopup('YOUR POSITION: ' + loc.label);
-                    }
-                } else {
-                    if (labelEl) labelEl.textContent = '— LOCATION SERVICES UNAVAILABLE';
-                }
-            }
+let liveCache = [];
+async function refreshGlobal() {
+    const items = await fetchRss(GLOBAL_RSS);
+    if (items?.length) { liveCache = items; setFeedStatus('globalFeedStatus', true); }
+    else setFeedStatus('globalFeedStatus', false);
+}
 
-            if (!detectedLocationLabel) {
-                setFeedStatus('localFeedStatus', false);
-                return;
-            }
+let detectedLabel = null, localCache = [];
+function getCoords() {
+    return new Promise((res,rej) => {
+        if (!navigator.geolocation) return rej();
+        navigator.geolocation.getCurrentPosition(p => res({lat:p.coords.latitude,lon:p.coords.longitude}), rej, {timeout:8000});
+    });
+}
+async function reverseGeo(lat,lon) {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {headers:{Accept:'application/json'}});
+    const d = await r.json(); const a = d.address||{};
+    const city = a.city||a.town||a.village||a.county;
+    const label = [city, a.country].filter(Boolean).join(', ');
+    if (!label) throw new Error('no addr');
+    return {label,lat,lon};
+}
+async function ipGeo() {
+    const r = await fetch('https://ipapi.co/json/'); const d = await r.json();
+    const label = [d.city,d.country_name].filter(Boolean).join(', ');
+    if (!label) throw new Error('no label');
+    return {label, lat:d.latitude, lon:d.longitude};
+}
+async function detectLoc() {
+    try { const c = await getCoords(); return await reverseGeo(c.lat,c.lon); } catch{}
+    try { return await ipGeo(); } catch{}
+    return null;
+}
+async function refreshLocal() {
+    if (!detectedLabel) {
+        const loc = await detectLoc();
+        const el = document.getElementById('localSectorLabel');
+        if (loc) {
+            detectedLabel = loc.label;
+            if (el) el.textContent = '— TRACKING: ' + loc.label.toUpperCase();
+            if (loc.lat && loc.lon && window.pipboyUserMarker)
+                window.pipboyUserMarker.setLatLng([loc.lat,loc.lon]).setOpacity(1).bindPopup('YOUR POSITION: '+loc.label);
+        } else { if (el) el.textContent = '— LOCATION SERVICES UNAVAILABLE'; }
+    }
+    if (!detectedLabel) { setFeedStatus('localFeedStatus',false); return; }
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(detectedLabel)}&hl=en-US&gl=US&ceid=US:en`;
+    const items = await fetchRss(url, 'LOCAL-'+detectedLabel.split(',')[0].toUpperCase());
+    if (items?.length) { localCache = items; setFeedStatus('localFeedStatus',true); }
+    else setFeedStatus('localFeedStatus',false);
+}
 
-            const localNewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(detectedLocationLabel)}&hl=en-US&gl=US&ceid=US:en`;
-            const liveItems = await fetchRssAsAlarms(localNewsUrl, 'LOCAL-' + detectedLocationLabel.split(',')[0].toUpperCase());
-            if (liveItems && liveItems.length) {
-                localAlarmCache = liveItems;
-                setFeedStatus('localFeedStatus', true);
-            } else {
-                setFeedStatus('localFeedStatus', false);
-            }
-        }
+// ============================================================
+// BOOT
+// ============================================================
+renderSafeZoneCard();
+runRiskCalculations();
+initGlobalMap();
 
-        const hotspotRegions = [
-            { name: 'Eastern Corridor Watch', lat: 50.45, lng: 30.52, note: 'OSINT-EUR monitoring node' },
-            { name: 'Pacific Maritime Sector', lat: 16.0, lng: 114.0, note: 'PACIFIC-MONITOR contested-waters tracking' },
-            { name: 'Mideast Signal Relay', lat: 33.3, lng: 44.4, note: 'MIDEAST-SIG surveillance grid' },
-            { name: 'Arctic Approach', lat: 71.0, lng: 25.0, note: 'Northern flank monitoring station' }
-        ];
+refreshGlobal().then(() => injectAlarm('newsTicker', () => liveCache.length ? liveCache : breakingAlarms));
+refreshLocal().then(()  => injectAlarm('localTicker', () => localCache.length ? localCache : localMockAlarms));
 
-        function initGlobalMap() {
-            if (typeof L === 'undefined') { console.warn('Leaflet failed to load — global map disabled.'); return; }
-            const map = L.map('globalMap', { worldCopyJump: true }).setView([20, 10], 2);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 18,
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-            const hotspotIcon = L.divIcon({ className: 'pipboy-marker', html: '\u25C6', iconSize: [16, 16] });
-            hotspotRegions.forEach(spot => {
-                L.marker([spot.lat, spot.lng], { icon: hotspotIcon })
-                    .addTo(map)
-                    .bindPopup(`<strong>${spot.name}</strong><br>${spot.note}`);
-            });
-            const userIcon = L.divIcon({ className: 'pipboy-marker pipboy-marker-user', html: '\u2609', iconSize: [18, 18] });
-            window.pipboyUserMarker = L.marker([0, 0], { icon: userIcon, opacity: 0 }).addTo(map);
-            window.pipboyMap = map;
-            setTimeout(() => map.invalidateSize(), 200);
-        }
-
-        // ============================================================
-        // BOOT — no slider listeners needed, vectors are fixed
-        // ============================================================
-        runRiskCalculations();
-        initGlobalMap();
-
-        refreshLiveAlarmCache().then(() => injectAlarm('newsTicker', () => liveAlarmCache.length ? liveAlarmCache : breakingAlarms));
-        refreshLocalAlarmCache().then(() => injectAlarm('localTicker', () => localAlarmCache.length ? localAlarmCache : localMockAlarms));
-
-        setInterval(() => injectAlarm('newsTicker', () => liveAlarmCache.length ? liveAlarmCache : breakingAlarms), 6000);
-        setInterval(() => injectAlarm('localTicker', () => localAlarmCache.length ? localAlarmCache : localMockAlarms), 7000);
-
-        setInterval(refreshLiveAlarmCache, FETCH_INTERVAL_MS);
-        setInterval(refreshLocalAlarmCache, FETCH_INTERVAL_MS);
-    </script>
+setInterval(() => injectAlarm('newsTicker', () => liveCache.length ? liveCache : breakingAlarms), 6000);
+setInterval(() => injectAlarm('localTicker', () => localCache.length ? localCache : localMockAlarms), 7000);
+setInterval(refreshGlobal, POLL_MS);
+setInterval(refreshLocal,  POLL_MS);
+</script>
 </body>
 </html>
