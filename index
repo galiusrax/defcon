@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Operational Threat & Doomsday Matrix</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        :root {
+            /* ===== PIP-BOY / MILITARY TERMINAL PALETTE ===== */
+            --bg-main: #040f08;
+            --bg-card: #081f10;
+            --border: #1d4428;
+            --text-light: #5dffa3;   /* primary phosphor green */
+            --text-dark: #2f6b46;    /* dim secondary green */
+            --danger: #ff3b3b;
+            --warning: #ffb000;      /* amber, classic CRT secondary */
+            --success: #39ff14;
+        }
+
+        body {
+            font-family: 'Courier New', ui-monospace, Menlo, Consolas, monospace;
+            letter-spacing: 0.3px;
+            background: radial-gradient(ellipse at center, #0a2010 0%, #040f08 75%);
+            color: var(--text-light);
+            margin: 0;
+            padding: 24px;
+            position: relative;
+            animation: crtFlicker 6s infinite;
+        }
+
+        /* CRT scanline overlay + vignette, fixed over the whole viewport */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(0,0,0,0) 0px,
+                rgba(0,0,0,0) 2px,
+                rgba(93,255,163,0.035) 3px
+            );
+            animation: scanroll 7s linear infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9997;
+            box-shadow: inset 0 0 160px 40px rgba(0,0,0,0.65);
+        }
+
+        @keyframes scanroll { from { background-position: 0 0; } to { background-position: 0 120px; } }
+        @keyframes crtFlicker {
+            0%, 100% { opacity: 1; }
+            92% { opacity: 1; }
+            93% { opacity: 0.95; }
+            94% { opacity: 1; }
+            96% { opacity: 0.97; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            color: var(--danger);
+        }
+
+        .blink-cursor {
+            display: inline-block;
+            width: 0.55em;
+            background: var(--danger);
+            margin-left: 4px;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        /* Large Map Section Layout */
+        .map-span {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .map-span { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        /* Signature HUD corner brackets, evoking the Pip-Boy tab highlight */
+        .card::before, .card::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            opacity: 0.65;
+            pointer-events: none;
+        }
+        .card::before { top: -1px; left: -1px; border-top: 2px solid var(--text-light); border-left: 2px solid var(--text-light); }
+        .card::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--text-light); border-right: 2px solid var(--text-light); }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .sector-label { color: var(--text-dark); font-size: 0.75rem; text-transform: none; letter-spacing: 0; }
+
+        .feed-status { font-size: 0.7rem; letter-spacing: 0.5px; white-space: nowrap; }
+        .status-online { color: var(--success); }
+        .status-offline { color: var(--danger); }
+
+        h1, h2, .metric, .feed-status { text-shadow: 0 0 6px currentColor; }
+
+        .metric {
+            font-size: 3.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin: 16px 0;
+            font-family: monospace;
+        }
+
+        .description {
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Global Map */
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            height: 450px;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #000;
+        }
+
+        #globalMap { width: 100%; height: 100%; background: #04130a; }
+
+        /* Recolor Leaflet's default tiles/UI to fit the green phosphor theme */
+        #globalMap .leaflet-tile-pane {
+            filter: grayscale(1) brightness(0.75) sepia(0.4) hue-rotate(70deg) saturate(3) contrast(1.15);
+        }
+        #globalMap .leaflet-control-zoom a {
+            background: var(--bg-card);
+            color: var(--text-light);
+            border: 1px solid var(--border);
+        }
+        #globalMap .leaflet-control-attribution {
+            background: rgba(8,31,16,0.8);
+            color: var(--text-dark);
+        }
+        #globalMap .leaflet-popup-content-wrapper,
+        #globalMap .leaflet-popup-tip {
+            background: var(--bg-card);
+            color: var(--text-light);
+            border: 1px solid var(--border);
+        }
+        .pipboy-marker {
+            color: var(--text-light);
+            font-size: 14px;
+            text-align: center;
+            line-height: 16px;
+            text-shadow: 0 0 6px var(--text-light);
+        }
+        .pipboy-marker-user {
+            color: var(--warning);
+            font-size: 16px;
+            text-shadow: 0 0 8px var(--warning);
+            animation: pulseUser 1.6s infinite;
+        }
+        @keyframes pulseUser { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+
+        /* Live Alarm Stream Ticker */
+        .news-ticker {
+            height: 450px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .news-alarm {
+            padding: 12px;
+            background: rgba(93,255,163,0.03);
+            border-radius: 2px;
+            border-left: 4px solid var(--border);
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .news-alarm.flash-red { border-left-color: var(--danger); background: rgba(255,59,59,0.05); }
+        .news-alarm.flash-orange { border-left-color: var(--warning); background: rgba(255,176,0,0.04); }
+
+        .news-time {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--text-dark);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Configuration Sliders */
+        .slider-group { margin-bottom: 20px; }
+        .slider-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+        input[type="range"] { width: 100%; accent-color: var(--text-light); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>QUANTUM RISK DESK v2026.3<span class="blink-cursor">&nbsp;</span></h1>
+            <div style="font-family: monospace; font-size: 0.9rem; color: var(--warning); text-shadow: 0 0 6px var(--warning);">[ SIMULATOR ACTIVE ]</div>
+        </header>
+
+        <div class="map-span">
+            <div class="card">
+                <h2>Global Sector Map — Interactive</h2>
+                <div class="map-wrapper">
+                    <div id="globalMap"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-header-row">
+                    <span>Active Operational Alarms</span>
+                    <span id="globalFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
+                </h2>
+                <div class="news-ticker" id="newsTicker"></div>
+            </div>
+        </div>
+
+        <div class="grid" style="margin-top: 24px;">
+            <div class="card">
+                <h2>Predictive Military Posture</h2>
+                <div class="metric" id="defconMetric">DEFCON --</div>
+                <div class="description" id="defconDesc">Awaiting telemetry streams...</div>
+            </div>
+
+            <div class="card">
+                <h2>Doomsday Clock Status</h2>
+                <div class="clock-container" style="display:flex; justify-content:center; align-items:center; margin-bottom:16px;">
+                    <svg width="140" height="140" viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="95" fill="none" stroke="#1d4428" stroke-width="6"/>
+                        <path d="M 100 15 A 85 85 0 0 1 185 100" fill="none" stroke="#ff3b3b" stroke-width="4" stroke-dasharray="4,4"/>
+                        <line x1="100" y1="100" x2="100" y2="45" stroke="#2f6b46" stroke-width="6" stroke-linecap="round"/>
+                        <line id="clockHand" x1="100" y1="100" x2="100" y2="25" stroke="#ff3b3b" stroke-width="4" stroke-linecap="round" style="transform-origin:100px 100px; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);"/>
+                        <circle cx="100" cy="100" r="6" fill="#5dffa3"/>
+                    </svg>
+                </div>
+                <div class="metric" id="clockMetric" style="color: var(--danger); margin: 0 0 8px 0; font-size: 2.5rem;">--s</div>
+                <div class="description">Time remaining until Midnight. Adjusted via cascading ecological, technological, and tactical vectors.</div>
+            </div>
+
+            <div class="card">
+                <h2>Global Vector Weights</h2>
+                <div class="slider-group">
+                    <div class="slider-label"><span>Nuclear Threat Profile</span><span id="vNuke">77%</span></div>
+                    <input type="range" id="nuke" min="0" max="100" value="77">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-label"><span>Geopolitical Friction Index</span><span id="vGeo">74%</span></div>
+                    <input type="range" id="geo" min="0" max="100" value="74">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-label"><span>Climate Multiplier State</span><span id="vClimate">82%</span></div>
+                    <input type="range" id="climate" min="0" max="100" value="82">
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 24px;">
+            <h2 class="card-header-row">
+                <span>Local Sector News <span id="localSectorLabel" class="sector-label">— ACQUIRING LOCATION...</span></span>
+                <span id="localFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
+            </h2>
+            <div class="news-ticker" id="localTicker" style="height: 240px;"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        const SLIDER_IDS = ['nuke', 'geo', 'climate'];
+
+        // ============================================================
+        // PERSISTENT SLIDER STATE (localStorage with safe fallback)
+        // ============================================================
+        // NOTE: Browser localStorage is blocked inside sandboxed preview
+        // iframes (including the Claude.ai Artifacts panel). The wrapper
+        // below catches that and falls back to an in-memory object so the
+        // dashboard never crashes. On a normal server / opened directly
+        // in a browser tab, localStorage works exactly as expected.
+        const STORAGE_PREFIX = 'doomsdayDashboard_';
+        const memoryStoreFallback = {};
+
+        function safeStorageSet(key, value) {
+            try {
+                window.localStorage.setItem(key, value);
+            } catch (err) {
+                memoryStoreFallback[key] = value;
+            }
+        }
+
+        function safeStorageGet(key) {
+            try {
+                const val = window.localStorage.getItem(key);
+                if (val !== null) return val;
+            } catch (err) {
+                /* localStorage unavailable in this context, fall through */
+            }
+            return Object.prototype.hasOwnProperty.call(memoryStoreFallback, key)
+                ? memoryStoreFallback[key]
+                : null;
+        }
+
+        function restoreSliderState() {
+            SLIDER_IDS.forEach(id => {
+                const saved = safeStorageGet(STORAGE_PREFIX + id);
+                if (saved !== null) {
+                    document.getElementById(id).value = saved;
+                }
+            });
+        }
+
+        // ============================================================
+        // DOOMSDAY CLOCK — EXACT LINEAR MAPPING CONSTANTS
+        // ============================================================
+        // Real analog-clock geometry: 60 seconds = 1 minute = 6 degrees
+        // of arc, so 1 second of clock-face movement = 0.1 degrees.
+        const DEGREES_PER_SECOND = 0.1;
+        const SCORE_MIN = 0;
+        const SCORE_MAX = 100;
+        const SECONDS_AT_MIN_SCORE = 600; // calmest reading: 10:00 before midnight
+        const SECONDS_AT_MAX_SCORE = 0;   // most severe reading: midnight
+
+        const breakingAlarms = [
+            { source: "OSINT-EUR", text: "Air space safety alerts initialized across eastern corridors. Sub-radar interference noted.", type: "flash-red" },
+            { source: "PACIFIC-MONITOR", text: "Task force formations track tactical transits inside contested maritime sectors.", type: "flash-orange" },
+            { source: "UN-CLIMATE", text: "Accelerating water scarcity triggers regional resource mobilization orders.", type: "flash-orange" },
+            { source: "CYBER-ALARM", text: "Malicious framework injections target multi-point energy distribution relays.", type: "flash-red" },
+            { source: "MIDEAST-SIG", text: "Tactical air surveillance defense grids transition into active sweep configurations.", type: "flash-red" }
+        ];
+
+        const localMockAlarms = [
+            { source: "LOCAL-SIM", text: "Regional infrastructure monitoring nominal. No anomalies detected in local sector.", type: "flash-orange" },
+            { source: "LOCAL-SIM", text: "Civil-defense channels report routine status for this sector.", type: "flash-orange" },
+            { source: "LOCAL-SIM", text: "No live local feed available — displaying simulated placeholder traffic.", type: "flash-orange" }
+        ];
+
+        function runRiskCalculations() {
+            const n = parseInt(document.getElementById('nuke').value);
+            const g = parseInt(document.getElementById('geo').value);
+            const c = parseInt(document.getElementById('climate').value);
+
+            document.getElementById('vNuke').innerText = n + '%';
+            document.getElementById('vGeo').innerText = g + '%';
+            document.getElementById('vClimate').innerText = c + '%';
+
+            const climateImpactModifier = c * 0.18;
+            const absoluteThreatScore = (n * 0.40) + ((g + climateImpactModifier) * 0.35) + (c * 0.25);
+
+            // Doomsday Clock Conversion — exact linear interpolation.
+            const clampedScore = Math.min(SCORE_MAX, Math.max(SCORE_MIN, absoluteThreatScore));
+            let secondsToMidnight = Math.round(
+                SECONDS_AT_MIN_SCORE - (clampedScore / SCORE_MAX) * (SECONDS_AT_MIN_SCORE - SECONDS_AT_MAX_SCORE)
+            );
+            secondsToMidnight = Math.max(0, secondsToMidnight);
+            document.getElementById('clockMetric').innerText = secondsToMidnight + 's';
+
+            const handRotationAngle = -(secondsToMidnight * DEGREES_PER_SECOND);
+            document.getElementById('clockHand').style.transform = `rotate(${handRotationAngle}deg)`;
+
+            let defcon = 5;
+            let desc = "FADE OUT. Normal peacetime posture. Standard intelligence monitoring loops active.";
+            let color = "var(--success)";
+
+            if (absoluteThreatScore > 85) { defcon = 1; desc = "COCKED PISTOL. Maximum force deployment options verified. Strategic nuclear theater engagement predicted."; color = "var(--danger)"; }
+            else if (absoluteThreatScore > 68) { defcon = 2; desc = "FAST PACE. High asset mobilization state. Combat units ordered to deploy ready configurations under 6 hours."; color = "var(--danger)"; }
+            else if (absoluteThreatScore > 48) { defcon = 3; desc = "ROUND HOUSE. Fleet defense boundaries extended. Air supremacy assets initialized for 15-minute quick launch loops."; color = "var(--warning)"; }
+            else if (absoluteThreatScore > 25) { defcon = 4; desc = "DOUBLE TAKE. Intelligence monitoring thresholds expanded. Cryptographic communication parameters intensified."; color = "var(--warning)"; }
+
+            const dMetric = document.getElementById('defconMetric');
+            dMetric.innerText = "DEFCON " + defcon;
+            dMetric.style.color = color;
+            document.getElementById('defconDesc').innerText = desc;
+        }
+
+        // ============================================================
+        // ALARM TICKER — generic injector shared by the global & local feeds
+        // ============================================================
+        function injectAlarm(tickerId, getPool) {
+            const ticker = document.getElementById(tickerId);
+            if (!ticker) return;
+            const pool = getPool();
+            if (!pool.length) return;
+
+            const alertData = pool[Math.floor(Math.random() * pool.length)];
+            const timestamp = new Date().toLocaleTimeString();
+
+            const element = document.createElement('div');
+            element.className = `news-alarm ${alertData.type}`;
+            element.innerHTML = `<span class="news-time">[${timestamp}] - INTEL SOURCE: ${alertData.source}</span>${alertData.text}`;
+
+            ticker.insertBefore(element, ticker.firstChild);
+            if (ticker.childNodes.length > 8) {
+                ticker.removeChild(ticker.lastChild);
+            }
+        }
+
+        function setFeedStatus(badgeId, isLive) {
+            const badge = document.getElementById(badgeId);
+            if (!badge) return;
+            badge.textContent = isLive ? '\u25CF ONLINE' : '\u25CF OFFLINE — SIMULATED';
+            badge.className = 'feed-status ' + (isLive ? 'status-online' : 'status-offline');
+        }
+
+        // ============================================================
+        // RSS-TO-JSON FETCH ENGINE (async/await, shared by both feeds)
+        // ============================================================
+        // rss2json.com is a free, keyless RSS-to-JSON proxy that also
+        // handles CORS for you. Swap for your own proxy/API key for
+        // higher rate limits or to read a private/internal feed.
+        const RSS_TO_JSON_ENDPOINT = 'https://api.rss2json.com/v1/api.json?rss_url=';
+        const GLOBAL_RSS_FEED_URL = 'https://feeds.bbci.co.uk/news/world/rss.xml';
+        const FETCH_INTERVAL_MS = 5 * 60 * 1000; // poll every 5 minutes, fully autonomous
+
+        function classifyAlarmSeverity(text) {
+            const redFlags = ['strike', 'attack', 'missile', 'nuclear', 'invasion', 'war'];
+            const lowered = text.toLowerCase();
+            return redFlags.some(word => lowered.includes(word)) ? 'flash-red' : 'flash-orange';
+        }
+
+        async function fetchRssAsAlarms(rssUrl, sourceOverride) {
+            try {
+                const response = await fetch(RSS_TO_JSON_ENDPOINT + encodeURIComponent(rssUrl));
+                if (!response.ok) {
+                    throw new Error(`RSS proxy responded with status ${response.status}`);
+                }
+                const data = await response.json();
+                if (data.status !== 'ok' || !Array.isArray(data.items)) {
+                    throw new Error('Unexpected RSS-to-JSON payload shape');
+                }
+                return data.items.slice(0, 8).map(item => ({
+                    source: sourceOverride || (data.feed && data.feed.title) || 'LIVE-FEED',
+                    text: item.title,
+                    type: classifyAlarmSeverity(item.title)
+                }));
+            } catch (err) {
+                console.warn('RSS fetch failed for', rssUrl, '\u2014', err);
+                return null; // caller keeps its existing cache / falls back to mock data
+            }
+        }
+
+        let liveAlarmCache = [];
+
+        async function refreshLiveAlarmCache() {
+            const liveItems = await fetchRssAsAlarms(GLOBAL_RSS_FEED_URL);
+            if (liveItems && liveItems.length) {
+                liveAlarmCache = liveItems;
+                setFeedStatus('globalFeedStatus', true);
+            } else {
+                setFeedStatus('globalFeedStatus', false);
+            }
+        }
+
+        // ============================================================
+        // LOCATION-AWARE LOCAL NEWS
+        // ============================================================
+        let detectedLocationLabel = null;
+        let localAlarmCache = [];
+
+        function getBrowserCoords() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    return reject(new Error('Geolocation API not supported in this browser'));
+                }
+                navigator.geolocation.getCurrentPosition(
+                    pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+                    err => reject(err),
+                    { timeout: 8000 }
+                );
+            });
+        }
+
+        // Reverse-geocodes precise coordinates to a city/country label.
+        async function reverseGeocode(lat, lon) {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) throw new Error('Reverse geocode failed: ' + res.status);
+            const data = await res.json();
+            const addr = data.address || {};
+            const city = addr.city || addr.town || addr.village || addr.county;
+            const label = [city, addr.country].filter(Boolean).join(', ');
+            if (!label) throw new Error('Reverse geocode returned no usable address');
+            return { label, lat, lon };
+        }
+
+        // Fallback: coarse IP-based location, no permission prompt required.
+        async function ipBasedLocation() {
+            const res = await fetch('https://ipapi.co/json/');
+            if (!res.ok) throw new Error('IP geolocation failed: ' + res.status);
+            const data = await res.json();
+            const label = [data.city, data.country_name].filter(Boolean).join(', ');
+            if (!label) throw new Error('IP geolocation returned no usable location');
+            return { label, lat: data.latitude, lon: data.longitude };
+        }
+
+        async function detectUserLocation() {
+            try {
+                const coords = await getBrowserCoords();
+                return await reverseGeocode(coords.lat, coords.lon);
+            } catch (err) {
+                console.warn('Precise browser geolocation unavailable:', err);
+            }
+            try {
+                return await ipBasedLocation();
+            } catch (err) {
+                console.warn('IP-based geolocation also failed:', err);
+            }
+            return null;
+        }
+
+        async function refreshLocalAlarmCache() {
+            if (!detectedLocationLabel) {
+                const loc = await detectUserLocation();
+                const labelEl = document.getElementById('localSectorLabel');
+                if (loc) {
+                    detectedLocationLabel = loc.label;
+                    if (labelEl) labelEl.textContent = '— TRACKING: ' + loc.label.toUpperCase();
+                    if (loc.lat && loc.lon && window.pipboyUserMarker) {
+                        window.pipboyUserMarker.setLatLng([loc.lat, loc.lon]).setOpacity(1)
+                            .bindPopup('YOUR POSITION: ' + loc.label);
+                    }
+                } else {
+                    if (labelEl) labelEl.textContent = '— LOCATION SERVICES UNAVAILABLE';
+                }
+            }
+
+            if (!detectedLocationLabel) {
+                setFeedStatus('localFeedStatus', false);
+                return; // injectAlarm() will use localMockAlarms automatically
+            }
+
+            const localNewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(detectedLocationLabel)}&hl=en-US&gl=US&ceid=US:en`;
+            const liveItems = await fetchRssAsAlarms(localNewsUrl, 'LOCAL-' + detectedLocationLabel.split(',')[0].toUpperCase());
+            if (liveItems && liveItems.length) {
+                localAlarmCache = liveItems;
+                setFeedStatus('localFeedStatus', true);
+            } else {
+                setFeedStatus('localFeedStatus', false);
+            }
+        }
+
+        // ============================================================
+        // GLOBAL SECTOR MAP (Leaflet + OpenStreetMap, no API key needed)
+        // ============================================================
+        // Generic, fictional reference points matching the existing mock
+        // OSINT alarm labels above — illustrative flavor, not real targeting data.
+        const hotspotRegions = [
+            { name: 'Eastern Corridor Watch', lat: 50.45, lng: 30.52, note: 'OSINT-EUR monitoring node' },
+            { name: 'Pacific Maritime Sector', lat: 16.0, lng: 114.0, note: 'PACIFIC-MONITOR contested-waters tracking' },
+            { name: 'Mideast Signal Relay', lat: 33.3, lng: 44.4, note: 'MIDEAST-SIG surveillance grid' },
+            { name: 'Arctic Approach', lat: 71.0, lng: 25.0, note: 'Northern flank monitoring station' }
+        ];
+
+        function initGlobalMap() {
+            if (typeof L === 'undefined') {
+                console.warn('Leaflet failed to load — global map disabled.');
+                return;
+            }
+
+            const map = L.map('globalMap', { worldCopyJump: true }).setView([20, 10], 2);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            const hotspotIcon = L.divIcon({ className: 'pipboy-marker', html: '\u25C6', iconSize: [16, 16] });
+            hotspotRegions.forEach(spot => {
+                L.marker([spot.lat, spot.lng], { icon: hotspotIcon })
+                    .addTo(map)
+                    .bindPopup(`<strong>${spot.name}</strong><br>${spot.note}`);
+            });
+
+            // Placeholder user marker, hidden until detectUserLocation() resolves
+            const userIcon = L.divIcon({ className: 'pipboy-marker pipboy-marker-user', html: '\u2609', iconSize: [18, 18] });
+            window.pipboyUserMarker = L.marker([0, 0], { icon: userIcon, opacity: 0 }).addTo(map);
+
+            window.pipboyMap = map;
+            // Defensive resize in case the container's final layout settles after init
+            setTimeout(() => map.invalidateSize(), 200);
+        }
+
+        // ============================================================
+        // BOOT SEQUENCE — fully autonomous, no manual updates required
+        // ============================================================
+        restoreSliderState();
+
+        SLIDER_IDS.forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                safeStorageSet(STORAGE_PREFIX + id, e.target.value);
+                runRiskCalculations();
+            });
+        });
+
+        runRiskCalculations();
+        initGlobalMap();
+
+        refreshLiveAlarmCache().then(() => injectAlarm('newsTicker', () => liveAlarmCache.length ? liveAlarmCache : breakingAlarms));
+        refreshLocalAlarmCache().then(() => injectAlarm('localTicker', () => localAlarmCache.length ? localAlarmCache : localMockAlarms));
+
+        setInterval(() => injectAlarm('newsTicker', () => liveAlarmCache.length ? liveAlarmCache : breakingAlarms), 6000);
+        setInterval(() => injectAlarm('localTicker', () => localAlarmCache.length ? localAlarmCache : localMockAlarms), 7000);
+
+        setInterval(refreshLiveAlarmCache, FETCH_INTERVAL_MS);
+        setInterval(refreshLocalAlarmCache, FETCH_INTERVAL_MS);
+    </script>
+</body>
+</html>
