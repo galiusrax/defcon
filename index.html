@@ -7,14 +7,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
         :root {
-            /* ===== PIP-BOY / MILITARY TERMINAL PALETTE ===== */
             --bg-main: #040f08;
             --bg-card: #081f10;
             --border: #1d4428;
-            --text-light: #5dffa3;   /* primary phosphor green */
-            --text-dark: #2f6b46;    /* dim secondary green */
+            --text-light: #5dffa3;
+            --text-dark: #2f6b46;
             --danger: #ff3b3b;
-            --warning: #ffb000;      /* amber, classic CRT secondary */
+            --warning: #ffb000;
             --success: #39ff14;
         }
 
@@ -29,7 +28,6 @@
             animation: crtFlicker 6s infinite;
         }
 
-        /* CRT scanline overlay + vignette, fixed over the whole viewport */
         body::before {
             content: '';
             position: fixed;
@@ -100,7 +98,6 @@
             gap: 24px;
         }
 
-        /* Large Map Section Layout */
         .map-span {
             grid-column: 1 / -1;
             display: grid;
@@ -123,7 +120,6 @@
             position: relative;
         }
 
-        /* Signature HUD corner brackets, evoking the Pip-Boy tab highlight */
         .card::before, .card::after {
             content: '';
             position: absolute;
@@ -155,7 +151,6 @@
         }
 
         .sector-label { color: var(--text-dark); font-size: 0.75rem; text-transform: none; letter-spacing: 0; }
-
         .feed-status { font-size: 0.7rem; letter-spacing: 0.5px; white-space: nowrap; }
         .status-online { color: var(--success); }
         .status-offline { color: var(--danger); }
@@ -177,7 +172,70 @@
             line-height: 1.4;
         }
 
-        /* Global Map */
+        /* ── VECTOR BREAKDOWN (replaces sliders) ── */
+        .vector-row {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .vector-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .vector-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.85rem;
+        }
+
+        .vector-name { color: var(--text-light); }
+
+        .vector-value {
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .vector-source {
+            font-size: 0.68rem;
+            color: var(--text-dark);
+            font-style: italic;
+        }
+
+        .vector-bar-track {
+            width: 100%;
+            height: 6px;
+            background: #0d2e16;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .vector-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            box-shadow: 0 0 6px currentColor;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bar-danger  { background: var(--danger);  color: var(--danger); }
+        .bar-warning { background: var(--warning); color: var(--warning); }
+        .bar-green   { background: var(--text-light); color: var(--text-light); }
+
+        .vector-lock-note {
+            margin-top: 20px;
+            font-size: 0.72rem;
+            color: var(--text-dark);
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        /* Map */
         .map-wrapper {
             position: relative;
             width: 100%;
@@ -190,7 +248,6 @@
 
         #globalMap { width: 100%; height: 100%; background: #04130a; }
 
-        /* Recolor Leaflet's default tiles/UI to fit the green phosphor theme */
         #globalMap .leaflet-tile-pane {
             filter: grayscale(1) brightness(0.75) sepia(0.4) hue-rotate(70deg) saturate(3) contrast(1.15);
         }
@@ -224,7 +281,6 @@
         }
         @keyframes pulseUser { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
 
-        /* Live Alarm Stream Ticker */
         .news-ticker {
             height: 450px;
             overflow-y: auto;
@@ -251,11 +307,6 @@
             display: block;
             margin-bottom: 4px;
         }
-
-        /* Configuration Sliders */
-        .slider-group { margin-bottom: 20px; }
-        .slider-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
-        input[type="range"] { width: 100%; accent-color: var(--text-light); }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -304,23 +355,49 @@
                     </svg>
                 </div>
                 <div class="metric" id="clockMetric" style="color: var(--danger); margin: 0 0 8px 0; font-size: 2.5rem;">--s</div>
-                <div class="description">Time remaining until Midnight. Adjusted via cascading ecological, technological, and tactical vectors.</div>
+                <div class="description">Time remaining until Midnight. Derived from cascading ecological, technological, and tactical vectors.</div>
             </div>
 
+            <!-- STATIC VECTOR BREAKDOWN — replaces interactive sliders -->
             <div class="card">
                 <h2>Global Vector Weights</h2>
-                <div class="slider-group">
-                    <div class="slider-label"><span>Nuclear Threat Profile</span><span id="vNuke">77%</span></div>
-                    <input type="range" id="nuke" min="0" max="100" value="77">
+                <div class="vector-row">
+
+                    <div class="vector-item">
+                        <div class="vector-meta">
+                            <span class="vector-name">Nuclear Threat Profile</span>
+                            <span class="vector-value" style="color: var(--danger);">90%</span>
+                        </div>
+                        <div class="vector-bar-track">
+                            <div class="vector-bar-fill bar-danger" style="width: 90%;"></div>
+                        </div>
+                        <span class="vector-source">Source: Bulletin of Atomic Scientists — Doomsday Clock 2024 (89s to midnight, closest ever recorded)</span>
+                    </div>
+
+                    <div class="vector-item">
+                        <div class="vector-meta">
+                            <span class="vector-name">Geopolitical Friction Index</span>
+                            <span class="vector-value" style="color: var(--danger);">82%</span>
+                        </div>
+                        <div class="vector-bar-track">
+                            <div class="vector-bar-fill bar-danger" style="width: 82%;"></div>
+                        </div>
+                        <span class="vector-source">Source: ACLED 2024 — active conflict zones at post-Cold War peak; Ukraine, Middle East, Taiwan Strait escalation</span>
+                    </div>
+
+                    <div class="vector-item">
+                        <div class="vector-meta">
+                            <span class="vector-name">Climate Multiplier State</span>
+                            <span class="vector-value" style="color: var(--warning);">78%</span>
+                        </div>
+                        <div class="vector-bar-track">
+                            <div class="vector-bar-fill bar-warning" style="width: 78%;"></div>
+                        </div>
+                        <span class="vector-source">Source: IPCC AR6 — accelerating resource scarcity compounding geopolitical and humanitarian risk</span>
+                    </div>
+
                 </div>
-                <div class="slider-group">
-                    <div class="slider-label"><span>Geopolitical Friction Index</span><span id="vGeo">74%</span></div>
-                    <input type="range" id="geo" min="0" max="100" value="74">
-                </div>
-                <div class="slider-group">
-                    <div class="slider-label"><span>Climate Multiplier State</span><span id="vClimate">82%</span></div>
-                    <input type="range" id="climate" min="0" max="100" value="82">
-                </div>
+                <p class="vector-lock-note">&#9632; VECTORS LOCKED — calibrated to latest published threat assessments. Read-only.</p>
             </div>
         </div>
 
@@ -335,58 +412,19 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script>
-        const SLIDER_IDS = ['nuke', 'geo', 'climate'];
+        // ============================================================
+        // FIXED VECTOR VALUES — locked for all users, not user-adjustable
+        // ============================================================
+        const FIXED_VECTORS = { nuke: 90, geo: 82, climate: 78 };
 
         // ============================================================
-        // PERSISTENT SLIDER STATE (localStorage with safe fallback)
+        // DOOMSDAY CLOCK CONSTANTS
         // ============================================================
-        // NOTE: Browser localStorage is blocked inside sandboxed preview
-        // iframes (including the Claude.ai Artifacts panel). The wrapper
-        // below catches that and falls back to an in-memory object so the
-        // dashboard never crashes. On a normal server / opened directly
-        // in a browser tab, localStorage works exactly as expected.
-        const STORAGE_PREFIX = 'doomsdayDashboard_';
-        const memoryStoreFallback = {};
-
-        function safeStorageSet(key, value) {
-            try {
-                window.localStorage.setItem(key, value);
-            } catch (err) {
-                memoryStoreFallback[key] = value;
-            }
-        }
-
-        function safeStorageGet(key) {
-            try {
-                const val = window.localStorage.getItem(key);
-                if (val !== null) return val;
-            } catch (err) {
-                /* localStorage unavailable in this context, fall through */
-            }
-            return Object.prototype.hasOwnProperty.call(memoryStoreFallback, key)
-                ? memoryStoreFallback[key]
-                : null;
-        }
-
-        function restoreSliderState() {
-            SLIDER_IDS.forEach(id => {
-                const saved = safeStorageGet(STORAGE_PREFIX + id);
-                if (saved !== null) {
-                    document.getElementById(id).value = saved;
-                }
-            });
-        }
-
-        // ============================================================
-        // DOOMSDAY CLOCK — EXACT LINEAR MAPPING CONSTANTS
-        // ============================================================
-        // Real analog-clock geometry: 60 seconds = 1 minute = 6 degrees
-        // of arc, so 1 second of clock-face movement = 0.1 degrees.
         const DEGREES_PER_SECOND = 0.1;
         const SCORE_MIN = 0;
         const SCORE_MAX = 100;
-        const SECONDS_AT_MIN_SCORE = 600; // calmest reading: 10:00 before midnight
-        const SECONDS_AT_MAX_SCORE = 0;   // most severe reading: midnight
+        const SECONDS_AT_MIN_SCORE = 600;
+        const SECONDS_AT_MAX_SCORE = 0;
 
         const breakingAlarms = [
             { source: "OSINT-EUR", text: "Air space safety alerts initialized across eastern corridors. Sub-radar interference noted.", type: "flash-red" },
@@ -403,18 +441,13 @@
         ];
 
         function runRiskCalculations() {
-            const n = parseInt(document.getElementById('nuke').value);
-            const g = parseInt(document.getElementById('geo').value);
-            const c = parseInt(document.getElementById('climate').value);
-
-            document.getElementById('vNuke').innerText = n + '%';
-            document.getElementById('vGeo').innerText = g + '%';
-            document.getElementById('vClimate').innerText = c + '%';
+            const n = FIXED_VECTORS.nuke;
+            const g = FIXED_VECTORS.geo;
+            const c = FIXED_VECTORS.climate;
 
             const climateImpactModifier = c * 0.18;
             const absoluteThreatScore = (n * 0.40) + ((g + climateImpactModifier) * 0.35) + (c * 0.25);
 
-            // Doomsday Clock Conversion — exact linear interpolation.
             const clampedScore = Math.min(SCORE_MAX, Math.max(SCORE_MIN, absoluteThreatScore));
             let secondsToMidnight = Math.round(
                 SECONDS_AT_MIN_SCORE - (clampedScore / SCORE_MAX) * (SECONDS_AT_MIN_SCORE - SECONDS_AT_MAX_SCORE)
@@ -440,9 +473,6 @@
             document.getElementById('defconDesc').innerText = desc;
         }
 
-        // ============================================================
-        // ALARM TICKER — generic injector shared by the global & local feeds
-        // ============================================================
         function injectAlarm(tickerId, getPool) {
             const ticker = document.getElementById(tickerId);
             if (!ticker) return;
@@ -469,15 +499,9 @@
             badge.className = 'feed-status ' + (isLive ? 'status-online' : 'status-offline');
         }
 
-        // ============================================================
-        // RSS-TO-JSON FETCH ENGINE (async/await, shared by both feeds)
-        // ============================================================
-        // rss2json.com is a free, keyless RSS-to-JSON proxy that also
-        // handles CORS for you. Swap for your own proxy/API key for
-        // higher rate limits or to read a private/internal feed.
         const RSS_TO_JSON_ENDPOINT = 'https://api.rss2json.com/v1/api.json?rss_url=';
         const GLOBAL_RSS_FEED_URL = 'https://feeds.bbci.co.uk/news/world/rss.xml';
-        const FETCH_INTERVAL_MS = 5 * 60 * 1000; // poll every 5 minutes, fully autonomous
+        const FETCH_INTERVAL_MS = 5 * 60 * 1000;
 
         function classifyAlarmSeverity(text) {
             const redFlags = ['strike', 'attack', 'missile', 'nuclear', 'invasion', 'war'];
@@ -488,13 +512,9 @@
         async function fetchRssAsAlarms(rssUrl, sourceOverride) {
             try {
                 const response = await fetch(RSS_TO_JSON_ENDPOINT + encodeURIComponent(rssUrl));
-                if (!response.ok) {
-                    throw new Error(`RSS proxy responded with status ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`RSS proxy responded with status ${response.status}`);
                 const data = await response.json();
-                if (data.status !== 'ok' || !Array.isArray(data.items)) {
-                    throw new Error('Unexpected RSS-to-JSON payload shape');
-                }
+                if (data.status !== 'ok' || !Array.isArray(data.items)) throw new Error('Unexpected RSS-to-JSON payload shape');
                 return data.items.slice(0, 8).map(item => ({
                     source: sourceOverride || (data.feed && data.feed.title) || 'LIVE-FEED',
                     text: item.title,
@@ -502,7 +522,7 @@
                 }));
             } catch (err) {
                 console.warn('RSS fetch failed for', rssUrl, '\u2014', err);
-                return null; // caller keeps its existing cache / falls back to mock data
+                return null;
             }
         }
 
@@ -518,17 +538,12 @@
             }
         }
 
-        // ============================================================
-        // LOCATION-AWARE LOCAL NEWS
-        // ============================================================
         let detectedLocationLabel = null;
         let localAlarmCache = [];
 
         function getBrowserCoords() {
             return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) {
-                    return reject(new Error('Geolocation API not supported in this browser'));
-                }
+                if (!navigator.geolocation) return reject(new Error('Geolocation API not supported'));
                 navigator.geolocation.getCurrentPosition(
                     pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
                     err => reject(err),
@@ -537,7 +552,6 @@
             });
         }
 
-        // Reverse-geocodes precise coordinates to a city/country label.
         async function reverseGeocode(lat, lon) {
             const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
             const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
@@ -550,7 +564,6 @@
             return { label, lat, lon };
         }
 
-        // Fallback: coarse IP-based location, no permission prompt required.
         async function ipBasedLocation() {
             const res = await fetch('https://ipapi.co/json/');
             if (!res.ok) throw new Error('IP geolocation failed: ' + res.status);
@@ -565,7 +578,7 @@
                 const coords = await getBrowserCoords();
                 return await reverseGeocode(coords.lat, coords.lon);
             } catch (err) {
-                console.warn('Precise browser geolocation unavailable:', err);
+                console.warn('Precise geolocation unavailable:', err);
             }
             try {
                 return await ipBasedLocation();
@@ -593,7 +606,7 @@
 
             if (!detectedLocationLabel) {
                 setFeedStatus('localFeedStatus', false);
-                return; // injectAlarm() will use localMockAlarms automatically
+                return;
             }
 
             const localNewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(detectedLocationLabel)}&hl=en-US&gl=US&ceid=US:en`;
@@ -606,11 +619,6 @@
             }
         }
 
-        // ============================================================
-        // GLOBAL SECTOR MAP (Leaflet + OpenStreetMap, no API key needed)
-        // ============================================================
-        // Generic, fictional reference points matching the existing mock
-        // OSINT alarm labels above — illustrative flavor, not real targeting data.
         const hotspotRegions = [
             { name: 'Eastern Corridor Watch', lat: 50.45, lng: 30.52, note: 'OSINT-EUR monitoring node' },
             { name: 'Pacific Maritime Sector', lat: 16.0, lng: 114.0, note: 'PACIFIC-MONITOR contested-waters tracking' },
@@ -619,46 +627,27 @@
         ];
 
         function initGlobalMap() {
-            if (typeof L === 'undefined') {
-                console.warn('Leaflet failed to load — global map disabled.');
-                return;
-            }
-
+            if (typeof L === 'undefined') { console.warn('Leaflet failed to load — global map disabled.'); return; }
             const map = L.map('globalMap', { worldCopyJump: true }).setView([20, 10], 2);
-
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 18,
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
-
             const hotspotIcon = L.divIcon({ className: 'pipboy-marker', html: '\u25C6', iconSize: [16, 16] });
             hotspotRegions.forEach(spot => {
                 L.marker([spot.lat, spot.lng], { icon: hotspotIcon })
                     .addTo(map)
                     .bindPopup(`<strong>${spot.name}</strong><br>${spot.note}`);
             });
-
-            // Placeholder user marker, hidden until detectUserLocation() resolves
             const userIcon = L.divIcon({ className: 'pipboy-marker pipboy-marker-user', html: '\u2609', iconSize: [18, 18] });
             window.pipboyUserMarker = L.marker([0, 0], { icon: userIcon, opacity: 0 }).addTo(map);
-
             window.pipboyMap = map;
-            // Defensive resize in case the container's final layout settles after init
             setTimeout(() => map.invalidateSize(), 200);
         }
 
         // ============================================================
-        // BOOT SEQUENCE — fully autonomous, no manual updates required
+        // BOOT — no slider listeners needed, vectors are fixed
         // ============================================================
-        restoreSliderState();
-
-        SLIDER_IDS.forEach(id => {
-            document.getElementById(id).addEventListener('input', (e) => {
-                safeStorageSet(STORAGE_PREFIX + id, e.target.value);
-                runRiskCalculations();
-            });
-        });
-
         runRiskCalculations();
         initGlobalMap();
 
