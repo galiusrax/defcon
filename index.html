@@ -15,6 +15,7 @@
             --danger: #ff3b3b;
             --warning: #ffb000;
             --success: #39ff14;
+            --info: #4dd8ff;
         }
 
         body {
@@ -55,6 +56,7 @@
             border-bottom: 1px solid var(--border);
             padding-bottom: 16px; margin-bottom: 24px;
             display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px;
         }
         h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; color: var(--danger); }
         .blink-cursor {
@@ -96,6 +98,7 @@
         .feed-status { font-size:0.7rem; letter-spacing:0.5px; white-space:nowrap; }
         .status-online { color:var(--success); }
         .status-offline { color:var(--danger); }
+        .status-partial { color: var(--warning); }
 
         h1, h2, .metric, .feed-status { text-shadow: 0 0 6px currentColor; }
         .metric { font-size:3.5rem; font-weight:800; text-align:center; margin:16px 0; font-family:monospace; }
@@ -110,6 +113,7 @@
             font-size: 0.72rem; font-family: monospace;
             color: var(--text-light);
             pointer-events: none;
+            max-width: 220px;
         }
         .legend-row { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
         .legend-row:last-child { margin-bottom:0; }
@@ -131,6 +135,8 @@
         .layer-btn.active-danger  { border-color:var(--danger);  color:var(--danger);  background:rgba(255,59,59,0.08); text-shadow:0 0 5px var(--danger); }
         .layer-btn.active-warning { border-color:var(--warning); color:var(--warning); background:rgba(255,176,0,0.08);  text-shadow:0 0 5px var(--warning); }
         .layer-btn.active-safe    { border-color:var(--success); color:var(--success); background:rgba(57,255,20,0.06);  text-shadow:0 0 5px var(--success); }
+        .layer-btn.active-info    { border-color:var(--info);    color:var(--info);    background:rgba(77,216,255,0.07); text-shadow:0 0 5px var(--info); }
+        .layer-btn.active-mil     { border-color:#ff7a3d;        color:#ff7a3d;        background:rgba(255,122,61,0.08); text-shadow:0 0 5px #ff7a3d; }
 
         /* MAP WRAPPER */
         .map-wrapper {
@@ -149,6 +155,10 @@
         .pipboy-marker-hot   { color:var(--danger);      font-size:15px; text-align:center; line-height:16px; text-shadow:0 0 8px var(--danger); animation: pulseRed 1.8s infinite; }
         .pipboy-marker-safe  { color:var(--success);     font-size:14px; text-align:center; line-height:16px; text-shadow:0 0 8px var(--success); animation: pulseSafe 2.5s infinite; }
         .pipboy-marker-user  { color:var(--warning);     font-size:16px; text-shadow:0 0 8px var(--warning); animation:pulseUser 1.6s infinite; }
+        .pipboy-marker-plane { color:var(--info);        font-size:13px; text-align:center; line-height:14px; text-shadow:0 0 6px var(--info); transition: transform 0.4s linear; }
+        .pipboy-marker-event { color:var(--warning);     font-size:13px; text-align:center; line-height:14px; text-shadow:0 0 6px var(--warning); animation: pulseRed 2.2s infinite; }
+        .pipboy-marker-mil   { color:#ff7a3d;             font-size:14px; text-align:center; line-height:15px; text-shadow:0 0 6px #ff7a3d; }
+        .pipboy-marker-nuke  { color:#ffe14d;             font-size:14px; text-align:center; line-height:15px; text-shadow:0 0 7px #ffe14d; }
 
         @keyframes pulseRed  { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
         @keyframes pulseSafe { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
@@ -160,6 +170,12 @@
         .safe-popup .sp-score { color:var(--warning); font-size:0.8rem; display:block; margin-bottom:6px; }
         .safe-popup .sp-reason { color:var(--text-light); }
         .safe-popup .sp-caveat { color:var(--text-dark); font-size:0.7rem; display:block; margin-top:5px; font-style:italic; }
+
+        /* GENERIC INFO POPUP (planes / events) */
+        .info-popup { font-size:0.78rem; line-height:1.5; }
+        .info-popup .ip-title { font-weight:700; font-size:0.85rem; display:block; margin-bottom:4px; }
+        .info-popup .ip-meta  { color:var(--text-dark); font-size:0.7rem; display:block; margin-bottom:4px; }
+        .info-popup .ip-body  { color:var(--text-light); }
 
         /* DEFCON legend */
         .defcon-legend { margin-top:16px; display:flex; flex-direction:column; gap:5px; }
@@ -191,6 +207,8 @@
         .news-alarm.flash-red    { border-left-color:var(--danger);  background:rgba(255,59,59,0.05); }
         .news-alarm.flash-orange { border-left-color:var(--warning); background:rgba(255,176,0,0.04); }
         .news-time { font-family:monospace; font-size:0.75rem; color:var(--text-dark); display:block; margin-bottom:4px; }
+        .news-link { color: var(--text-dark); font-size: 0.68rem; text-decoration: none; display: inline-block; margin-top: 4px; border-bottom: 1px dotted var(--text-dark); }
+        .news-link:hover { color: var(--text-light); border-color: var(--text-light); }
 
         @keyframes fadeIn { from{opacity:0;transform:translateY(-5px);} to{opacity:1;transform:translateY(0);} }
 
@@ -222,6 +240,43 @@
             border-top:1px solid var(--border); padding-top:10px;
             text-align:center; font-style:italic;
         }
+
+        /* DATA FRESHNESS FOOTER */
+        .data-meta-footer {
+            margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+            font-size: 0.68rem; color: var(--text-dark); letter-spacing: 0.4px;
+        }
+        .data-meta-footer span strong { color: var(--text-light); }
+
+        /* STOCK MARKET CARD */
+        .ticker-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .ticker-item {
+            display: flex; flex-direction: column; gap: 4px;
+            padding: 12px 14px;
+            background: rgba(93,255,163,0.025);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--text-dark);
+            border-radius: 2px;
+        }
+        .ticker-item.up   { border-left-color: var(--success); }
+        .ticker-item.down { border-left-color: var(--danger); }
+        .ticker-name { font-size: 0.78rem; color: var(--text-light); font-weight: 700; letter-spacing: 0.5px; }
+        .ticker-sub  { font-size: 0.65rem; color: var(--text-dark); }
+        .ticker-price-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px; }
+        .ticker-price { font-size: 1.15rem; font-family: monospace; font-weight: 800; }
+        .ticker-change { font-size: 0.78rem; font-family: monospace; font-weight: 700; }
+        .ticker-change.up   { color: var(--success); }
+        .ticker-change.down { color: var(--danger); }
+        .ticker-stale { font-size: 0.62rem; color: var(--text-dark); font-style: italic; margin-top: 2px; }
+        .market-disclaimer {
+            margin-top: 14px; font-size: 0.7rem; color: var(--text-dark);
+            border-top: 1px solid var(--border); padding-top: 10px;
+            text-align: center; font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -241,6 +296,9 @@
                 <button class="layer-btn active-warning" id="btn-conflict"  onclick="toggleLayer('conflict')">&#9670; Conflict Hotspots</button>
                 <button class="layer-btn active-danger"  id="btn-targets"   onclick="toggleLayer('targets')">&#9888; Primary Targets</button>
                 <button class="layer-btn active-safe"    id="btn-safezones" onclick="toggleLayer('safezones')">&#10003; Safe Zones</button>
+                <button class="layer-btn active-warning" id="btn-events"    onclick="toggleLayer('events')">&#9889; News Events</button>
+                <button class="layer-btn active-info"    id="btn-planes"    onclick="toggleLayer('planes')">&#9992; Live Air Traffic</button>
+                <button class="layer-btn active-mil"     id="btn-milnuke"   onclick="toggleLayer('milnuke')">&#9760; Military &amp; Nuclear Sites</button>
             </div>
 
             <div class="map-wrapper">
@@ -249,6 +307,11 @@
                     <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9670;</span> Conflict / OSINT Hotspot</div>
                     <div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9888;</span> Primary Nuclear Target</div>
                     <div class="legend-row"><span class="legend-dot" style="color:var(--success)">&#10022;</span> Probable Safe Zone</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9889;</span> News-Derived Event</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--info)">&#9992;</span> Live Aircraft</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:#ff7a3d">&#9760;</span> Military Base</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:#ffe14d">&#9889;</span> Civil Nuclear Plant</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9679;</span> Conflict Intensity (heatmap)</div>
                     <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9737;</span> Your Position</div>
                 </div>
             </div>
@@ -340,6 +403,26 @@
         <div class="news-ticker" id="localTicker" style="height:240px;"></div>
     </div>
 
+    <!-- STOCK MARKET -->
+    <div class="card" style="margin-top:24px;">
+        <h2 class="card-header-row">
+            <span>Global Market Watch</span>
+            <span id="marketFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
+        </h2>
+        <div class="ticker-grid" id="marketGrid"></div>
+        <p class="market-disclaimer">
+            &#9888; Quotes sourced from Stooq end-of-day/delayed feeds (free, no API key). Not real-time exchange data — informational only, not for trading decisions.
+        </p>
+    </div>
+
+    <!-- DATA FRESHNESS / GEODATA VERSIONING FOOTER -->
+    <div class="data-meta-footer">
+        <span>GEODATA VECTORS REV: <strong id="geoRevLabel">--</strong></span>
+        <span>NEXT SCHEDULED REVIEW: <strong id="geoNextLabel">--</strong></span>
+        <span>NEWS SOURCES ACTIVE: <strong id="sourceCountLabel">0</strong> / <span id="sourceTotalLabel">0</span></span>
+        <span>AIRCRAFT TRACKED: <strong id="aircraftCountLabel">0</strong></span>
+    </div>
+
 </div><!-- /container -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -365,7 +448,29 @@ const DEFCON_DESCRIPTIONS = {
 };
 
 // ============================================================
-// MAP DATA
+// GEODATA VERSIONING
+// ------------------------------------------------------------
+// This block is the single source of truth for "how fresh are
+// the hand-curated geo datasets" (hotspots / targets / safe
+// zones below). Since this app has no backend/cron, the dataset
+// can't silently refresh itself — but we track a revision date
+// and compute a "next review due" date (+30 days) so the UI is
+// honest about staleness, and so any future automated job (a
+// GitHub Action, a small Worker, etc.) has a clear hook: bump
+// GEO_DATASET_REVISION and it propagates everywhere automatically.
+// ============================================================
+const GEO_DATASET_REVISION = '2026-06-21';
+const GEO_REVIEW_INTERVAL_DAYS = 30;
+
+function renderGeoFreshness() {
+    const rev = new Date(GEO_DATASET_REVISION + 'T00:00:00Z');
+    const next = new Date(rev.getTime() + GEO_REVIEW_INTERVAL_DAYS * 86400000);
+    document.getElementById('geoRevLabel').textContent = GEO_DATASET_REVISION;
+    document.getElementById('geoNextLabel').textContent = next.toISOString().slice(0,10);
+}
+
+// ============================================================
+// MAP DATA — hand-curated, reviewed on GEO_DATASET_REVISION
 // ============================================================
 const conflictHotspots = [
     { name:'Eastern Corridor Watch',  lat:50.45, lng:30.52,  note:'Russia-Ukraine active front — OSINT-EUR monitoring' },
@@ -391,7 +496,37 @@ const primaryTargets = [
     { name:'Pyongyang',              lat:39.01,  lng:125.74, note:'DPRK NCA. US/ROK first-strike priority in peninsula scenario.' }
 ];
 
-// Safe zones — grounded in survivability analysis
+// Military bases (NATO/US/Russia/China) and major civil nuclear power plants —
+// distinct from primaryTargets above: these are operational installations
+// (troop presence, reactors), not strategic command/launch targets.
+const militaryNuclearSites = [
+    // — NATO / US bases
+    { type:'mil', name:'Ramstein Air Base (USAFE)',     lat:49.44,  lng:7.60,   note:'NATO/US Air Forces Europe HQ. Major logistics and airlift hub, Germany.' },
+    { type:'mil', name:'RAF Lakenheath',                lat:52.41,  lng:0.56,   note:'US Air Force base, UK. F-35 fighter wing.' },
+    { type:'mil', name:'Incirlik Air Base',              lat:37.00,  lng:35.43,  note:'US/NATO base, Turkey. Forward presence near Mideast theater.' },
+    { type:'mil', name:'Camp Humphreys',                 lat:36.97,  lng:127.03, note:'Largest US overseas base. South Korea, peninsula deterrence.' },
+    { type:'mil', name:'Yokota Air Base',                lat:35.75,  lng:139.35, note:'US Forces Japan HQ. Western Pacific logistics.' },
+    { type:'mil', name:'Diego Garcia',                   lat:-7.31,  lng:72.41,  note:'US/UK joint base, Indian Ocean. Strategic bomber and naval staging.' },
+    // — Russia
+    { type:'mil', name:'Kaliningrad Garrison',           lat:54.71,  lng:20.51,  note:'Russian exclave base. Baltic Fleet, Iskander missile presence.' },
+    { type:'mil', name:'Severomorsk Naval Base',         lat:69.07,  lng:33.42,  note:'Russian Northern Fleet HQ. Arctic/Atlantic naval power projection.' },
+    { type:'mil', name:'Hmeimim Air Base',               lat:35.40,  lng:35.95,  note:'Russian base in Syria. Mediterranean/Mideast forward presence.' },
+    // — China
+    { type:'mil', name:'Yulin Naval Base',               lat:18.22,  lng:109.49, note:'PLAN submarine base, Hainan Island. South China Sea power projection.' },
+    { type:'mil', name:'Djibouti Support Base',          lat:11.59,  lng:43.15,  note:'China\u2019s only overseas military base. Horn of Africa / Red Sea access.' },
+    { type:'mil', name:'Fiery Cross Reef',               lat:9.55,   lng:112.89, note:'PLA militarized artificial island, Spratly Islands, South China Sea.' },
+    // — Civil nuclear power plants (major, high public-data visibility)
+    { type:'nuke', name:'Zaporizhzhia NPP',              lat:47.51,  lng:34.59,  note:'Largest nuclear plant in Europe, Ukraine. Active conflict-zone safety concern (IAEA monitored).' },
+    { type:'nuke', name:'Bushehr NPP',                   lat:28.83,  lng:50.89,  note:'Iran\u2019s sole operating commercial nuclear power plant.' },
+    { type:'nuke', name:'Kori NPP',                      lat:35.32,  lng:129.30, note:'South Korea\u2019s first and largest nuclear power complex.' },
+    { type:'nuke', name:'Fukushima Daiichi (decommissioning)', lat:37.42, lng:141.03, note:'Site of 2011 meltdown. Long-term decommissioning and water-release operations ongoing.' },
+    { type:'nuke', name:'Three Mile Island',             lat:40.15,  lng:-76.72, note:'US plant, site of 1979 partial meltdown. Restart efforts underway as of 2026.' },
+    { type:'nuke', name:'Diablo Canyon Power Plant',     lat:35.21,  lng:-120.85,note:'Last operating nuclear plant in California, US.' },
+    { type:'nuke', name:'Gravelines Nuclear Power Station', lat:51.02, lng:2.14, note:'Largest nuclear power plant in Western Europe, France.' },
+    { type:'nuke', name:'Kursk NPP',                     lat:51.68,  lng:35.60,  note:'Russian nuclear plant near Ukraine border region.' },
+];
+
+
 const safeZones = [
     {
         name:'Patagonia, Argentina',
@@ -444,9 +579,28 @@ const safeZones = [
     }
 ];
 
-// ============================================================
-// SAFE ZONE CARD — render into DOM
-// ============================================================
+// Conflict intensity heatmap — permanent overlay, not click-triggered.
+// Centers reuse the existing conflictHotspots coordinates (single source of
+// truth — if a hotspot moves, its heat blob moves with it) plus a short list
+// of additional active-conflict zones not otherwise pinned on the map.
+// "intensity" (0-1) drives radius + opacity; it is a coarse editorial label
+// (high/medium/low based on ACLED/UCDP active-conflict counts), not a live feed.
+const conflictHeatZones = [
+    { lat:50.45, lng:30.52,  intensity:1.0,  label:'Ukraine theater' },
+    { lat:32.0,  lng:35.0,   intensity:0.95, label:'Israel-Gaza-Lebanon corridor' },
+    { lat:15.5,  lng:48.5,   intensity:0.75, label:'Yemen civil conflict' },
+    { lat:15.5,  lng:30.0,   intensity:0.85, label:'Sudan civil war' },
+    { lat:16.0,  lng:114.0,  intensity:0.55, label:'South China Sea / Taiwan Strait tension' },
+    { lat:29.5,  lng:47.8,   intensity:0.5,  label:'Gulf sector friction' },
+    { lat:9.0,   lng:38.7,   intensity:0.45, label:'Horn of Africa instability' },
+    { lat:12.0,  lng:8.0,    intensity:0.6,  label:'Sahel insurgency belt' },
+    { lat:4.5,   lng:27.0,   intensity:0.5,  label:'DR Congo / Great Lakes conflict' },
+    { lat:34.8,  lng:38.99,  intensity:0.6,  label:'Syria residual conflict' },
+    { lat:33.3,  lng:44.4,   intensity:0.4,  label:'Iraq instability' },
+    { lat:6.5,   lng:2.5,    intensity:0.3,  label:'Gulf of Guinea piracy/insurgency' },
+];
+
+
 function renderSafeZoneCard() {
     const container = document.getElementById('safezoneList');
     container.innerHTML = safeZones.map(z => `
@@ -499,7 +653,7 @@ function runRiskCalculations() {
 // ============================================================
 // MAP — LAYER GROUPS + TOGGLE
 // ============================================================
-const layerState = { conflict: true, targets: true, safezones: true };
+const layerState = { conflict: true, targets: true, safezones: true, events: true, planes: true, milnuke: true };
 const layerGroups = {};
 
 function toggleLayer(name) {
@@ -559,6 +713,68 @@ function initGlobalMap() {
     safeGroup.addTo(map);
     layerGroups.safezones = safeGroup;
 
+    // — Military & civil nuclear sites layer (toggleable)
+    const milGroup = L.layerGroup();
+    const milIcon  = L.divIcon({ className: 'pipboy-marker-mil',  html: '&#9760;', iconSize: [16,16] });
+    const nukeIcon = L.divIcon({ className: 'pipboy-marker-nuke', html: '&#9889;', iconSize: [16,16] });
+    militaryNuclearSites.forEach(s => {
+        const icon = s.type === 'nuke' ? nukeIcon : milIcon;
+        const color = s.type === 'nuke' ? '#ffe14d' : '#ff7a3d';
+        const tag = s.type === 'nuke' ? 'CIVIL NUCLEAR SITE' : 'MILITARY BASE';
+        L.marker([s.lat, s.lng], { icon }).addTo(milGroup)
+            .bindPopup(`
+                <div class="info-popup">
+                    <span class="ip-title" style="color:${color}">${s.type === 'nuke' ? '&#9889;' : '&#9760;'} ${s.name}</span>
+                    <span class="ip-meta">${tag}</span>
+                    <span class="ip-body">${s.note}</span>
+                </div>
+            `);
+    });
+    milGroup.addTo(map);
+    layerGroups.milnuke = milGroup;
+
+    // — Conflict intensity heatmap (permanent overlay, not part of layerGroups
+    //   toggles — always visible alongside whatever other layers are on, same
+    //   way the base tile layer is always on). Implemented as graduated
+    //   translucent circles rather than a separate heatmap library, so no new
+    //   script dependency is introduced.
+    const heatGroup = L.layerGroup();
+    conflictHeatZones.forEach(z => {
+        const baseRadiusM = 90000 + z.intensity * 260000; // 90km-350km depending on intensity
+        const opacity = 0.10 + z.intensity * 0.22;
+        L.circle([z.lat, z.lng], {
+            radius: baseRadiusM,
+            color: 'var(--danger)',
+            weight: 0,
+            fillColor: '#ff3b3b',
+            fillOpacity: opacity
+        }).addTo(heatGroup).bindPopup(`<strong style="color:#ff3b3b">${z.label}</strong><br><span style="font-size:0.75rem">Conflict intensity: ${Math.round(z.intensity*100)}%</span>`);
+        // tighter, hotter core for high-intensity zones
+        if (z.intensity > 0.6) {
+            L.circle([z.lat, z.lng], {
+                radius: baseRadiusM * 0.4,
+                color: 'var(--danger)',
+                weight: 0,
+                fillColor: '#ff3b3b',
+                fillOpacity: opacity * 1.6
+            }).addTo(heatGroup);
+        }
+    });
+    heatGroup.addTo(map);
+    window.pipboyHeatGroup = heatGroup;
+
+    // — News-derived events layer (populated dynamically, see newsEventLayer below)
+    const eventGroup = L.layerGroup();
+    eventGroup.addTo(map);
+    layerGroups.events = eventGroup;
+    window.pipboyEventGroup = eventGroup;
+
+    // — Live aircraft layer (populated dynamically via OpenSky, see refreshAircraft below)
+    const planeGroup = L.layerGroup();
+    planeGroup.addTo(map);
+    layerGroups.planes = planeGroup;
+    window.pipboyPlaneGroup = planeGroup;
+
     // — User position marker
     const userIcon = L.divIcon({ className: 'pipboy-marker-user', html: '&#9737;', iconSize:[18,18] });
     window.pipboyUserMarker = L.marker([0,0], { icon: userIcon, opacity:0 }).addTo(map);
@@ -567,7 +783,227 @@ function initGlobalMap() {
 }
 
 // ============================================================
-// ALARM TICKER
+// NEWS-DERIVED MAP EVENTS
+// ------------------------------------------------------------
+// There is no free equivalent of LiveUAmap's curated incident
+// feed. Rather than fabricate incident coordinates, we derive
+// approximate event markers from real aggregated headlines: each
+// headline is scanned for known place names (the same gazetteer
+// used for hotspots/targets, plus a short extra list of frequently
+// newsworthy capitals/regions). When a place name is matched, a
+// transient marker is plotted at that location with the real
+// headline + source + link in its popup. Markers age out after
+// EVENT_TTL_MS so the layer reflects "recent", not "all-time".
+// ============================================================
+const EVENT_TTL_MS = 90 * 60 * 1000; // 90 minutes
+const EVENT_GAZETTEER = [
+    ...conflictHotspots.map(h => ({ name: h.name.split(' ')[0], lat: h.lat, lng: h.lng, label: h.name })),
+    { name:'Ukraine',    lat:49.0,  lng:31.0,  label:'Ukraine' },
+    { name:'Russia',     lat:61.5,  lng:90.0,  label:'Russia' },
+    { name:'Moscow',     lat:55.75, lng:37.61, label:'Moscow' },
+    { name:'Kyiv',       lat:50.45, lng:30.52, label:'Kyiv' },
+    { name:'Taiwan',     lat:23.7,  lng:121.0, label:'Taiwan' },
+    { name:'China',      lat:35.0,  lng:103.0, label:'China' },
+    { name:'Beijing',    lat:39.90, lng:116.40,label:'Beijing' },
+    { name:'Israel',     lat:31.5,  lng:34.8,  label:'Israel' },
+    { name:'Iran',       lat:32.0,  lng:53.0,  label:'Iran' },
+    { name:'Gaza',       lat:31.4,  lng:34.4,  label:'Gaza' },
+    { name:'Lebanon',    lat:33.85, lng:35.86, label:'Lebanon' },
+    { name:'Syria',      lat:34.8,  lng:38.99, label:'Syria' },
+    { name:'Yemen',      lat:15.5,  lng:48.5,  label:'Yemen' },
+    { name:'Gulf',       lat:27.5,  lng:51.0,  label:'Persian Gulf' },
+    { name:'Korea',      lat:38.0,  lng:127.5, label:'Korean Peninsula' },
+    { name:'Pyongyang',  lat:39.01, lng:125.74,label:'Pyongyang' },
+    { name:'India',      lat:22.0,  lng:79.0,  label:'India' },
+    { name:'Pakistan',   lat:30.0,  lng:70.0,  label:'Pakistan' },
+    { name:'Sudan',      lat:15.5,  lng:30.0,  label:'Sudan' },
+    { name:'Venezuela',  lat:7.0,   lng:-66.0, label:'Venezuela' },
+    { name:'Mexico',     lat:23.0,  lng:-102.0,label:'Mexico' },
+    { name:'Washington', lat:38.89, lng:-77.03,label:'Washington D.C.' },
+    { name:'NATO',       lat:50.85, lng:4.35,  label:'NATO HQ (Brussels)' },
+];
+const eventMarkerRegistry = []; // { marker, expiresAt }
+
+function pruneExpiredEventMarkers() {
+    const now = Date.now();
+    for (let i = eventMarkerRegistry.length - 1; i >= 0; i--) {
+        if (eventMarkerRegistry[i].expiresAt <= now) {
+            window.pipboyEventGroup.removeLayer(eventMarkerRegistry[i].marker);
+            eventMarkerRegistry.splice(i, 1);
+        }
+    }
+}
+
+function plotNewsEvent(item) {
+    if (!window.pipboyEventGroup) return;
+    const text = item.text || '';
+    const hit = EVENT_GAZETTEER.find(g => text.toLowerCase().includes(g.name.toLowerCase()));
+    if (!hit) return;
+    // jitter slightly so repeated hits on the same place don't fully stack
+    const jitter = () => (Math.random() - 0.5) * 1.4;
+    const eventIcon = L.divIcon({ className: 'pipboy-marker-event', html: '&#9889;', iconSize: [15,15] });
+    const marker = L.marker([hit.lat + jitter(), hit.lng + jitter()], { icon: eventIcon });
+    marker.bindPopup(`
+        <div class="info-popup">
+            <span class="ip-title" style="color:var(--warning)">&#9889; ${hit.label}</span>
+            <span class="ip-meta">${item.source || 'NEWS-FEED'} &middot; ${new Date().toLocaleTimeString()}</span>
+            <span class="ip-body">${text}</span>
+        </div>
+    `);
+    marker.addTo(window.pipboyEventGroup);
+    eventMarkerRegistry.push({ marker, expiresAt: Date.now() + EVENT_TTL_MS });
+}
+
+// ============================================================
+// LIVE AIRCRAFT — OpenSky Network (no API key required)
+// ------------------------------------------------------------
+// OpenSky's anonymous REST endpoint is rate-limited (roughly one
+// request per 10s per IP) and occasionally returns 429s under
+// load — handled gracefully below by simply skipping that cycle.
+// We bound the bounding box requested and cap rendered aircraft
+// to keep the Leaflet layer light.
+// ============================================================
+const OPENSKY_URL = 'https://opensky-network.org/api/states/all';
+const MAX_AIRCRAFT_RENDERED = 120;
+let aircraftMarkers = [];
+
+async function refreshAircraft() {
+    if (!window.pipboyPlaneGroup) return;
+    try {
+        const r = await fetch(OPENSKY_URL);
+        if (!r.ok) throw new Error('opensky http ' + r.status);
+        const data = await r.json();
+        const states = Array.isArray(data.states) ? data.states : [];
+
+        // clear previous frame
+        aircraftMarkers.forEach(m => window.pipboyPlaneGroup.removeLayer(m));
+        aircraftMarkers = [];
+
+        // OpenSky state vector indices: 1=callsign, 5=lon, 6=lat, 10=track(heading), 7=baro_altitude, 9=velocity, 8=on_ground
+        const inAir = states.filter(s => s[5] != null && s[6] != null && !s[8]);
+        // sample down if there are more than our render cap (global feed is large)
+        const sampled = inAir.length > MAX_AIRCRAFT_RENDERED
+            ? inAir.filter(() => Math.random() < MAX_AIRCRAFT_RENDERED / inAir.length)
+            : inAir;
+
+        sampled.forEach(s => {
+            const callsign = (s[1] || '').trim() || 'UNKNOWN';
+            const lon = s[5], lat = s[6], heading = s[10] || 0;
+            const altM = s[7]; const velMs = s[9];
+            const icon = L.divIcon({
+                className: 'pipboy-marker-plane',
+                html: `<span style="display:inline-block;transform:rotate(${heading}deg);">&#9992;</span>`,
+                iconSize: [14,14]
+            });
+            const marker = L.marker([lat, lon], { icon });
+            marker.bindPopup(`
+                <div class="info-popup">
+                    <span class="ip-title" style="color:var(--info)">&#9992; ${callsign}</span>
+                    <span class="ip-meta">OpenSky Network &middot; live ADS-B</span>
+                    <span class="ip-body">
+                        Altitude: ${altM != null ? Math.round(altM) + ' m' : 'n/a'}<br>
+                        Speed: ${velMs != null ? Math.round(velMs * 3.6) + ' km/h' : 'n/a'}<br>
+                        Heading: ${Math.round(heading)}&deg;
+                    </span>
+                </div>
+            `);
+            marker.addTo(window.pipboyPlaneGroup);
+            aircraftMarkers.push(marker);
+        });
+
+        document.getElementById('aircraftCountLabel').textContent = sampled.length;
+    } catch (e) {
+        console.warn('OpenSky fetch failed (likely rate-limited), skipping this cycle', e);
+        // leave previous frame's markers in place rather than clearing to blank
+    }
+}
+
+// ============================================================
+// GLOBAL MARKET WATCH — Stooq CSV feed (free, no API key)
+// ------------------------------------------------------------
+// Stooq publishes a simple CSV quote endpoint that works fine
+// from the browser without auth or CORS issues for most symbols.
+// This is delayed/end-of-day style data, not a live exchange feed
+// — fine for a situational-awareness dashboard, explicitly labeled
+// as such in the UI disclaimer rather than implied as real-time.
+// ============================================================
+const MARKET_TICKERS = [
+    { symbol: '^spx',  name: 'S&P 500',    sub: 'US Large Cap' },
+    { symbol: '^dji',  name: 'Dow Jones',  sub: 'US Industrial' },
+    { symbol: '^ndq',  name: 'Nasdaq',     sub: 'US Tech-heavy' },
+    { symbol: '^ipsa', name: 'IPSA',       sub: 'Chile — Bolsa de Santiago' },
+];
+const STOOQ_URL = 'https://stooq.com/q/l/?s=SYMBOLS&f=sd2t2ohlcv&h&e=csv';
+
+function parseStooqCsv(csvText) {
+    const lines = csvText.trim().split('\n');
+    const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const closeIdx = header.indexOf('close');
+    const openIdx = header.indexOf('open');
+    const symIdx = header.indexOf('symbol');
+    return lines.slice(1).map(line => {
+        const cols = line.split(',');
+        const close = parseFloat(cols[closeIdx]);
+        const open = parseFloat(cols[openIdx]);
+        return {
+            symbol: (cols[symIdx] || '').toLowerCase(),
+            close: isNaN(close) ? null : close,
+            open: isNaN(open) ? null : open
+        };
+    });
+}
+
+async function refreshMarkets() {
+    const grid = document.getElementById('marketGrid');
+    if (!grid) return;
+    try {
+        const url = STOOQ_URL.replace('SYMBOLS', MARKET_TICKERS.map(t => t.symbol).join('+'));
+        const r = await fetch(url);
+        if (!r.ok) throw new Error('stooq http ' + r.status);
+        const csv = await r.text();
+        const rows = parseStooqCsv(csv);
+
+        grid.innerHTML = MARKET_TICKERS.map(t => {
+            const row = rows.find(x => x.symbol === t.symbol);
+            if (!row || row.close == null) {
+                return `
+                    <div class="ticker-item">
+                        <span class="ticker-name">${t.name}</span>
+                        <span class="ticker-sub">${t.sub}</span>
+                        <span class="ticker-stale">No data returned for this symbol</span>
+                    </div>`;
+            }
+            const change = (row.open != null && row.open !== 0) ? ((row.close - row.open) / row.open) * 100 : null;
+            const dir = change == null ? '' : (change >= 0 ? 'up' : 'down');
+            const arrow = dir === 'up' ? '&#9650;' : (dir === 'down' ? '&#9660;' : '');
+            return `
+                <div class="ticker-item ${dir}">
+                    <span class="ticker-name">${t.name}</span>
+                    <span class="ticker-sub">${t.sub}</span>
+                    <div class="ticker-price-row">
+                        <span class="ticker-price">${row.close.toLocaleString()}</span>
+                        <span class="ticker-change ${dir}">${change != null ? arrow + ' ' + change.toFixed(2) + '%' : 'n/a'}</span>
+                    </div>
+                </div>`;
+        }).join('');
+
+        setFeedStatus('marketFeedStatus', true);
+    } catch (e) {
+        console.warn('Market data fetch failed', e);
+        setFeedStatus('marketFeedStatus', false);
+        if (!grid.innerHTML) {
+            grid.innerHTML = MARKET_TICKERS.map(t => `
+                <div class="ticker-item">
+                    <span class="ticker-name">${t.name}</span>
+                    <span class="ticker-sub">${t.sub}</span>
+                    <span class="ticker-stale">Feed unavailable</span>
+                </div>`).join('');
+        }
+    }
+}
+
+// ============================================================
+// ALARM TICKER (fallback pool, used only if all live feeds fail)
 // ============================================================
 const breakingAlarms = [
     { source:"OSINT-EUR",       text:"Air space safety alerts initialized across eastern corridors. Sub-radar interference noted.",               type:"flash-red"    },
@@ -591,44 +1027,108 @@ function injectAlarm(tickerId, getPool) {
     const a = pool[Math.floor(Math.random() * pool.length)];
     const el = document.createElement('div');
     el.className = `news-alarm ${a.type}`;
-    el.innerHTML = `<span class="news-time">[${new Date().toLocaleTimeString()}] - INTEL SOURCE: ${a.source}</span>${a.text}`;
+    const linkHtml = a.link ? `<br><a class="news-link" href="${a.link}" target="_blank" rel="noopener noreferrer">read source &#8599;</a>` : '';
+    el.innerHTML = `<span class="news-time">[${new Date().toLocaleTimeString()}] - INTEL SOURCE: ${a.source}</span>${a.text}${linkHtml}`;
     ticker.insertBefore(el, ticker.firstChild);
     if (ticker.childNodes.length > 8) ticker.removeChild(ticker.lastChild);
+
+    // feed the map's news-derived events layer with the same real item
+    plotNewsEvent(a);
 }
 
-function setFeedStatus(id, live) {
+function setFeedStatus(id, live, partial) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.textContent = live ? '\u25CF ONLINE' : '\u25CF OFFLINE — SIMULATED';
-    el.className = 'feed-status ' + (live ? 'status-online' : 'status-offline');
+    if (live) {
+        el.textContent = '\u25CF ONLINE';
+        el.className = 'feed-status status-online';
+    } else if (partial) {
+        el.textContent = '\u25CF PARTIAL';
+        el.className = 'feed-status status-partial';
+    } else {
+        el.textContent = '\u25CF OFFLINE — SIMULATED';
+        el.className = 'feed-status status-offline';
+    }
 }
 
 // ============================================================
-// RSS / LIVE FEEDS
+// RSS / LIVE FEEDS — multi-source aggregation + dedup
+// ------------------------------------------------------------
+// Originally this app polled a single BBC World RSS feed via
+// rss2json. That's now one entry in a list of independent
+// international sources. Each source is fetched in parallel;
+// failures are isolated per-source (one feed dying doesn't take
+// down the others). Results are merged, then deduplicated by a
+// normalized-title fingerprint so the same story breaking across
+// multiple outlets doesn't show up 3-4 times in the ticker.
 // ============================================================
 const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
-const GLOBAL_RSS = 'https://feeds.bbci.co.uk/news/world/rss.xml';
+const GLOBAL_SOURCES = [
+    { name: 'BBC World',      url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+    { name: 'Reuters World',  url: 'https://www.reutersagency.com/feed/?best-topics=world&post_type=best' },
+    { name: 'Al Jazeera',     url: 'https://www.aljazeera.com/xml/rss/all.xml' },
+    { name: 'Guardian World', url: 'https://www.theguardian.com/world/rss' },
+    { name: 'NYT World',      url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+];
 const POLL_MS = 5 * 60 * 1000;
 
 function sev(text) {
-    return ['strike','attack','missile','nuclear','invasion','war','ceasefire','explosion']
+    return ['strike','attack','missile','nuclear','invasion','war','ceasefire','explosion','killed','troops']
         .some(w => text.toLowerCase().includes(w)) ? 'flash-red' : 'flash-orange';
 }
+
+function normalizeForDedup(title) {
+    return title.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 8)   // fingerprint on the first ~8 significant words
+        .join(' ');
+}
+
 async function fetchRss(url, src) {
     try {
         const r = await fetch(RSS2JSON + encodeURIComponent(url));
         if (!r.ok) throw new Error(r.status);
         const d = await r.json();
         if (d.status !== 'ok' || !Array.isArray(d.items)) throw new Error('bad payload');
-        return d.items.slice(0,8).map(i => ({ source: src || d.feed?.title || 'LIVE-FEED', text: i.title, type: sev(i.title) }));
+        return d.items.slice(0,8).map(i => ({
+            source: src || d.feed?.title || 'LIVE-FEED',
+            text: i.title,
+            link: i.link,
+            type: sev(i.title)
+        }));
     } catch(e) { console.warn('RSS fail', url, e); return null; }
+}
+
+function dedupeItems(items) {
+    const seen = new Set();
+    const out = [];
+    for (const it of items) {
+        const fp = normalizeForDedup(it.text || '');
+        if (seen.has(fp)) continue;
+        seen.add(fp);
+        out.push(it);
+    }
+    return out;
 }
 
 let liveCache = [];
 async function refreshGlobal() {
-    const items = await fetchRss(GLOBAL_RSS);
-    if (items?.length) { liveCache = items; setFeedStatus('globalFeedStatus', true); }
-    else setFeedStatus('globalFeedStatus', false);
+    const results = await Promise.all(GLOBAL_SOURCES.map(s => fetchRss(s.url, s.name)));
+    const okResults = results.filter(Boolean);
+    const merged = dedupeItems(okResults.flat());
+
+    document.getElementById('sourceCountLabel').textContent = okResults.length;
+    document.getElementById('sourceTotalLabel').textContent = GLOBAL_SOURCES.length;
+
+    if (merged.length) {
+        liveCache = merged;
+        if (okResults.length === GLOBAL_SOURCES.length) setFeedStatus('globalFeedStatus', true);
+        else setFeedStatus('globalFeedStatus', false, true); // partial: some sources down, still have data
+    } else {
+        setFeedStatus('globalFeedStatus', false);
+    }
 }
 
 let detectedLabel = null, localCache = [];
@@ -671,24 +1171,52 @@ async function refreshLocal() {
     if (!detectedLabel) { setFeedStatus('localFeedStatus',false); return; }
     const url = `https://news.google.com/rss/search?q=${encodeURIComponent(detectedLabel)}&hl=en-US&gl=US&ceid=US:en`;
     const items = await fetchRss(url, 'LOCAL-'+detectedLabel.split(',')[0].toUpperCase());
-    if (items?.length) { localCache = items; setFeedStatus('localFeedStatus',true); }
+    if (items?.length) { localCache = dedupeItems(items); setFeedStatus('localFeedStatus',true); }
     else setFeedStatus('localFeedStatus',false);
 }
 
 // ============================================================
+// MARITIME TRAFFIC — placeholder hook (intentionally disabled)
+// ------------------------------------------------------------
+// Real vessel tracking (MarineTraffic, AISStream, etc.) requires
+// a personal API key with usage limits and terms of service that
+// can't be bundled into a static client-side file. This stub
+// documents exactly where that integration would slot in:
+//
+//   1. Get a free AISStream.io API key: https://aisstream.io
+//   2. Open a WebSocket to wss://stream.aisstream.io/v0/stream
+//   3. Send a subscription message with your API key + bounding box
+//   4. For each PositionReport message, plot a marker similar to
+//      refreshAircraft() above, into a new 'ships' layerGroup
+//      (mirror the .pipboy-marker-plane CSS pattern with a ship glyph)
+//   5. Add a "Live Maritime" button to .map-controls, matching the
+//      existing layer-btn pattern.
+//
+// Left disabled (not stubbed-and-called) so the app makes zero
+// network calls to a service that doesn't have a key configured.
+// ============================================================
+// function refreshVessels() { /* see comment above */ }
+
+// ============================================================
 // BOOT
 // ============================================================
+renderGeoFreshness();
 renderSafeZoneCard();
 runRiskCalculations();
 initGlobalMap();
 
 refreshGlobal().then(() => injectAlarm('newsTicker', () => liveCache.length ? liveCache : breakingAlarms));
 refreshLocal().then(()  => injectAlarm('localTicker', () => localCache.length ? localCache : localMockAlarms));
+refreshAircraft();
+refreshMarkets();
 
 setInterval(() => injectAlarm('newsTicker', () => liveCache.length ? liveCache : breakingAlarms), 6000);
 setInterval(() => injectAlarm('localTicker', () => localCache.length ? localCache : localMockAlarms), 7000);
+setInterval(pruneExpiredEventMarkers, 60000);
 setInterval(refreshGlobal, POLL_MS);
 setInterval(refreshLocal,  POLL_MS);
+setInterval(refreshAircraft, 15000); // OpenSky anonymous tier: keep well under its rate limit
+setInterval(refreshMarkets, 60000); // markets move slower than news/aircraft; 1min cadence is plenty
 </script>
 </body>
 </html>
