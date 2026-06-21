@@ -1,378 +1,1354 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Global Operational Threat & Doomsday Matrix</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-<style>
-:root{--bg-main:#040f08;--bg-card:#081f10;--border:#1d4428;--text-light:#5dffa3;--text-dark:#2f6b46;--danger:#ff3b3b;--warning:#ffb000;--success:#39ff14;--info:#4dd8ff;}
-body{font-family:'Courier New',ui-monospace,Menlo,Consolas,monospace;letter-spacing:.3px;background:radial-gradient(ellipse at center,#0a2010 0,#040f08 75%);color:var(--text-light);margin:0;padding:24px;position:relative;animation:crtFlicker 6s infinite;}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(93,255,163,.035) 3px);animation:scanroll 7s linear infinite;}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9997;box-shadow:inset 0 0 160px 40px rgba(0,0,0,.65);}
-@keyframes scanroll{from{background-position:0 0}to{background-position:0 120px}}
-@keyframes crtFlicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.95}94%{opacity:1}96%{opacity:.97}}
-.container{max-width:1400px;margin:0 auto;position:relative;}
-header{border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
-h1{margin:0;font-size:1.5rem;letter-spacing:2px;color:var(--danger);}
-.blink-cursor{display:inline-block;width:.55em;background:var(--danger);margin-left:4px;animation:blink 1s step-end infinite;}
-@keyframes blink{50%{opacity:0}}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;}
-.map-span{grid-column:1/-1;display:grid;grid-template-columns:2fr 1fr;gap:24px;}
-@media(max-width:900px){.map-span{grid-template-columns:1fr}}
-.card{background-color:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:24px;display:flex;flex-direction:column;justify-content:space-between;position:relative;}
-.card::before,.card::after{content:'';position:absolute;width:14px;height:14px;opacity:.65;pointer-events:none;}
-.card::before{top:-1px;left:-1px;border-top:2px solid var(--text-light);border-left:2px solid var(--text-light);}
-.card::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--text-light);border-right:2px solid var(--text-light);}
-.card h2{margin-top:0;font-size:.95rem;color:var(--text-dark);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:16px;}
-.card-header-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;}
-.sector-label{color:var(--text-dark);font-size:.75rem;text-transform:none;letter-spacing:0;}
-.feed-status{font-size:.7rem;letter-spacing:.5px;white-space:nowrap;}
-.status-online{color:var(--success);}.status-offline{color:var(--danger);}.status-partial{color:var(--warning);}
-h1,h2,.metric,.feed-status{text-shadow:0 0 6px currentColor;}
-.metric{font-size:3.5rem;font-weight:800;text-align:center;margin:16px 0;font-family:monospace;}
-.description{color:var(--text-dark);font-size:.9rem;text-align:center;line-height:1.4;}
-.map-legend{position:absolute;bottom:12px;left:12px;z-index:1000;background:rgba(8,31,16,.92);border:1px solid var(--border);border-radius:3px;padding:10px 14px;font-size:.72rem;font-family:monospace;color:var(--text-light);max-width:220px;transition:all .25s ease;}
-.map-legend.collapsed{padding:6px 10px;}
-.map-legend.collapsed .legend-body{display:none;}
-.legend-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;color:var(--text-dark);letter-spacing:.5px;text-transform:uppercase;font-size:.68rem;}
-.map-legend.collapsed .legend-header{margin-bottom:0;}
-.legend-toggle{cursor:pointer;background:var(--bg-main);color:var(--text-light);border:1px solid var(--border);border-radius:2px;padding:2px 8px;font-family:monospace;font-size:.7rem;line-height:1;transition:all .15s;}
-.legend-toggle:hover{color:var(--warning);border-color:var(--warning);text-shadow:0 0 5px var(--warning);}
-.legend-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
-.legend-row:last-child{margin-bottom:0;}
-.legend-dot{font-size:13px;line-height:1;}
-.map-controls{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-.layer-btn{font-family:monospace;font-size:.72rem;padding:4px 10px;border-radius:2px;cursor:pointer;border:1px solid var(--border);background:var(--bg-main);color:var(--text-dark);letter-spacing:.5px;text-transform:uppercase;transition:all .15s;}
-.layer-btn.active-danger{border-color:var(--danger);color:var(--danger);background:rgba(255,59,59,.08);text-shadow:0 0 5px var(--danger);}
-.layer-btn.active-warning{border-color:var(--warning);color:var(--warning);background:rgba(255,176,0,.08);text-shadow:0 0 5px var(--warning);}
-.layer-btn.active-safe{border-color:var(--success);color:var(--success);background:rgba(57,255,20,.06);text-shadow:0 0 5px var(--success);}
-.layer-btn.active-info{border-color:var(--info);color:var(--info);background:rgba(77,216,255,.07);text-shadow:0 0 5px var(--info);}
-.layer-btn.active-mil{border-color:#ff7a3d;color:#ff7a3d;background:rgba(255,122,61,.08);text-shadow:0 0 5px #ff7a3d;}
-.layer-btn.active-quake{border-color:#d97cff;color:#d97cff;background:rgba(217,124,255,.08);text-shadow:0 0 5px #d97cff;}
-.map-wrapper{position:relative;width:100%;height:430px;border-radius:4px;overflow:hidden;border:1px solid var(--border);background:#000;}
-#globalMap{width:100%;height:100%;background:#04130a;}
-#globalMap .leaflet-tile-pane{filter:grayscale(1) brightness(.75) sepia(.4) hue-rotate(70deg) saturate(3) contrast(1.15);}
-#globalMap .leaflet-control-zoom a{background:var(--bg-card);color:var(--text-light);border:1px solid var(--border);}
-#globalMap .leaflet-control-attribution{background:rgba(8,31,16,.8);color:var(--text-dark);}
-#globalMap .leaflet-popup-content-wrapper,#globalMap .leaflet-popup-tip{background:var(--bg-card);color:var(--text-light);border:1px solid var(--border);}
-.pipboy-marker{color:var(--text-light);font-size:14px;text-align:center;line-height:16px;text-shadow:0 0 6px var(--text-light);}
-.pipboy-marker-hot{color:var(--danger);font-size:15px;text-align:center;line-height:16px;text-shadow:0 0 8px var(--danger);animation:pulseRed 1.8s infinite;}
-.pipboy-marker-safe{color:var(--success);font-size:14px;text-align:center;line-height:16px;text-shadow:0 0 8px var(--success);animation:pulseSafe 2.5s infinite;}
-.pipboy-marker-user{color:var(--warning);font-size:16px;text-shadow:0 0 8px var(--warning);animation:pulseUser 1.6s infinite;}
-.pipboy-marker-plane{color:var(--info);font-size:13px;text-align:center;line-height:14px;text-shadow:0 0 6px var(--info);transition:transform .4s linear;}
-.pipboy-marker-event{color:var(--warning);font-size:13px;text-align:center;line-height:14px;text-shadow:0 0 6px var(--warning);animation:pulseRed 2.2s infinite;}
-.pipboy-marker-mil{color:#ff7a3d;font-size:14px;text-align:center;line-height:15px;text-shadow:0 0 6px #ff7a3d;}
-.pipboy-marker-nuke{color:#ffe14d;font-size:14px;text-align:center;line-height:15px;text-shadow:0 0 7px #ffe14d;}
-.pipboy-marker-quake{color:#d97cff;text-align:center;text-shadow:0 0 7px #d97cff;animation:pulseRed 2.6s infinite;}
-@keyframes pulseRed{0%,100%{opacity:1}50%{opacity:.45}}
-@keyframes pulseSafe{0%,100%{opacity:1}50%{opacity:.55}}
-@keyframes pulseUser{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
-.safe-popup{font-size:.78rem;line-height:1.5;}
-.safe-popup .sp-title{color:var(--success);font-weight:700;font-size:.85rem;display:block;margin-bottom:4px;text-shadow:0 0 5px var(--success);}
-.safe-popup .sp-score{color:var(--warning);font-size:.8rem;display:block;margin-bottom:6px;}
-.safe-popup .sp-reason{color:var(--text-light);}
-.safe-popup .sp-caveat{color:var(--text-dark);font-size:.7rem;display:block;margin-top:5px;font-style:italic;}
-.info-popup{font-size:.78rem;line-height:1.5;}
-.info-popup .ip-title{font-weight:700;font-size:.85rem;display:block;margin-bottom:4px;}
-.info-popup .ip-meta{color:var(--text-dark);font-size:.7rem;display:block;margin-bottom:4px;}
-.info-popup .ip-body{color:var(--text-light);}
-.defcon-legend{margin-top:16px;display:flex;flex-direction:column;gap:5px;}
-.defcon-row{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--text-dark);padding:4px 6px;border-radius:2px;transition:background .2s;}
-.defcon-row.active{background:rgba(93,255,163,.06);color:var(--text-light);}
-.defcon-row.active-danger{background:rgba(255,59,59,.08);color:var(--danger);}
-.defcon-row.active-warning{background:rgba(255,176,0,.07);color:var(--warning);}
-.defcon-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.dot-d{background:var(--danger);box-shadow:0 0 4px var(--danger);}
-.dot-w{background:var(--warning);box-shadow:0 0 4px var(--warning);}
-.dot-g{background:var(--success);box-shadow:0 0 4px var(--success);}
-.vector-row{display:flex;flex-direction:column;gap:18px;}
-.vector-item{display:flex;flex-direction:column;gap:6px;}
-.vector-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:.85rem;}
-.vector-name{color:var(--text-light);}
-.vector-value{font-size:1rem;font-weight:700;font-family:monospace;}
-.vector-source{font-size:.68rem;color:var(--text-dark);font-style:italic;}
-.vector-bar-track{width:100%;height:6px;background:#0d2e16;border-radius:2px;overflow:hidden;}
-.vector-bar-fill{height:100%;border-radius:2px;box-shadow:0 0 6px currentColor;}
-.bar-danger{background:var(--danger);color:var(--danger);}
-.bar-warning{background:var(--warning);color:var(--warning);}
-.vector-lock-note{margin-top:20px;font-size:.72rem;color:var(--text-dark);border-top:1px solid var(--border);padding-top:12px;text-align:center;letter-spacing:.5px;}
-.news-ticker{height:390px;overflow-y:auto;padding-right:8px;}
-.news-alarm{padding:12px;background:rgba(93,255,163,.03);border-radius:2px;border-left:4px solid var(--border);margin-bottom:12px;font-size:.85rem;animation:fadeIn .5s ease-out;}
-.news-alarm.flash-red{border-left-color:var(--danger);background:rgba(255,59,59,.05);}
-.news-alarm.flash-orange{border-left-color:var(--warning);background:rgba(255,176,0,.04);}
-.news-time{font-family:monospace;font-size:.75rem;color:var(--text-dark);display:block;margin-bottom:4px;}
-.news-link{color:var(--text-dark);font-size:.68rem;text-decoration:none;display:inline-block;margin-top:4px;border-bottom:1px dotted var(--text-dark);}
-.news-link:hover{color:var(--text-light);border-color:var(--text-light);}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
-.safezone-grid{display:flex;flex-direction:column;gap:10px;}
-.safezone-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(57,255,20,.03);border:1px solid #1d4428;border-left:3px solid var(--success);border-radius:2px;font-size:.8rem;}
-.safezone-rank{font-size:1.1rem;font-weight:800;font-family:monospace;color:var(--success);text-shadow:0 0 6px var(--success);min-width:28px;text-align:center;line-height:1.2;}
-.safezone-name{color:var(--text-light);font-weight:700;display:block;margin-bottom:2px;}
-.safezone-score{display:inline-block;font-size:.7rem;font-family:monospace;color:var(--warning);margin-bottom:4px;}
-.safezone-why{color:var(--text-dark);line-height:1.4;}
-.safezone-caveat{color:#1d4428;font-style:italic;font-size:.68rem;display:block;margin-top:3px;}
-.safezone-disclaimer{margin-top:14px;font-size:.7rem;color:var(--text-dark);border-top:1px solid var(--border);padding-top:10px;text-align:center;font-style:italic;}
-.data-meta-footer{margin-top:24px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.68rem;color:var(--text-dark);letter-spacing:.4px;}
-.data-meta-footer span strong{color:var(--text-light);}
-.market-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-.market-tab{font-family:monospace;font-size:.72rem;padding:4px 12px;border-radius:2px;cursor:pointer;border:1px solid var(--border);background:var(--bg-main);color:var(--text-dark);letter-spacing:.5px;text-transform:uppercase;transition:all .15s;}
-.market-tab.active{border-color:var(--text-light);color:var(--text-light);background:rgba(93,255,163,.08);text-shadow:0 0 5px var(--text-light);}
-.ticker-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
-.ticker-item{display:flex;flex-direction:column;gap:4px;padding:12px 14px;background:rgba(93,255,163,.025);border:1px solid var(--border);border-left:3px solid var(--text-dark);border-radius:2px;}
-.ticker-item.up{border-left-color:var(--success);}
-.ticker-item.down{border-left-color:var(--danger);}
-.ticker-name{font-size:.78rem;color:var(--text-light);font-weight:700;letter-spacing:.5px;}
-.ticker-sub{font-size:.65rem;color:var(--text-dark);}
-.ticker-price-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:2px;}
-.ticker-price{font-size:1.15rem;font-family:monospace;font-weight:800;}
-.ticker-change{font-size:.78rem;font-family:monospace;font-weight:700;}
-.ticker-change.up{color:var(--success);}
-.ticker-change.down{color:var(--danger);}
-.ticker-stale{font-size:.62rem;color:var(--text-dark);font-style:italic;margin-top:2px;}
-.market-disclaimer{margin-top:14px;font-size:.7rem;color:var(--text-dark);border-top:1px solid var(--border);padding-top:10px;text-align:center;font-style:italic;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Operational Threat & Doomsday Matrix</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        :root {
+            --bg-main: #040f08;
+            --bg-card: #081f10;
+            --border: #1d4428;
+            --text-light: #5dffa3;
+            --text-dark: #2f6b46;
+            --danger: #ff3b3b;
+            --warning: #ffb000;
+            --success: #39ff14;
+            --info: #4dd8ff;
+        }
+
+        body {
+            font-family: 'Courier New', ui-monospace, Menlo, Consolas, monospace;
+            letter-spacing: 0.3px;
+            background: radial-gradient(ellipse at center, #0a2010 0%, #040f08 75%);
+            color: var(--text-light);
+            margin: 0;
+            padding: 24px;
+            position: relative;
+            animation: crtFlicker 6s infinite;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(93,255,163,0.035) 3px);
+            animation: scanroll 7s linear infinite;
+        }
+        body::after {
+            content: '';
+            position: fixed; inset: 0;
+            pointer-events: none;
+            z-index: 9997;
+            box-shadow: inset 0 0 160px 40px rgba(0,0,0,0.65);
+        }
+
+        @keyframes scanroll { from { background-position: 0 0; } to { background-position: 0 120px; } }
+        @keyframes crtFlicker {
+            0%,100% { opacity:1; } 92% { opacity:1; } 93% { opacity:0.95; } 94% { opacity:1; } 96% { opacity:0.97; }
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; position: relative; }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px; margin-bottom: 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px;
+        }
+        h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; color: var(--danger); }
+        .blink-cursor {
+            display: inline-block; width: 0.55em;
+            background: var(--danger); margin-left: 4px;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+
+        .map-span {
+            grid-column: 1 / -1;
+            display: grid; grid-template-columns: 2fr 1fr; gap: 24px;
+        }
+        @media (max-width: 900px) { .map-span { grid-template-columns: 1fr; } }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px; padding: 24px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            position: relative;
+        }
+        .card::before, .card::after {
+            content: ''; position: absolute; width: 14px; height: 14px;
+            opacity: 0.65; pointer-events: none;
+        }
+        .card::before { top:-1px; left:-1px; border-top:2px solid var(--text-light); border-left:2px solid var(--text-light); }
+        .card::after  { bottom:-1px; right:-1px; border-bottom:2px solid var(--text-light); border-right:2px solid var(--text-light); }
+
+        .card h2 {
+            margin-top: 0; font-size: 0.95rem; color: var(--text-dark);
+            text-transform: uppercase; letter-spacing: 1px;
+            border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;
+        }
+        .card-header-row { display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; }
+        .sector-label { color:var(--text-dark); font-size:0.75rem; text-transform:none; letter-spacing:0; }
+        .feed-status { font-size:0.7rem; letter-spacing:0.5px; white-space:nowrap; }
+        .status-online { color:var(--success); }
+        .status-offline { color:var(--danger); }
+        .status-partial { color: var(--warning); }
+
+        h1, h2, .metric, .feed-status { text-shadow: 0 0 6px currentColor; }
+        .metric { font-size:3.5rem; font-weight:800; text-align:center; margin:16px 0; font-family:monospace; }
+        .description { color:var(--text-dark); font-size:0.9rem; text-align:center; line-height:1.4; }
+
+        /* MAP LEGEND */
+        .map-legend {
+            position: absolute; bottom: 12px; left: 12px; z-index: 1000;
+            background: rgba(8,31,16,0.92);
+            border: 1px solid var(--border);
+            border-radius: 3px; padding: 10px 14px;
+            font-size: 0.72rem; font-family: monospace;
+            color: var(--text-light);
+            pointer-events: none;
+            max-width: 220px;
+        }
+        .legend-row { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
+        .legend-row:last-child { margin-bottom:0; }
+        .legend-dot { font-size:13px; line-height:1; }
+
+        /* MAP LAYER TOGGLE */
+        .map-controls {
+            display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+        }
+        .layer-btn {
+            font-family: monospace; font-size: 0.72rem;
+            padding: 4px 10px;
+            border-radius: 2px; cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-main); color: var(--text-dark);
+            letter-spacing: 0.5px; text-transform: uppercase;
+            transition: all 0.15s;
+        }
+        .layer-btn.active-danger  { border-color:var(--danger);  color:var(--danger);  background:rgba(255,59,59,0.08); text-shadow:0 0 5px var(--danger); }
+        .layer-btn.active-warning { border-color:var(--warning); color:var(--warning); background:rgba(255,176,0,0.08);  text-shadow:0 0 5px var(--warning); }
+        .layer-btn.active-safe    { border-color:var(--success); color:var(--success); background:rgba(57,255,20,0.06);  text-shadow:0 0 5px var(--success); }
+        .layer-btn.active-info    { border-color:var(--info);    color:var(--info);    background:rgba(77,216,255,0.07); text-shadow:0 0 5px var(--info); }
+        .layer-btn.active-mil     { border-color:#ff7a3d;        color:#ff7a3d;        background:rgba(255,122,61,0.08); text-shadow:0 0 5px #ff7a3d; }
+        .layer-btn.active-quake   { border-color:#d97cff;        color:#d97cff;        background:rgba(217,124,255,0.08); text-shadow:0 0 5px #d97cff; }
+
+        /* MAP WRAPPER */
+        .map-wrapper {
+            position: relative; width: 100%; height: 430px;
+            border-radius: 4px; overflow: hidden;
+            border: 1px solid var(--border); background: #000;
+        }
+        #globalMap { width:100%; height:100%; background:#04130a; }
+        #globalMap .leaflet-tile-pane { filter: grayscale(1) brightness(0.75) sepia(0.4) hue-rotate(70deg) saturate(3) contrast(1.15); }
+        #globalMap .leaflet-control-zoom a { background:var(--bg-card); color:var(--text-light); border:1px solid var(--border); }
+        #globalMap .leaflet-control-attribution { background:rgba(8,31,16,0.8); color:var(--text-dark); }
+        #globalMap .leaflet-popup-content-wrapper, #globalMap .leaflet-popup-tip { background:var(--bg-card); color:var(--text-light); border:1px solid var(--border); }
+
+        /* MARKERS */
+        .pipboy-marker       { color:var(--text-light);  font-size:14px; text-align:center; line-height:16px; text-shadow:0 0 6px var(--text-light); }
+        .pipboy-marker-hot   { color:var(--danger);      font-size:15px; text-align:center; line-height:16px; text-shadow:0 0 8px var(--danger); animation: pulseRed 1.8s infinite; }
+        .pipboy-marker-safe  { color:var(--success);     font-size:14px; text-align:center; line-height:16px; text-shadow:0 0 8px var(--success); animation: pulseSafe 2.5s infinite; }
+        .pipboy-marker-user  { color:var(--warning);     font-size:16px; text-shadow:0 0 8px var(--warning); animation:pulseUser 1.6s infinite; }
+        .pipboy-marker-plane { color:var(--info);        font-size:13px; text-align:center; line-height:14px; text-shadow:0 0 6px var(--info); transition: transform 0.4s linear; }
+        .pipboy-marker-event { color:var(--warning);     font-size:13px; text-align:center; line-height:14px; text-shadow:0 0 6px var(--warning); animation: pulseRed 2.2s infinite; }
+        .pipboy-marker-mil   { color:#ff7a3d;             font-size:14px; text-align:center; line-height:15px; text-shadow:0 0 6px #ff7a3d; }
+        .pipboy-marker-nuke  { color:#ffe14d;             font-size:14px; text-align:center; line-height:15px; text-shadow:0 0 7px #ffe14d; }
+        .pipboy-marker-quake { color:#d97cff;             text-align:center; text-shadow:0 0 7px #d97cff; animation: pulseRed 2.6s infinite; }
+
+        @keyframes pulseRed  { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+        @keyframes pulseSafe { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
+        @keyframes pulseUser { 0%,100%{opacity:1;transform:scale(1);}  50%{opacity:0.5;transform:scale(1.3);} }
+
+        /* SAFE ZONE POPUP STYLE */
+        .safe-popup { font-size:0.78rem; line-height:1.5; }
+        .safe-popup .sp-title { color:var(--success); font-weight:700; font-size:0.85rem; display:block; margin-bottom:4px; text-shadow:0 0 5px var(--success); }
+        .safe-popup .sp-score { color:var(--warning); font-size:0.8rem; display:block; margin-bottom:6px; }
+        .safe-popup .sp-reason { color:var(--text-light); }
+        .safe-popup .sp-caveat { color:var(--text-dark); font-size:0.7rem; display:block; margin-top:5px; font-style:italic; }
+
+        /* GENERIC INFO POPUP (planes / events) */
+        .info-popup { font-size:0.78rem; line-height:1.5; }
+        .info-popup .ip-title { font-weight:700; font-size:0.85rem; display:block; margin-bottom:4px; }
+        .info-popup .ip-meta  { color:var(--text-dark); font-size:0.7rem; display:block; margin-bottom:4px; }
+        .info-popup .ip-body  { color:var(--text-light); }
+
+        /* DEFCON legend */
+        .defcon-legend { margin-top:16px; display:flex; flex-direction:column; gap:5px; }
+        .defcon-row { display:flex; align-items:center; gap:8px; font-size:0.72rem; color:var(--text-dark); padding:4px 6px; border-radius:2px; transition:background 0.2s; }
+        .defcon-row.active        { background:rgba(93,255,163,0.06);  color:var(--text-light); }
+        .defcon-row.active-danger { background:rgba(255,59,59,0.08);   color:var(--danger); }
+        .defcon-row.active-warning{ background:rgba(255,176,0,0.07);   color:var(--warning); }
+        .defcon-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .dot-d { background:var(--danger);  box-shadow:0 0 4px var(--danger); }
+        .dot-w { background:var(--warning); box-shadow:0 0 4px var(--warning); }
+        .dot-g { background:var(--success); box-shadow:0 0 4px var(--success); }
+
+        /* VECTOR BREAKDOWN */
+        .vector-row { display:flex; flex-direction:column; gap:18px; }
+        .vector-item { display:flex; flex-direction:column; gap:6px; }
+        .vector-meta { display:flex; justify-content:space-between; align-items:baseline; font-size:0.85rem; }
+        .vector-name { color:var(--text-light); }
+        .vector-value { font-size:1rem; font-weight:700; font-family:monospace; }
+        .vector-source { font-size:0.68rem; color:var(--text-dark); font-style:italic; }
+        .vector-bar-track { width:100%; height:6px; background:#0d2e16; border-radius:2px; overflow:hidden; }
+        .vector-bar-fill  { height:100%; border-radius:2px; box-shadow:0 0 6px currentColor; }
+        .bar-danger  { background:var(--danger);  color:var(--danger); }
+        .bar-warning { background:var(--warning); color:var(--warning); }
+        .vector-lock-note { margin-top:20px; font-size:0.72rem; color:var(--text-dark); border-top:1px solid var(--border); padding-top:12px; text-align:center; letter-spacing:0.5px; }
+
+        /* ALARM TICKER */
+        .news-ticker { height:390px; overflow-y:auto; padding-right:8px; }
+        .news-alarm { padding:12px; background:rgba(93,255,163,0.03); border-radius:2px; border-left:4px solid var(--border); margin-bottom:12px; font-size:0.85rem; animation:fadeIn 0.5s ease-out; }
+        .news-alarm.flash-red    { border-left-color:var(--danger);  background:rgba(255,59,59,0.05); }
+        .news-alarm.flash-orange { border-left-color:var(--warning); background:rgba(255,176,0,0.04); }
+        .news-time { font-family:monospace; font-size:0.75rem; color:var(--text-dark); display:block; margin-bottom:4px; }
+        .news-link { color: var(--text-dark); font-size: 0.68rem; text-decoration: none; display: inline-block; margin-top: 4px; border-bottom: 1px dotted var(--text-dark); }
+        .news-link:hover { color: var(--text-light); border-color: var(--text-light); }
+
+        @keyframes fadeIn { from{opacity:0;transform:translateY(-5px);} to{opacity:1;transform:translateY(0);} }
+
+        /* SAFE ZONE CARD */
+        .safezone-grid { display:flex; flex-direction:column; gap:10px; }
+        .safezone-item {
+            display:flex; align-items:flex-start; gap:10px;
+            padding:10px 12px;
+            background:rgba(57,255,20,0.03);
+            border:1px solid #1d4428;
+            border-left:3px solid var(--success);
+            border-radius:2px;
+            font-size:0.8rem;
+        }
+        .safezone-rank {
+            font-size:1.1rem; font-weight:800; font-family:monospace;
+            color:var(--success); text-shadow:0 0 6px var(--success);
+            min-width:28px; text-align:center; line-height:1.2;
+        }
+        .safezone-name { color:var(--text-light); font-weight:700; display:block; margin-bottom:2px; }
+        .safezone-score {
+            display:inline-block; font-size:0.7rem; font-family:monospace;
+            color:var(--warning); margin-bottom:4px;
+        }
+        .safezone-why { color:var(--text-dark); line-height:1.4; }
+        .safezone-caveat { color:#1d4428; font-style:italic; font-size:0.68rem; display:block; margin-top:3px; }
+        .safezone-disclaimer {
+            margin-top:14px; font-size:0.7rem; color:var(--text-dark);
+            border-top:1px solid var(--border); padding-top:10px;
+            text-align:center; font-style:italic;
+        }
+
+        /* DATA FRESHNESS FOOTER */
+        .data-meta-footer {
+            margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+            font-size: 0.68rem; color: var(--text-dark); letter-spacing: 0.4px;
+        }
+        .data-meta-footer span strong { color: var(--text-light); }
+
+        /* STOCK MARKET CARD */
+        .market-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .market-tab {
+            font-family: monospace; font-size: 0.72rem;
+            padding: 4px 12px;
+            border-radius: 2px; cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-main); color: var(--text-dark);
+            letter-spacing: 0.5px; text-transform: uppercase;
+            transition: all 0.15s;
+        }
+        .market-tab.active {
+            border-color: var(--text-light); color: var(--text-light);
+            background: rgba(93,255,163,0.08); text-shadow: 0 0 5px var(--text-light);
+        }
+        .ticker-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .ticker-item {
+            display: flex; flex-direction: column; gap: 4px;
+            padding: 12px 14px;
+            background: rgba(93,255,163,0.025);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--text-dark);
+            border-radius: 2px;
+        }
+        .ticker-item.up   { border-left-color: var(--success); }
+        .ticker-item.down { border-left-color: var(--danger); }
+        .ticker-name { font-size: 0.78rem; color: var(--text-light); font-weight: 700; letter-spacing: 0.5px; }
+        .ticker-sub  { font-size: 0.65rem; color: var(--text-dark); }
+        .ticker-price-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px; }
+        .ticker-price { font-size: 1.15rem; font-family: monospace; font-weight: 800; }
+        .ticker-change { font-size: 0.78rem; font-family: monospace; font-weight: 700; }
+        .ticker-change.up   { color: var(--success); }
+        .ticker-change.down { color: var(--danger); }
+        .ticker-stale { font-size: 0.62rem; color: var(--text-dark); font-style: italic; margin-top: 2px; }
+        .market-disclaimer {
+            margin-top: 14px; font-size: 0.7rem; color: var(--text-dark);
+            border-top: 1px solid var(--border); padding-top: 10px;
+            text-align: center; font-style: italic;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
-<header>
-<h1>QUANTUM RISK DESK v2026.3<span class="blink-cursor">&nbsp;</span></h1>
-<div style="font-family:monospace;font-size:.9rem;color:var(--warning);text-shadow:0 0 6px var(--warning);">[ SIMULATOR ACTIVE — JUNE 2026 ]</div>
-</header>
+    <header>
+        <h1>QUANTUM RISK DESK v2026.3<span class="blink-cursor">&nbsp;</span></h1>
+        <div style="font-family:monospace;font-size:0.9rem;color:var(--warning);text-shadow:0 0 6px var(--warning);">[ SIMULATOR ACTIVE — JUNE 2026 ]</div>
+    </header>
 
-<div class="map-span">
-<div class="card">
-<h2>Global Sector Map — Threat &amp; Survival Overlay</h2>
-<div class="map-controls">
-<button class="layer-btn active-warning" id="btn-conflict" onclick="toggleLayer('conflict')">&#9670; Conflict Hotspots</button>
-<button class="layer-btn active-danger" id="btn-targets" onclick="toggleLayer('targets')">&#9888; Primary Targets</button>
-<button class="layer-btn active-safe" id="btn-safezones" onclick="toggleLayer('safezones')">&#10003; Safe Zones</button>
-<button class="layer-btn active-warning" id="btn-events" onclick="toggleLayer('events')">&#9889; News Events</button>
-<button class="layer-btn active-info" id="btn-planes" onclick="toggleLayer('planes')">&#9992; Live Air Traffic</button>
-<button class="layer-btn active-mil" id="btn-milnuke" onclick="toggleLayer('milnuke')">&#9760; Military &amp; Nuclear Sites</button>
-<button class="layer-btn active-quake" id="btn-quakes" onclick="toggleLayer('quakes')">&#9889; Natural Disasters (Live Quakes)</button>
-</div>
-<div class="map-wrapper">
-<div id="globalMap"></div>
-<div class="map-legend" id="mapLegend">
-<div class="legend-header">
-<span id="legendTitle">Map Key</span>
-<button type="button" class="legend-toggle" id="legendToggleBtn" onclick="toggleMapLegend()">[ HIDE ]</button>
-</div>
-<div class="legend-body" id="legendBody">
-<div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9670;</span> Conflict / OSINT Hotspot</div>
-<div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9888;</span> Primary Nuclear Target</div>
-<div class="legend-row"><span class="legend-dot" style="color:var(--success)">&#10022;</span> Probable Safe Zone</div>
-<div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9889;</span> News-Derived Event</div>
-<div class="legend-row"><span class="legend-dot" style="color:var(--info)">&#9992;</span> Live Aircraft</div>
-<div class="legend-row"><span class="legend-dot" style="color:#ff7a3d">&#9760;</span> Military Base</div>
-<div class="legend-row"><span class="legend-dot" style="color:#ffe14d">&#9762;</span> Civil Nuclear Plant</div>
-<div class="legend-row"><span class="legend-dot" style="color:#d97cff">&#9711;</span> Earthquake (live, USGS)</div>
-<div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9679;</span> Conflict Intensity (heatmap)</div>
-<div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9737;</span> Your Position</div>
-</div>
-</div>
-</div>
-</div>
+    <!-- MAP + ALARMS -->
+    <div class="map-span">
+        <div class="card">
+            <h2>Global Sector Map — Threat &amp; Survival Overlay</h2>
 
-<div class="card">
-<h2 class="card-header-row"><span>Active Operational Alarms</span><span id="globalFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span></h2>
-<div class="news-ticker" id="newsTicker"></div>
-</div>
-</div>
+            <!-- Layer toggle buttons -->
+            <div class="map-controls">
+                <button class="layer-btn active-warning" id="btn-conflict"  onclick="toggleLayer('conflict')">&#9670; Conflict Hotspots</button>
+                <button class="layer-btn active-danger"  id="btn-targets"   onclick="toggleLayer('targets')">&#9888; Primary Targets</button>
+                <button class="layer-btn active-safe"    id="btn-safezones" onclick="toggleLayer('safezones')">&#10003; Safe Zones</button>
+                <button class="layer-btn active-warning" id="btn-events"    onclick="toggleLayer('events')">&#9889; News Events</button>
+                <button class="layer-btn active-info"    id="btn-planes"    onclick="toggleLayer('planes')">&#9992; Live Air Traffic</button>
+                <button class="layer-btn active-mil"     id="btn-milnuke"   onclick="toggleLayer('milnuke')">&#9760; Military &amp; Nuclear Sites</button>
+                <button class="layer-btn active-quake"   id="btn-quakes"    onclick="toggleLayer('quakes')">&#9889; Natural Disasters (Live Quakes)</button>
+            </div>
 
-<div class="grid" style="margin-top:24px;">
-<div class="card">
-<h2>Predictive Military Posture</h2>
-<div class="metric" id="defconMetric">DEFCON --</div>
-<div class="description" id="defconDesc">Awaiting telemetry streams...</div>
-<div class="defcon-legend">
-<div class="defcon-row" id="legend-1"><div class="defcon-dot dot-d"></div><span><strong>DEFCON 1</strong> — COCKED PISTOL. Nuclear war imminent or underway. Never officially declared.</span></div>
-<div class="defcon-row" id="legend-2"><div class="defcon-dot dot-d"></div><span><strong>DEFCON 2</strong> — FAST PACE. Armed forces ready within 6 hours. Highest ever reached (Cuba 1962).</span></div>
-<div class="defcon-row" id="legend-3"><div class="defcon-dot dot-w"></div><span><strong>DEFCON 3</strong> — ROUND HOUSE. Air Force ready in 15 min. Raised twice in history (1973, 2001).</span></div>
-<div class="defcon-row" id="legend-4"><div class="defcon-dot dot-w"></div><span><strong>DEFCON 4</strong> — DOUBLE TAKE. Heightened intelligence watch. Analyst consensus for current global posture.</span></div>
-<div class="defcon-row" id="legend-5"><div class="defcon-dot dot-g"></div><span><strong>DEFCON 5</strong> — FADE OUT. Peacetime baseline. Normal readiness.</span></div>
-</div>
-</div>
+            <div class="map-wrapper">
+                <div id="globalMap"></div>
+                <div class="map-legend">
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9670;</span> Conflict / OSINT Hotspot</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9888;</span> Primary Nuclear Target</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--success)">&#10022;</span> Probable Safe Zone</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9889;</span> News-Derived Event</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--info)">&#9992;</span> Live Aircraft</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:#ff7a3d">&#9760;</span> Military Base</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:#ffe14d">&#9762;</span> Civil Nuclear Plant</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:#d97cff">&#9711;</span> Earthquake (live, USGS)</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9679;</span> Conflict Intensity (heatmap)</div>
+                    <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9737;</span> Your Position</div>
+                </div>
+            </div>
+        </div>
 
-<div class="card">
-<h2>Doomsday Clock Status</h2>
-<div style="display:flex;justify-content:center;align-items:center;margin-bottom:16px;">
-<svg width="140" height="140" viewBox="0 0 200 200">
-<circle cx="100" cy="100" r="95" fill="none" stroke="#1d4428" stroke-width="6"/>
-<path d="M 100 15 A 85 85 0 0 1 185 100" fill="none" stroke="#ff3b3b" stroke-width="4" stroke-dasharray="4,4"/>
-<line x1="100" y1="100" x2="100" y2="45" stroke="#2f6b46" stroke-width="6" stroke-linecap="round"/>
-<line id="clockHand" x1="100" y1="100" x2="100" y2="25" stroke="#ff3b3b" stroke-width="4" stroke-linecap="round" style="transform-origin:100px 100px;transition:transform .5s cubic-bezier(.4,0,.2,1);"/>
-<circle cx="100" cy="100" r="6" fill="#5dffa3"/>
-</svg>
-</div>
-<div class="metric" id="clockMetric" style="color:var(--danger);margin:0 0 8px 0;font-size:2.5rem;">--s</div>
-<div class="description">Official reading: <strong style="color:var(--danger);">85 seconds</strong> to midnight — set Jan 27 2026 by the Bulletin of Atomic Scientists. Closest in history.<br><br>Simulator value derived from weighted threat vectors.</div>
-</div>
+        <div class="card">
+            <h2 class="card-header-row">
+                <span>Active Operational Alarms</span>
+                <span id="globalFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
+            </h2>
+            <div class="news-ticker" id="newsTicker"></div>
+        </div>
+    </div>
 
-<div class="card">
-<h2>Global Vector Weights — June 2026</h2>
-<div class="vector-row">
-<div class="vector-item">
-<div class="vector-meta"><span class="vector-name">Nuclear Threat Profile</span><span class="vector-value" style="color:var(--warning);">72%</span></div>
-<div class="vector-bar-track"><div class="vector-bar-fill bar-warning" style="width:72%;"></div></div>
-<span class="vector-source">Bulletin BAS Jan 2026: 85s to midnight. New START expired. All 9 nuclear states modernizing. Elevated but stable — no active nuclear crisis.</span>
-</div>
-<div class="vector-item">
-<div class="vector-meta"><span class="vector-name">Geopolitical Friction Index</span><span class="vector-value" style="color:var(--warning);">68%</span></div>
-<div class="vector-bar-track"><div class="vector-bar-fill bar-warning" style="width:68%;"></div></div>
-<span class="vector-source">40+ active armed conflicts (ACLED/UCDP 2026). Three escalation pathways: Russia-NATO, Iran-Israel-Gulf, China-Taiwan.</span>
-</div>
-<div class="vector-item">
-<div class="vector-meta"><span class="vector-name">Climate Multiplier State</span><span class="vector-value" style="color:var(--warning);">65%</span></div>
-<div class="vector-bar-track"><div class="vector-bar-fill bar-warning" style="width:65%;"></div></div>
-<span class="vector-source">CRI 2026 (Germanwatch): compounding losses; 1.5°C targets out of reach. Force multiplier on conflict.</span>
-</div>
-</div>
-<p class="vector-lock-note">&#9632; VECTORS LOCKED — calibrated to latest published threat assessments as of June 2026. Read-only.</p>
-</div>
-</div>
+    <!-- DEFCON + CLOCK + VECTORS -->
+    <div class="grid" style="margin-top:24px;">
 
-<div class="card" style="margin-top:24px;">
-<h2>&#10022; Probable Nuclear Survival Zones — Analysis Based on June 2026 Intelligence</h2>
-<div class="safezone-grid" id="safezoneList"></div>
-<p class="safezone-disclaimer">&#9888; Analysis based on open-source targeting doctrine, geographic isolation, agricultural capacity, and fallout modeling. No location is categorically safe from nuclear winter, supply chain collapse, or secondary humanitarian cascades. Treat as relative survivability assessment only. Sources: Bulletin of Atomic Scientists 2026, SIPRI 2025, DEFCON Warning System, Princeton Science &amp; Global Security, Global Peace Index 2025.</p>
-</div>
+        <div class="card">
+            <h2>Predictive Military Posture</h2>
+            <div class="metric" id="defconMetric">DEFCON --</div>
+            <div class="description" id="defconDesc">Awaiting telemetry streams...</div>
+            <div class="defcon-legend">
+                <div class="defcon-row" id="legend-1"><div class="defcon-dot dot-d"></div><span><strong>DEFCON 1</strong> — COCKED PISTOL. Nuclear war imminent or underway. Never officially declared.</span></div>
+                <div class="defcon-row" id="legend-2"><div class="defcon-dot dot-d"></div><span><strong>DEFCON 2</strong> — FAST PACE. Armed forces ready within 6 hours. Highest ever reached (Cuba 1962).</span></div>
+                <div class="defcon-row" id="legend-3"><div class="defcon-dot dot-w"></div><span><strong>DEFCON 3</strong> — ROUND HOUSE. Air Force ready in 15 min. Raised twice in history (1973, 2001).</span></div>
+                <div class="defcon-row" id="legend-4"><div class="defcon-dot dot-w"></div><span><strong>DEFCON 4</strong> — DOUBLE TAKE. Heightened intelligence watch. Analyst consensus for current global posture.</span></div>
+                <div class="defcon-row" id="legend-5"><div class="defcon-dot dot-g"></div><span><strong>DEFCON 5</strong> — FADE OUT. Peacetime baseline. Normal readiness.</span></div>
+            </div>
+        </div>
 
-<div class="card" style="margin-top:24px;">
-<h2 class="card-header-row"><span>Local Sector News <span id="localSectorLabel" class="sector-label">— ACQUIRING LOCATION...</span></span><span id="localFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span></h2>
-<div class="news-ticker" id="localTicker" style="height:240px;"></div>
-</div>
+        <div class="card">
+            <h2>Doomsday Clock Status</h2>
+            <div class="clock-container" style="display:flex;justify-content:center;align-items:center;margin-bottom:16px;">
+                <svg width="140" height="140" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="95" fill="none" stroke="#1d4428" stroke-width="6"/>
+                    <path d="M 100 15 A 85 85 0 0 1 185 100" fill="none" stroke="#ff3b3b" stroke-width="4" stroke-dasharray="4,4"/>
+                    <line x1="100" y1="100" x2="100" y2="45" stroke="#2f6b46" stroke-width="6" stroke-linecap="round"/>
+                    <line id="clockHand" x1="100" y1="100" x2="100" y2="25" stroke="#ff3b3b" stroke-width="4" stroke-linecap="round" style="transform-origin:100px 100px;transition:transform 0.5s cubic-bezier(0.4,0,0.2,1);"/>
+                    <circle cx="100" cy="100" r="6" fill="#5dffa3"/>
+                </svg>
+            </div>
+            <div class="metric" id="clockMetric" style="color:var(--danger);margin:0 0 8px 0;font-size:2.5rem;">--s</div>
+            <div class="description">
+                Official reading: <strong style="color:var(--danger);">85 seconds</strong> to midnight — set Jan 27 2026 by the Bulletin of Atomic Scientists. Closest in history.<br><br>
+                Simulator value derived from weighted threat vectors.
+            </div>
+        </div>
 
-<div class="card" style="margin-top:24px;">
-<h2 class="card-header-row"><span>Global Market Watch</span><span id="marketFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span></h2>
-<div class="market-tabs" id="marketTabs">
-<button class="market-tab active" id="tab-indices" onclick="setMarketCategory('indices')">Indices</button>
-<button class="market-tab" id="tab-forex" onclick="setMarketCategory('forex')">Forex</button>
-<button class="market-tab" id="tab-commodities" onclick="setMarketCategory('commodities')">Commodities</button>
-</div>
-<div class="ticker-grid" id="marketGrid"></div>
-<p class="market-disclaimer">&#9888; Quotes sourced from Stooq end-of-day/delayed feeds via public CORS proxy. Not real-time exchange data — informational only, not for trading decisions.</p>
-</div>
+        <div class="card">
+            <h2>Global Vector Weights — June 2026</h2>
+            <div class="vector-row">
+                <div class="vector-item">
+                    <div class="vector-meta"><span class="vector-name">Nuclear Threat Profile</span><span class="vector-value" style="color:var(--warning);">72%</span></div>
+                    <div class="vector-bar-track"><div class="vector-bar-fill bar-warning" style="width:72%;"></div></div>
+                    <span class="vector-source">Bulletin BAS Jan 2026: 85s to midnight. New START expired. All 9 nuclear states modernizing. Elevated but stable — no active nuclear crisis. (DNI ATA 2026)</span>
+                </div>
+                <div class="vector-item">
+                    <div class="vector-meta"><span class="vector-name">Geopolitical Friction Index</span><span class="vector-value" style="color:var(--warning);">68%</span></div>
+                    <div class="vector-bar-track"><div class="vector-bar-fill bar-warning" style="width:68%;"></div></div>
+                    <span class="vector-source">40+ active armed conflicts (ACLED/UCDP 2026). Three escalation pathways: Russia-NATO, Iran-Israel-Gulf, China-Taiwan. No direct great-power war. (Warmonit CII; Chatham House 2026)</span>
+                </div>
+                <div class="vector-item">
+                    <div class="vector-meta"><span class="vector-name">Climate Multiplier State</span><span class="vector-value" style="color:var(--warning);">65%</span></div>
+                    <div class="vector-bar-track"><div class="vector-bar-fill bar-warning" style="width:65%;"></div></div>
+                    <span class="vector-source">CRI 2026 (Germanwatch): compounding losses; 1.5°C targets out of reach (OECD CAM 2025). Force multiplier on conflict — not yet standalone crisis driver.</span>
+                </div>
+            </div>
+            <p class="vector-lock-note">&#9632; VECTORS LOCKED — calibrated to latest published threat assessments as of June 2026. Read-only.</p>
+        </div>
 
-<div class="data-meta-footer">
-<span>GEODATA VECTORS REV: <strong id="geoRevLabel">--</strong></span>
-<span>NEXT SCHEDULED REVIEW: <strong id="geoNextLabel">--</strong></span>
-<span>NEWS SOURCES ACTIVE: <strong id="sourceCountLabel">0</strong> / <span id="sourceTotalLabel">0</span></span>
-<span>AIRCRAFT TRACKED: <strong id="aircraftCountLabel">0</strong></span>
-</div>
-</div>
+    </div><!-- /grid -->
 
+    <!-- SAFE ZONES CARD — full width -->
+    <div class="card" style="margin-top:24px;">
+        <h2>&#10022; Probable Nuclear Survival Zones — Analysis Based on June 2026 Intelligence</h2>
+        <div class="safezone-grid" id="safezoneList"></div>
+        <p class="safezone-disclaimer">
+            &#9888; Analysis based on open-source targeting doctrine, geographic isolation, agricultural capacity, and fallout modeling. No location is categorically safe from nuclear winter, supply chain collapse, or secondary humanitarian cascades. Treat as relative survivability assessment only.
+            Sources: Bulletin of Atomic Scientists 2026, SIPRI 2025, DEFCON Warning System, Princeton Science &amp; Global Security, Global Peace Index 2025.
+        </p>
+    </div>
+
+    <!-- LOCAL NEWS -->
+    <div class="card" style="margin-top:24px;">
+        <h2 class="card-header-row">
+            <span>Local Sector News <span id="localSectorLabel" class="sector-label">— ACQUIRING LOCATION...</span></span>
+            <span id="localFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
+        </h2>
+        <div class="news-ticker" id="localTicker" style="height:240px;"></div>
+    </div>
+
+    <!-- STOCK MARKET -->
+    <div class="card" style="margin-top:24px;">
+        <h2 class="card-header-row">
+            <span>Global Market Watch</span>
+            <span id="marketFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
+        </h2>
+        <div class="market-tabs" id="marketTabs">
+            <button class="market-tab active" id="tab-indices"     onclick="setMarketCategory('indices')">Indices</button>
+            <button class="market-tab"        id="tab-forex"       onclick="setMarketCategory('forex')">Forex</button>
+            <button class="market-tab"        id="tab-commodities" onclick="setMarketCategory('commodities')">Commodities</button>
+        </div>
+        <div class="ticker-grid" id="marketGrid"></div>
+        <p class="market-disclaimer">
+            &#9888; Quotes sourced from Stooq end-of-day/delayed feeds (free, no API key). Not real-time exchange data — informational only, not for trading decisions.
+        </p>
+    </div>
+
+    <!-- DATA FRESHNESS / GEODATA VERSIONING FOOTER -->
+    <div class="data-meta-footer">
+        <span>GEODATA VECTORS REV: <strong id="geoRevLabel">--</strong></span>
+        <span>NEXT SCHEDULED REVIEW: <strong id="geoNextLabel">--</strong></span>
+        <span>NEWS SOURCES ACTIVE: <strong id="sourceCountLabel">0</strong> / <span id="sourceTotalLabel">0</span></span>
+        <span>AIRCRAFT TRACKED: <strong id="aircraftCountLabel">0</strong></span>
+    </div>
+
+</div><!-- /container -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
-const CORS_PROXIES=[u=>'https://corsproxy.io/?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
-async function fetchViaProxy(targetUrl,asText){let lastErr;for(const wrap of CORS_PROXIES){try{const r=await fetch(wrap(targetUrl),{cache:'no-store'});if(!r.ok){lastErr=new Error('proxy http '+r.status);continue;}return asText?await r.text():await r.json();}catch(e){lastErr=e;}}throw lastErr||new Error('all proxies failed');}
+// ============================================================
+// FIXED VECTORS
+// ============================================================
+const FIXED_VECTORS = { nuke: 72, geo: 68, climate: 65 };
 
-const FIXED_VECTORS={nuke:72,geo:68,climate:65};
-const DEFCON_THRESHOLDS=[{level:1,minScore:95,label:'COCKED PISTOL',color:'var(--danger)',legendClass:'active-danger'},{level:2,minScore:68,label:'FAST PACE',color:'var(--danger)',legendClass:'active-danger'},{level:3,minScore:50,label:'ROUND HOUSE',color:'var(--warning)',legendClass:'active-warning'},{level:4,minScore:28,label:'DOUBLE TAKE',color:'var(--warning)',legendClass:'active-warning'},{level:5,minScore:0,label:'FADE OUT',color:'var(--success)',legendClass:'active'}];
-const DEFCON_DESCRIPTIONS={1:"COCKED PISTOL. Nuclear conflict imminent or underway. Maximum force deployment. Never officially declared in US history.",2:"FAST PACE. Armed forces ready for combat within 6 hours. Highest DEFCON ever officially reached — Cuban Missile Crisis, October 1962.",3:"ROUND HOUSE. Air Force ready to mobilize within 15 minutes. Declared twice: 1973 Yom Kippur War, September 11 2001.",4:"DOUBLE TAKE. Heightened intelligence watch. Analyst consensus for real-world US posture as of June 2026.",5:"FADE OUT. Normal peacetime readiness. Standard intelligence monitoring loops active."};
+const DEFCON_THRESHOLDS = [
+    { level:1, minScore:95, label:'COCKED PISTOL', color:'var(--danger)',  legendClass:'active-danger'  },
+    { level:2, minScore:68, label:'FAST PACE',     color:'var(--danger)',  legendClass:'active-danger'  },
+    { level:3, minScore:50, label:'ROUND HOUSE',   color:'var(--warning)', legendClass:'active-warning' },
+    { level:4, minScore:28, label:'DOUBLE TAKE',   color:'var(--warning)', legendClass:'active-warning' },
+    { level:5, minScore:0,  label:'FADE OUT',      color:'var(--success)', legendClass:'active'         }
+];
+const DEFCON_DESCRIPTIONS = {
+    1: "COCKED PISTOL. Nuclear conflict imminent or underway. Maximum force deployment. This threshold has never been officially declared in US history.",
+    2: "FAST PACE. Armed forces ready for combat within 6 hours. Highest DEFCON ever officially reached — Cuban Missile Crisis, October 1962. Current vectors place the simulator here.",
+    3: "ROUND HOUSE. Air Force ready to mobilize within 15 minutes. Declared twice: 1973 Yom Kippur War, September 11 2001.",
+    4: "DOUBLE TAKE. Heightened intelligence watch and strengthened security measures. Analyst consensus for real-world US posture as of June 2026.",
+    5: "FADE OUT. Normal peacetime readiness. Standard intelligence monitoring loops active."
+};
 
-const GEO_DATASET_REVISION='2026-06-21';
-const GEO_REVIEW_INTERVAL_DAYS=30;
-function renderGeoFreshness(){const rev=new Date(GEO_DATASET_REVISION+'T00:00:00Z');const next=new Date(rev.getTime()+GEO_REVIEW_INTERVAL_DAYS*86400000);document.getElementById('geoRevLabel').textContent=GEO_DATASET_REVISION;document.getElementById('geoNextLabel').textContent=next.toISOString().slice(0,10);}
+// ============================================================
+// GEODATA VERSIONING
+// ------------------------------------------------------------
+// This block is the single source of truth for "how fresh are
+// the hand-curated geo datasets" (hotspots / targets / safe
+// zones below). Since this app has no backend/cron, the dataset
+// can't silently refresh itself — but we track a revision date
+// and compute a "next review due" date (+30 days) so the UI is
+// honest about staleness, and so any future automated job (a
+// GitHub Action, a small Worker, etc.) has a clear hook: bump
+// GEO_DATASET_REVISION and it propagates everywhere automatically.
+// ============================================================
+const GEO_DATASET_REVISION = '2026-06-21';
+const GEO_REVIEW_INTERVAL_DAYS = 30;
 
-const conflictHotspots=[{name:'Eastern Corridor Watch',lat:50.45,lng:30.52,note:'Russia-Ukraine active front'},{name:'Pacific Maritime Sector',lat:16.0,lng:114.0,note:'Taiwan Strait / South China Sea'},{name:'Mideast Signal Relay',lat:32.0,lng:35.0,note:'Iran-Israel theater'},{name:'Arctic Approach',lat:71.0,lng:25.0,note:'NATO-Russia northern flank'},{name:'Gulf Sector',lat:29.5,lng:47.8,note:'US-Iran ceasefire compliance monitoring'}];
-const primaryTargets=[{name:'Washington D.C.',lat:38.89,lng:-77.03,note:'National command authority. Pentagon.'},{name:'New York City',lat:40.71,lng:-74.00,note:'Largest US population center. Financial hub.'},{name:'Los Angeles',lat:34.05,lng:-118.24,note:'Major port, industry, population.'},{name:'Chicago',lat:41.87,lng:-87.63,note:'Rail/industrial hub.'},{name:'Minot AFB / ND Silos',lat:48.41,lng:-101.35,note:'Minuteman III ICBM silo belt.'},{name:'Norfolk Naval Station',lat:36.94,lng:-76.32,note:'Largest US naval base.'},{name:'Offutt AFB / STRATCOM',lat:41.12,lng:-95.91,note:'US Strategic Command HQ.'},{name:'Moscow',lat:55.75,lng:37.61,note:'Russian national command authority.'},{name:'Beijing',lat:39.90,lng:116.40,note:'Chinese NCA. PLA General Staff HQ.'},{name:'London',lat:51.50,lng:-0.12,note:'UK NCA. NATO nuclear partner.'},{name:'Paris',lat:48.85,lng:2.35,note:'French NCA. NATO nuclear partner.'},{name:'Pyongyang',lat:39.01,lng:125.74,note:'DPRK NCA.'}];
-const militaryNuclearSites=[{type:'mil',name:'Ramstein Air Base',lat:49.44,lng:7.60,note:'NATO/US Air Forces Europe HQ, Germany.'},{type:'mil',name:'RAF Lakenheath',lat:52.41,lng:0.56,note:'US Air Force base, UK. F-35 fighter wing.'},{type:'mil',name:'Incirlik Air Base',lat:37.00,lng:35.43,note:'US/NATO base, Turkey.'},{type:'mil',name:'Camp Humphreys',lat:36.97,lng:127.03,note:'Largest US overseas base, South Korea.'},{type:'mil',name:'Yokota Air Base',lat:35.75,lng:139.35,note:'US Forces Japan HQ.'},{type:'mil',name:'Diego Garcia',lat:-7.31,lng:72.41,note:'US/UK joint base, Indian Ocean.'},{type:'mil',name:'Kaliningrad Garrison',lat:54.71,lng:20.51,note:'Russian exclave base. Baltic Fleet.'},{type:'mil',name:'Severomorsk Naval Base',lat:69.07,lng:33.42,note:'Russian Northern Fleet HQ.'},{type:'mil',name:'Hmeimim Air Base',lat:35.40,lng:35.95,note:'Russian base in Syria.'},{type:'mil',name:'Yulin Naval Base',lat:18.22,lng:109.49,note:'PLAN submarine base, Hainan Island.'},{type:'mil',name:'Djibouti Support Base',lat:11.59,lng:43.15,note:"China's only overseas military base."},{type:'mil',name:'Fiery Cross Reef',lat:9.55,lng:112.89,note:'PLA militarized artificial island.'},{type:'nuke',name:'Zaporizhzhia NPP',lat:47.51,lng:34.59,note:'Largest nuclear plant in Europe, Ukraine.'},{type:'nuke',name:'Bushehr NPP',lat:28.83,lng:50.89,note:"Iran's sole operating commercial nuclear power plant."},{type:'nuke',name:'Kori NPP',lat:35.32,lng:129.30,note:"South Korea's largest nuclear power complex."},{type:'nuke',name:'Fukushima Daiichi',lat:37.42,lng:141.03,note:'Site of 2011 meltdown.'},{type:'nuke',name:'Three Mile Island',lat:40.15,lng:-76.72,note:'US plant, 1979 partial meltdown site.'},{type:'nuke',name:'Diablo Canyon',lat:35.21,lng:-120.85,note:'Last operating nuclear plant in California.'},{type:'nuke',name:'Gravelines NPP',lat:51.02,lng:2.14,note:'Largest nuclear plant in Western Europe, France.'},{type:'nuke',name:'Kursk NPP',lat:51.68,lng:35.60,note:'Russian nuclear plant near Ukraine border.'}];
-const safeZones=[{name:'Patagonia, Argentina',lat:-46.5,lng:-71.5,rank:1,score:'HIGH',why:'Remote Southern Hemisphere. No strategic value. Strong agricultural base. Low population density.',caveat:'Nuclear winter food disruption remains a risk globally.'},{name:'South Island, New Zealand',lat:-44.5,lng:170.0,rank:2,score:'HIGH',why:'Extreme geographic isolation. No nuclear targets. Strong food/water self-sufficiency.',caveat:'Nuclear soot could reduce NZ crop yields 20–40%.'},{name:'Iceland',lat:64.9,lng:-18.5,rank:3,score:'HIGH',why:'Geothermal energy independence. No nuclear weapons. Remote North Atlantic.',caveat:'Proximity to Northern Hemisphere fallout corridors.'},{name:'Uruguay',lat:-32.5,lng:-56.0,rank:4,score:'MODERATE-HIGH',why:'Politically stable, no military alliances. Strong agricultural output.',caveat:'Proximity to Argentine and Brazilian urban centers.'},{name:'Tasmania, Australia',lat:-42.0,lng:146.5,rank:5,score:'MODERATE-HIGH',why:'Island geography. Strong food production. Low population.',caveat:"Australia's ANZUS alliance may make mainland bases targets."},{name:'Paraguay Interior',lat:-22.0,lng:-58.0,rank:6,score:'MODERATE',why:'Landlocked, no strategic military value. Agricultural capacity.',caveat:'Limited medical infrastructure.'},{name:'Ireland',lat:53.1,lng:-8.1,rank:7,score:'MODERATE',why:'Neutral state — not a NATO member, no nuclear hosting.',caveat:'Proximity to UK and Northern Europe fallout corridor.'}];
-const conflictHeatZones=[{lat:50.45,lng:30.52,intensity:1.0,label:'Ukraine theater'},{lat:32.0,lng:35.0,intensity:.95,label:'Israel-Gaza-Lebanon corridor'},{lat:15.5,lng:48.5,intensity:.75,label:'Yemen civil conflict'},{lat:15.5,lng:30.0,intensity:.85,label:'Sudan civil war'},{lat:16.0,lng:114.0,intensity:.55,label:'South China Sea / Taiwan Strait'},{lat:29.5,lng:47.8,intensity:.5,label:'Gulf sector friction'},{lat:9.0,lng:38.7,intensity:.45,label:'Horn of Africa instability'},{lat:12.0,lng:8.0,intensity:.6,label:'Sahel insurgency belt'},{lat:4.5,lng:27.0,intensity:.5,label:'DR Congo conflict'},{lat:34.8,lng:38.99,intensity:.6,label:'Syria residual conflict'},{lat:33.3,lng:44.4,intensity:.4,label:'Iraq instability'},{lat:6.5,lng:2.5,intensity:.3,label:'Gulf of Guinea piracy'}];
+function renderGeoFreshness() {
+    const rev = new Date(GEO_DATASET_REVISION + 'T00:00:00Z');
+    const next = new Date(rev.getTime() + GEO_REVIEW_INTERVAL_DAYS * 86400000);
+    document.getElementById('geoRevLabel').textContent = GEO_DATASET_REVISION;
+    document.getElementById('geoNextLabel').textContent = next.toISOString().slice(0,10);
+}
 
-function renderSafeZoneCard(){const c=document.getElementById('safezoneList');c.innerHTML=safeZones.map(z=>'<div class="safezone-item"><div class="safezone-rank">#'+z.rank+'</div><div><span class="safezone-name">'+z.name+'</span><span class="safezone-score">SURVIVABILITY: '+z.score+'</span><span class="safezone-why">'+z.why+'</span><span class="safezone-caveat">&#9888; '+z.caveat+'</span></div></div>').join('');}
+// ============================================================
+// MAP DATA — hand-curated, reviewed on GEO_DATASET_REVISION
+// ============================================================
+const conflictHotspots = [
+    { name:'Eastern Corridor Watch',  lat:50.45, lng:30.52,  note:'Russia-Ukraine active front — OSINT-EUR monitoring' },
+    { name:'Pacific Maritime Sector', lat:16.0,  lng:114.0,  note:'Taiwan Strait / South China Sea — PLA naval activity' },
+    { name:'Mideast Signal Relay',    lat:32.0,  lng:35.0,   note:'Iran-Israel theater — active strike exchange monitoring' },
+    { name:'Arctic Approach',         lat:71.0,  lng:25.0,   note:'NATO-Russia northern flank proximity watch' },
+    { name:'Gulf Sector',             lat:29.5,  lng:47.8,   note:'US-Iran ceasefire compliance — Kuwait projectile interceptions ongoing' }
+];
 
-function toggleMapLegend(){const legend=document.getElementById('mapLegend');const btn=document.getElementById('legendToggleBtn');const title=document.getElementById('legendTitle');const collapsed=legend.classList.toggle('collapsed');if(collapsed){btn.textContent='[ SHOW ]';title.textContent='Key';}else{btn.textContent='[ HIDE ]';title.textContent='Map Key';}try{localStorage.setItem('mapLegendCollapsed',collapsed?'1':'0');}catch(e){}}
-function restoreMapLegendState(){try{if(localStorage.getItem('mapLegendCollapsed')==='1')toggleMapLegend();}catch(e){}}
+// Primary nuclear target zones — sourced from open-source targeting doctrine
+const primaryTargets = [
+    { name:'Washington D.C.',        lat:38.89,  lng:-77.03, note:'National command authority. Pentagon. Top priority counterforce + countervalue target.' },
+    { name:'New York City',          lat:40.71,  lng:-74.00, note:'Largest US population center. Financial hub. High-priority countervalue target.' },
+    { name:'Los Angeles',            lat:34.05,  lng:-118.24,note:'Major port, industry, population. Secondary priority target.' },
+    { name:'Chicago',                lat:41.87,  lng:-87.63, note:'Rail/industrial hub. High-priority countervalue.' },
+    { name:'Minot AFB / ND Silos',   lat:48.41,  lng:-101.35,note:'Minuteman III ICBM silo belt. North Dakota / Montana / Wyoming. First-wave counterforce priority.' },
+    { name:'Norfolk Naval Station',  lat:36.94,  lng:-76.32, note:'Largest US naval base. Fleet Forces Command HQ. Top counterforce target.' },
+    { name:'Offutt AFB / STRATCOM',  lat:41.12,  lng:-95.91, note:'US Strategic Command HQ. High-priority C2 decapitation target.' },
+    { name:'Moscow',                 lat:55.75,  lng:37.61,  note:'Russian national command authority. Kremlin. Top US countervalue target.' },
+    { name:'Beijing',                lat:39.90,  lng:116.40, note:'Chinese NCA. PLA General Staff HQ. US countervalue target in extended scenario.' },
+    { name:'London',                 lat:51.50,  lng:-0.12,  note:'UK NCA. NATO nuclear partner. Russian counterforce target in escalation scenario.' },
+    { name:'Paris',                  lat:48.85,  lng:2.35,   note:'French NCA. NATO nuclear partner. Independent deterrent command.' },
+    { name:'Pyongyang',              lat:39.01,  lng:125.74, note:'DPRK NCA. US/ROK first-strike priority in peninsula scenario.' }
+];
 
-function highlightDefconLegend(level){for(let i=1;i<=5;i++){const el=document.getElementById('legend-'+i);if(!el)continue;el.className='defcon-row';if(i===level){const t=DEFCON_THRESHOLDS.find(d=>d.level===level);el.classList.add(t?t.legendClass:'active');}}}
-function runRiskCalculations(){const n=FIXED_VECTORS.nuke,g=FIXED_VECTORS.geo,c=FIXED_VECTORS.climate;const cm=c*.18;const ts=(n*.40)+((g+cm)*.35)+(c*.25);const cs=Math.min(100,Math.max(0,ts));const s2m=Math.max(0,Math.round(600-(cs/100)*600));document.getElementById('clockMetric').innerText=s2m+'s';document.getElementById('clockHand').style.transform='rotate('+(-(s2m*.1))+'deg)';let matched=DEFCON_THRESHOLDS[DEFCON_THRESHOLDS.length-1];for(const t of DEFCON_THRESHOLDS){if(ts>=t.minScore){matched=t;break;}}const dM=document.getElementById('defconMetric');dM.innerText='DEFCON '+matched.level;dM.style.color=matched.color;dM.style.textShadow='0 0 16px '+matched.color;document.getElementById('defconDesc').innerText=DEFCON_DESCRIPTIONS[matched.level];highlightDefconLegend(matched.level);}
+// Military bases (NATO/US/Russia/China) and major civil nuclear power plants —
+// distinct from primaryTargets above: these are operational installations
+// (troop presence, reactors), not strategic command/launch targets.
+const militaryNuclearSites = [
+    // — NATO / US bases
+    { type:'mil', name:'Ramstein Air Base (USAFE)',     lat:49.44,  lng:7.60,   note:'NATO/US Air Forces Europe HQ. Major logistics and airlift hub, Germany.' },
+    { type:'mil', name:'RAF Lakenheath',                lat:52.41,  lng:0.56,   note:'US Air Force base, UK. F-35 fighter wing.' },
+    { type:'mil', name:'Incirlik Air Base',              lat:37.00,  lng:35.43,  note:'US/NATO base, Turkey. Forward presence near Mideast theater.' },
+    { type:'mil', name:'Camp Humphreys',                 lat:36.97,  lng:127.03, note:'Largest US overseas base. South Korea, peninsula deterrence.' },
+    { type:'mil', name:'Yokota Air Base',                lat:35.75,  lng:139.35, note:'US Forces Japan HQ. Western Pacific logistics.' },
+    { type:'mil', name:'Diego Garcia',                   lat:-7.31,  lng:72.41,  note:'US/UK joint base, Indian Ocean. Strategic bomber and naval staging.' },
+    // — Russia
+    { type:'mil', name:'Kaliningrad Garrison',           lat:54.71,  lng:20.51,  note:'Russian exclave base. Baltic Fleet, Iskander missile presence.' },
+    { type:'mil', name:'Severomorsk Naval Base',         lat:69.07,  lng:33.42,  note:'Russian Northern Fleet HQ. Arctic/Atlantic naval power projection.' },
+    { type:'mil', name:'Hmeimim Air Base',               lat:35.40,  lng:35.95,  note:'Russian base in Syria. Mediterranean/Mideast forward presence.' },
+    // — China
+    { type:'mil', name:'Yulin Naval Base',               lat:18.22,  lng:109.49, note:'PLAN submarine base, Hainan Island. South China Sea power projection.' },
+    { type:'mil', name:'Djibouti Support Base',          lat:11.59,  lng:43.15,  note:'China\u2019s only overseas military base. Horn of Africa / Red Sea access.' },
+    { type:'mil', name:'Fiery Cross Reef',               lat:9.55,   lng:112.89, note:'PLA militarized artificial island, Spratly Islands, South China Sea.' },
+    // — Civil nuclear power plants (major, high public-data visibility)
+    { type:'nuke', name:'Zaporizhzhia NPP',              lat:47.51,  lng:34.59,  note:'Largest nuclear plant in Europe, Ukraine. Active conflict-zone safety concern (IAEA monitored).' },
+    { type:'nuke', name:'Bushehr NPP',                   lat:28.83,  lng:50.89,  note:'Iran\u2019s sole operating commercial nuclear power plant.' },
+    { type:'nuke', name:'Kori NPP',                      lat:35.32,  lng:129.30, note:'South Korea\u2019s first and largest nuclear power complex.' },
+    { type:'nuke', name:'Fukushima Daiichi (decommissioning)', lat:37.42, lng:141.03, note:'Site of 2011 meltdown. Long-term decommissioning and water-release operations ongoing.' },
+    { type:'nuke', name:'Three Mile Island',             lat:40.15,  lng:-76.72, note:'US plant, site of 1979 partial meltdown. Restart efforts underway as of 2026.' },
+    { type:'nuke', name:'Diablo Canyon Power Plant',     lat:35.21,  lng:-120.85,note:'Last operating nuclear plant in California, US.' },
+    { type:'nuke', name:'Gravelines Nuclear Power Station', lat:51.02, lng:2.14, note:'Largest nuclear power plant in Western Europe, France.' },
+    { type:'nuke', name:'Kursk NPP',                     lat:51.68,  lng:35.60,  note:'Russian nuclear plant near Ukraine border region.' },
+];
 
-const layerState={conflict:true,targets:true,safezones:true,events:true,planes:true,milnuke:true,quakes:true};
-const layerGroups={};
-function toggleLayer(name){layerState[name]=!layerState[name];const btn=document.getElementById('btn-'+name);if(layerState[name]){layerGroups[name].addTo(window.pipboyMap);btn.style.opacity='1';}else{window.pipboyMap.removeLayer(layerGroups[name]);btn.style.opacity='0.35';}}
 
-function initGlobalMap(){if(typeof L==='undefined'){console.warn('Leaflet not loaded');return;}const map=L.map('globalMap',{worldCopyJump:true}).setView([20,10],2);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);window.pipboyMap=map;
-const conflictGroup=L.layerGroup();const conflictIcon=L.divIcon({className:'pipboy-marker',html:'&#9670;',iconSize:[16,16]});conflictHotspots.forEach(s=>{L.marker([s.lat,s.lng],{icon:conflictIcon}).addTo(conflictGroup).bindPopup('<strong>'+s.name+'</strong><br>'+s.note);});conflictGroup.addTo(map);layerGroups.conflict=conflictGroup;
-const targetGroup=L.layerGroup();const targetIcon=L.divIcon({className:'pipboy-marker-hot',html:'&#9888;',iconSize:[16,16]});primaryTargets.forEach(t=>{L.marker([t.lat,t.lng],{icon:targetIcon}).addTo(targetGroup).bindPopup('<strong style="color:#ff3b3b">&#9888; '+t.name+'</strong><br><span style="font-size:.8rem">'+t.note+'</span>');});targetGroup.addTo(map);layerGroups.targets=targetGroup;
-const safeGroup=L.layerGroup();const safeIcon=L.divIcon({className:'pipboy-marker-safe',html:'&#10022;',iconSize:[16,16]});safeZones.forEach(z=>{L.marker([z.lat,z.lng],{icon:safeIcon}).addTo(safeGroup).bindPopup('<div class="safe-popup"><span class="sp-title">&#10022; #'+z.rank+' — '+z.name+'</span><span class="sp-score">SURVIVABILITY: '+z.score+'</span><span class="sp-reason">'+z.why+'</span><span class="sp-caveat">&#9888; '+z.caveat+'</span></div>');});safeGroup.addTo(map);layerGroups.safezones=safeGroup;
-const milGroup=L.layerGroup();const milIcon=L.divIcon({className:'pipboy-marker-mil',html:'&#9760;',iconSize:[16,16]});const nukeIcon=L.divIcon({className:'pipboy-marker-nuke',html:'&#9762;',iconSize:[16,16]});militaryNuclearSites.forEach(s=>{const icon=s.type==='nuke'?nukeIcon:milIcon;const color=s.type==='nuke'?'#ffe14d':'#ff7a3d';const tag=s.type==='nuke'?'CIVIL NUCLEAR SITE':'MILITARY BASE';const glyph=s.type==='nuke'?'&#9762;':'&#9760;';L.marker([s.lat,s.lng],{icon:icon}).addTo(milGroup).bindPopup('<div class="info-popup"><span class="ip-title" style="color:'+color+'">'+glyph+' '+s.name+'</span><span class="ip-meta">'+tag+'</span><span class="ip-body">'+s.note+'</span></div>');});milGroup.addTo(map);layerGroups.milnuke=milGroup;
-const quakeGroup=L.layerGroup();quakeGroup.addTo(map);layerGroups.quakes=quakeGroup;window.pipboyQuakeGroup=quakeGroup;
-const heatGroup=L.layerGroup();conflictHeatZones.forEach(z=>{const br=90000+z.intensity*260000;const op=.10+z.intensity*.22;L.circle([z.lat,z.lng],{radius:br,color:'#ff3b3b',weight:0,fillColor:'#ff3b3b',fillOpacity:op}).addTo(heatGroup).bindPopup('<strong style="color:#ff3b3b">'+z.label+'</strong><br><span style="font-size:.75rem">Conflict intensity: '+Math.round(z.intensity*100)+'%</span>');if(z.intensity>.6){L.circle([z.lat,z.lng],{radius:br*.4,color:'#ff3b3b',weight:0,fillColor:'#ff3b3b',fillOpacity:op*1.6}).addTo(heatGroup);}});heatGroup.addTo(map);window.pipboyHeatGroup=heatGroup;
-const eventGroup=L.layerGroup();eventGroup.addTo(map);layerGroups.events=eventGroup;window.pipboyEventGroup=eventGroup;
-const planeGroup=L.layerGroup();planeGroup.addTo(map);layerGroups.planes=planeGroup;window.pipboyPlaneGroup=planeGroup;
-const userIcon=L.divIcon({className:'pipboy-marker-user',html:'&#9737;',iconSize:[18,18]});window.pipboyUserMarker=L.marker([0,0],{icon:userIcon,opacity:0}).addTo(map);
-setTimeout(()=>map.invalidateSize(),200);}
+const safeZones = [
+    {
+        name:'Patagonia, Argentina',
+        lat:-46.5, lng:-71.5,
+        rank:1, score:'HIGH',
+        why:'Remote Southern Hemisphere. No strategic value. Strong agricultural base. Prevailing winds push Northern Hemisphere fallout away. Low population density. Argentina has no nuclear alliance obligations.',
+        caveat:'Nuclear winter food disruption remains a risk globally. Argentine urban centers still exposed.'
+    },
+    {
+        name:'South Island, New Zealand',
+        lat:-44.5, lng:170.0,
+        rank:2, score:'HIGH',
+        why:'Extreme geographic isolation. No nuclear targets on island. Strong food/water self-sufficiency. Southern Pacific location minimizes fallout from Northern Hemisphere exchanges. Stable governance.',
+        caveat:'Nuclear soot stratospheric injection could still reduce NZ crop yields 20–40%.'
+    },
+    {
+        name:'Iceland',
+        lat:64.9,  lng:-18.5,
+        rank:3, score:'HIGH',
+        why:'Geothermal energy independence. No nuclear weapons or hosting obligations. Remote North Atlantic. Limited strategic value. ~370,000 population — manageable resource load. NATO member but no deployed assets.',
+        caveat:'Proximity to Northern Hemisphere fallout corridors. Ocean currents may carry contamination.'
+    },
+    {
+        name:'Uruguay',
+        lat:-32.5, lng:-56.0,
+        rank:4, score:'MODERATE-HIGH',
+        why:'Small, politically stable, no military alliances. Southern Hemisphere. Strong agricultural output. No nuclear target value. Low population density in interior regions.',
+        caveat:'Proximity to Argentine and Brazilian urban centers creates secondary risk.'
+    },
+    {
+        name:'Tasmania, Australia',
+        lat:-42.0, lng:146.5,
+        rank:5, score:'MODERATE-HIGH',
+        why:'Island geography. Remote from Northern Hemisphere exchanges. Australia has no nuclear weapons. Strong food production. Low population. Prevailing southern winds favorable.',
+        caveat:'Australia\'s alliance with US (ANZUS) may make mainland bases targets, not Tasmania directly.'
+    },
+    {
+        name:'Paraguay Interior',
+        lat:-22.0, lng:-58.0,
+        rank:6, score:'MODERATE',
+        why:'Landlocked, no strategic military value. Southern Hemisphere. Agricultural capacity. Geographic buffer from coastal exposure. No nuclear alliance.',
+        caveat:'Limited medical infrastructure. River systems could carry contamination from regional fallout.'
+    },
+    {
+        name:'Ireland',
+        lat:53.1,  lng:-8.1,
+        rank:7, score:'MODERATE',
+        why:'Neutral state — not a NATO member, no nuclear hosting. No strategic military targets. Self-sufficient food production. English-speaking, stable institutions.',
+        caveat:'Proximity to UK (primary target) and Northern Europe fallout corridor is a significant risk factor.'
+    }
+];
 
-const EVENT_TTL_MS=90*60*1000;
-const EVENT_GAZETTEER=[{name:'Ukraine',lat:49.0,lng:31.0,label:'Ukraine'},{name:'Russia',lat:61.5,lng:90.0,label:'Russia'},{name:'Moscow',lat:55.75,lng:37.61,label:'Moscow'},{name:'Kyiv',lat:50.45,lng:30.52,label:'Kyiv'},{name:'Taiwan',lat:23.7,lng:121.0,label:'Taiwan'},{name:'China',lat:35.0,lng:103.0,label:'China'},{name:'Beijing',lat:39.90,lng:116.40,label:'Beijing'},{name:'Israel',lat:31.5,lng:34.8,label:'Israel'},{name:'Iran',lat:32.0,lng:53.0,label:'Iran'},{name:'Gaza',lat:31.4,lng:34.4,label:'Gaza'},{name:'Lebanon',lat:33.85,lng:35.86,label:'Lebanon'},{name:'Syria',lat:34.8,lng:38.99,label:'Syria'},{name:'Yemen',lat:15.5,lng:48.5,label:'Yemen'},{name:'Korea',lat:38.0,lng:127.5,label:'Korean Peninsula'},{name:'Pyongyang',lat:39.01,lng:125.74,label:'Pyongyang'},{name:'India',lat:22.0,lng:79.0,label:'India'},{name:'Pakistan',lat:30.0,lng:70.0,label:'Pakistan'},{name:'Sudan',lat:15.5,lng:30.0,label:'Sudan'},{name:'Venezuela',lat:7.0,lng:-66.0,label:'Venezuela'},{name:'Mexico',lat:23.0,lng:-102.0,label:'Mexico'},{name:'Washington',lat:38.89,lng:-77.03,label:'Washington D.C.'},{name:'NATO',lat:50.85,lng:4.35,label:'NATO HQ (Brussels)'}];
-const eventMarkerRegistry=[];
-function pruneExpiredEventMarkers(){const now=Date.now();for(let i=eventMarkerRegistry.length-1;i>=0;i--){if(eventMarkerRegistry[i].expiresAt<=now){window.pipboyEventGroup.removeLayer(eventMarkerRegistry[i].marker);eventMarkerRegistry.splice(i,1);}}}
-function plotNewsEvent(item){if(!window.pipboyEventGroup)return;const text=item.text||'';const hit=EVENT_GAZETTEER.find(g=>text.toLowerCase().includes(g.name.toLowerCase()));if(!hit)return;const jitter=()=>(Math.random()-.5)*1.4;const eventIcon=L.divIcon({className:'pipboy-marker-event',html:'&#9889;',iconSize:[15,15]});const marker=L.marker([hit.lat+jitter(),hit.lng+jitter()],{icon:eventIcon});marker.bindPopup('<div class="info-popup"><span class="ip-title" style="color:var(--warning)">&#9889; '+hit.label+'</span><span class="ip-meta">'+(item.source||'NEWS-FEED')+' &middot; '+new Date().toLocaleTimeString()+'</span><span class="ip-body">'+text+'</span></div>');marker.addTo(window.pipboyEventGroup);eventMarkerRegistry.push({marker:marker,expiresAt:Date.now()+EVENT_TTL_MS});}
+// Conflict intensity heatmap — permanent overlay, not click-triggered.
+// Centers reuse the existing conflictHotspots coordinates (single source of
+// truth — if a hotspot moves, its heat blob moves with it) plus a short list
+// of additional active-conflict zones not otherwise pinned on the map.
+// "intensity" (0-1) drives radius + opacity; it is a coarse editorial label
+// (high/medium/low based on ACLED/UCDP active-conflict counts), not a live feed.
+const conflictHeatZones = [
+    { lat:50.45, lng:30.52,  intensity:1.0,  label:'Ukraine theater' },
+    { lat:32.0,  lng:35.0,   intensity:0.95, label:'Israel-Gaza-Lebanon corridor' },
+    { lat:15.5,  lng:48.5,   intensity:0.75, label:'Yemen civil conflict' },
+    { lat:15.5,  lng:30.0,   intensity:0.85, label:'Sudan civil war' },
+    { lat:16.0,  lng:114.0,  intensity:0.55, label:'South China Sea / Taiwan Strait tension' },
+    { lat:29.5,  lng:47.8,   intensity:0.5,  label:'Gulf sector friction' },
+    { lat:9.0,   lng:38.7,   intensity:0.45, label:'Horn of Africa instability' },
+    { lat:12.0,  lng:8.0,    intensity:0.6,  label:'Sahel insurgency belt' },
+    { lat:4.5,   lng:27.0,   intensity:0.5,  label:'DR Congo / Great Lakes conflict' },
+    { lat:34.8,  lng:38.99,  intensity:0.6,  label:'Syria residual conflict' },
+    { lat:33.3,  lng:44.4,   intensity:0.4,  label:'Iraq instability' },
+    { lat:6.5,   lng:2.5,    intensity:0.3,  label:'Gulf of Guinea piracy/insurgency' },
+];
 
-const OPENSKY_URL='https://opensky-network.org/api/states/all?lamin=-60&lomin=-180&lamax=75&lomax=180';
-const MAX_AIRCRAFT_RENDERED=120;
-let aircraftMarkers=[];
-async function refreshAircraft(){if(!window.pipboyPlaneGroup)return;try{const data=await fetchViaProxy(OPENSKY_URL,false);const states=Array.isArray(data.states)?data.states:[];aircraftMarkers.forEach(m=>window.pipboyPlaneGroup.removeLayer(m));aircraftMarkers=[];const inAir=states.filter(s=>s[5]!=null&&s[6]!=null&&!s[8]);const sampled=inAir.length>MAX_AIRCRAFT_RENDERED?inAir.filter(()=>Math.random()<MAX_AIRCRAFT_RENDERED/inAir.length):inAir;sampled.forEach(s=>{const cs=(s[1]||'').trim()||'UNKNOWN';const lon=s[5],lat=s[6],hd=s[10]||0;const altM=s[7];const velMs=s[9];const icon=L.divIcon({className:'pipboy-marker-plane',html:'<span style="display:inline-block;transform:rotate('+hd+'deg);">&#9992;</span>',iconSize:[14,14]});const marker=L.marker([lat,lon],{icon:icon});marker.bindPopup('<div class="info-popup"><span class="ip-title" style="color:var(--info)">&#9992; '+cs+'</span><span class="ip-meta">OpenSky Network &middot; live ADS-B</span><span class="ip-body">Altitude: '+(altM!=null?Math.round(altM)+' m':'n/a')+'<br>Speed: '+(velMs!=null?Math.round(velMs*3.6)+' km/h':'n/a')+'<br>Heading: '+Math.round(hd)+'&deg;</span></div>');marker.addTo(window.pipboyPlaneGroup);aircraftMarkers.push(marker);});document.getElementById('aircraftCountLabel').textContent=sampled.length;}catch(e){console.warn('OpenSky fetch failed',e);}}
 
-const MARKET_CATEGORIES={indices:[{symbol:'^spx',name:'S&P 500',sub:'US Large Cap'},{symbol:'^dji',name:'Dow Jones',sub:'US Industrial'},{symbol:'^ndq',name:'Nasdaq',sub:'US Tech-heavy'},{symbol:'^ipsa',name:'IPSA',sub:'Chile — Bolsa de Santiago'}],forex:[{symbol:'usdclp',name:'USD/CLP',sub:'Dollar — Chilean Peso'},{symbol:'eurusd',name:'EUR/USD',sub:'Euro — US Dollar'},{symbol:'usdjpy',name:'USD/JPY',sub:'Dollar — Japanese Yen'},{symbol:'usdrub',name:'USD/RUB',sub:'Dollar — Russian Ruble'}],commodities:[{symbol:'gc.f',name:'Gold',sub:'COMEX Futures, $/oz'},{symbol:'cl.f',name:'Crude Oil',sub:'WTI Futures, $/bbl'},{symbol:'si.f',name:'Silver',sub:'COMEX Futures, $/oz'},{symbol:'ng.f',name:'Natural Gas',sub:'NYMEX Futures, $/MMBtu'}]};
-let currentMarketCategory='indices';
-function buildStooqUrl(symbols){return 'https://stooq.com/q/l/?s='+symbols.join(',')+'&f=sd2t2ohlcv&h&e=csv';}
-function parseStooqCsv(csvText){const lines=csvText.trim().split(/\r?\n/);if(lines.length<2)return[];const header=lines[0].split(',').map(h=>h.trim().toLowerCase());const closeIdx=header.indexOf('close');const openIdx=header.indexOf('open');const symIdx=header.indexOf('symbol');return lines.slice(1).map(line=>{const cols=line.split(',');const close=parseFloat(cols[closeIdx]);const open=parseFloat(cols[openIdx]);return{symbol:(cols[symIdx]||'').toLowerCase().trim(),close:isNaN(close)?null:close,open:isNaN(open)?null:open};});}
-function setMarketCategory(category){if(!MARKET_CATEGORIES[category])return;currentMarketCategory=category;document.querySelectorAll('.market-tab').forEach(btn=>btn.classList.remove('active'));const ab=document.getElementById('tab-'+category);if(ab)ab.classList.add('active');refreshMarkets();}
-async function refreshMarkets(){const grid=document.getElementById('marketGrid');if(!grid)return;const tickers=MARKET_CATEGORIES[currentMarketCategory]||MARKET_CATEGORIES.indices;try{const url=buildStooqUrl(tickers.map(t=>t.symbol));const csv=await fetchViaProxy(url,true);const rows=parseStooqCsv(csv);grid.innerHTML=tickers.map(t=>{const row=rows.find(x=>x.symbol===t.symbol.toLowerCase());if(!row||row.close==null)return '<div class="ticker-item"><span class="ticker-name">'+t.name+'</span><span class="ticker-sub">'+t.sub+'</span><span class="ticker-stale">No data returned</span></div>';const change=(row.open!=null&&row.open!==0)?((row.close-row.open)/row.open)*100:null;const dir=change==null?'':(change>=0?'up':'down');const arrow=dir==='up'?'&#9650;':(dir==='down'?'&#9660;':'');return '<div class="ticker-item '+dir+'"><span class="ticker-name">'+t.name+'</span><span class="ticker-sub">'+t.sub+'</span><div class="ticker-price-row"><span class="ticker-price">'+row.close.toLocaleString()+'</span><span class="ticker-change '+dir+'">'+(change!=null?arrow+' '+change.toFixed(2)+'%':'n/a')+'</span></div></div>';}).join('');setFeedStatus('marketFeedStatus',true);}catch(e){console.warn('Market data fetch failed',e);setFeedStatus('marketFeedStatus',false);if(!grid.innerHTML){grid.innerHTML=tickers.map(t=>'<div class="ticker-item"><span class="ticker-name">'+t.name+'</span><span class="ticker-sub">'+t.sub+'</span><span class="ticker-stale">Feed unavailable</span></div>').join('');}}}
+function renderSafeZoneCard() {
+    const container = document.getElementById('safezoneList');
+    container.innerHTML = safeZones.map(z => `
+        <div class="safezone-item">
+            <div class="safezone-rank">#${z.rank}</div>
+            <div>
+                <span class="safezone-name">${z.name}</span>
+                <span class="safezone-score">SURVIVABILITY: ${z.score}</span>
+                <span class="safezone-why">${z.why}</span>
+                <span class="safezone-caveat">&#9888; ${z.caveat}</span>
+            </div>
+        </div>
+    `).join('');
+}
 
-const USGS_QUAKE_URL='https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson';
-let quakeMarkers=[];
-function quakeColor(mag){if(mag>=6)return '#ff3b3b';if(mag>=5)return '#ff7a3d';return '#d97cff';}
-async function refreshEarthquakes(){if(!window.pipboyQuakeGroup)return;try{const r=await fetch(USGS_QUAKE_URL);if(!r.ok)throw new Error('usgs http '+r.status);const data=await r.json();const features=Array.isArray(data.features)?data.features:[];quakeMarkers.forEach(m=>window.pipboyQuakeGroup.removeLayer(m));quakeMarkers=[];features.forEach(f=>{const coords=f.geometry&&f.geometry.coordinates;if(!coords)return;const lon=coords[0],lat=coords[1];if(lon==null||lat==null)return;const mag=f.properties&&f.properties.mag;const place=(f.properties&&f.properties.place)||'Unknown location';const time=f.properties&&f.properties.time?new Date(f.properties.time).toLocaleString():'n/a';const url=f.properties&&f.properties.url;const color=quakeColor(mag||0);const rp=5+(mag||2)*2.2;const icon=L.divIcon({className:'pipboy-marker-quake',html:'<span style="display:inline-block;width:'+rp+'px;height:'+rp+'px;border-radius:50%;border:2px solid '+color+';box-shadow:0 0 6px '+color+';"></span>',iconSize:[rp,rp]});const marker=L.marker([lat,lon],{icon:icon});const linkHtml=url?'<br><a class="news-link" href="'+url+'" target="_blank" rel="noopener noreferrer">USGS report &#8599;</a>':'';marker.bindPopup('<div class="info-popup"><span class="ip-title" style="color:'+color+'">&#9711; M'+(mag!=null?mag.toFixed(1):'?')+' — '+place+'</span><span class="ip-meta">USGS &middot; '+time+'</span><span class="ip-body">'+(linkHtml||'Live earthquake feed, past 24h, M2.5+')+'</span></div>');marker.addTo(window.pipboyQuakeGroup);quakeMarkers.push(marker);});}catch(e){console.warn('USGS fetch failed',e);}}
+// ============================================================
+// RISK CALCULATIONS
+// ============================================================
+function highlightDefconLegend(level) {
+    for (let i = 1; i <= 5; i++) {
+        const el = document.getElementById('legend-' + i);
+        if (!el) continue;
+        el.className = 'defcon-row';
+        if (i === level) {
+            const t = DEFCON_THRESHOLDS.find(d => d.level === level);
+            el.classList.add(t ? t.legendClass : 'active');
+        }
+    }
+}
 
-const breakingAlarms=[{source:"OSINT-EUR",text:"Air space safety alerts initialized across eastern corridors.",type:"flash-red"},{source:"PACIFIC-MONITOR",text:"Task force formations track tactical transits inside contested maritime sectors.",type:"flash-orange"},{source:"UN-CLIMATE",text:"Accelerating water scarcity triggers regional resource mobilization orders.",type:"flash-orange"},{source:"CYBER-ALARM",text:"Malicious framework injections target multi-point energy distribution relays.",type:"flash-red"},{source:"MIDEAST-SIG",text:"Tactical air surveillance defense grids transition into active sweep configurations.",type:"flash-red"},{source:"ARMS-CTRL",text:"New START expiration leaves zero active US-Russia bilateral nuclear verification protocols.",type:"flash-red"},{source:"GULF-INTEL",text:"US-Iran ceasefire compliance monitoring ongoing.",type:"flash-orange"}];
-const localMockAlarms=[{source:"LOCAL-SIM",text:"Regional infrastructure monitoring nominal. No anomalies detected in local sector.",type:"flash-orange"},{source:"LOCAL-SIM",text:"Civil-defense channels report routine status for this sector.",type:"flash-orange"},{source:"LOCAL-SIM",text:"No live local feed available — displaying simulated placeholder traffic.",type:"flash-orange"}];
+function runRiskCalculations() {
+    const n = FIXED_VECTORS.nuke, g = FIXED_VECTORS.geo, c = FIXED_VECTORS.climate;
+    const climateImpactModifier = c * 0.18;
+    const absoluteThreatScore = (n * 0.40) + ((g + climateImpactModifier) * 0.35) + (c * 0.25);
+    const clampedScore = Math.min(100, Math.max(0, absoluteThreatScore));
+    let s2m = Math.max(0, Math.round(600 - (clampedScore / 100) * 600));
+    document.getElementById('clockMetric').innerText = s2m + 's';
+    document.getElementById('clockHand').style.transform = `rotate(${-(s2m * 0.1)}deg)`;
 
-function injectAlarm(tickerId,getPool){const ticker=document.getElementById(tickerId);if(!ticker)return;const pool=getPool();if(!pool.length)return;const a=pool[Math.floor(Math.random()*pool.length)];const el=document.createElement('div');el.className='news-alarm '+a.type;const linkHtml=a.link?'<br><a class="news-link" href="'+a.link+'" target="_blank" rel="noopener noreferrer">read source &#8599;</a>':'';el.innerHTML='<span class="news-time">['+new Date().toLocaleTimeString()+'] - INTEL SOURCE: '+a.source+'</span>'+a.text+linkHtml;ticker.insertBefore(el,ticker.firstChild);if(ticker.childNodes.length>8)ticker.removeChild(ticker.lastChild);plotNewsEvent(a);}
-function setFeedStatus(id,live,partial){const el=document.getElementById(id);if(!el)return;if(live){el.textContent='\u25CF ONLINE';el.className='feed-status status-online';}else if(partial){el.textContent='\u25CF PARTIAL';el.className='feed-status status-partial';}else{el.textContent='\u25CF OFFLINE — SIMULATED';el.className='feed-status status-offline';}}
+    let matched = DEFCON_THRESHOLDS[DEFCON_THRESHOLDS.length - 1];
+    for (const t of DEFCON_THRESHOLDS) { if (absoluteThreatScore >= t.minScore) { matched = t; break; } }
+    const dMetric = document.getElementById('defconMetric');
+    dMetric.innerText = 'DEFCON ' + matched.level;
+    dMetric.style.color = matched.color;
+    dMetric.style.textShadow = '0 0 16px ' + matched.color;
+    document.getElementById('defconDesc').innerText = DEFCON_DESCRIPTIONS[matched.level];
+    highlightDefconLegend(matched.level);
+}
 
-const RSS2JSON='https://api.rss2json.com/v1/api.json?rss_url=';
-const GLOBAL_SOURCES=[{name:'BBC World',url:'https://feeds.bbci.co.uk/news/world/rss.xml'},{name:'Al Jazeera',url:'https://www.aljazeera.com/xml/rss/all.xml'},{name:'Guardian World',url:'https://www.theguardian.com/world/rss'},{name:'NYT World',url:'https://rss.nytimes.com/services/xml/rss/nyt/World.xml'}];
-const POLL_MS=5*60*1000;
-function sev(text){return['strike','attack','missile','nuclear','invasion','war','ceasefire','explosion','killed','troops'].some(w=>text.toLowerCase().includes(w))?'flash-red':'flash-orange';}
-function normalizeForDedup(title){return title.toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).filter(Boolean).slice(0,8).join(' ');}
-async function fetchRss(url,src){try{const r=await fetch(RSS2JSON+encodeURIComponent(url));if(!r.ok)throw new Error(r.status);const d=await r.json();if(d.status!=='ok'||!Array.isArray(d.items))throw new Error('bad payload');return d.items.slice(0,8).map(i=>({source:src||(d.feed&&d.feed.title)||'LIVE-FEED',text:i.title,link:i.link,type:sev(i.title)}));}catch(e){console.warn('RSS fail',url,e);return null;}}
-function dedupeItems(items){const seen=new Set();const out=[];for(const it of items){const fp=normalizeForDedup(it.text||'');if(seen.has(fp))continue;seen.add(fp);out.push(it);}return out;}
+// ============================================================
+// MAP — LAYER GROUPS + TOGGLE
+// ============================================================
+const layerState = { conflict: true, targets: true, safezones: true, events: true, planes: true, milnuke: true, quakes: true };
+const layerGroups = {};
 
-let liveCache=[];
-async function refreshGlobal(){const results=await Promise.all(GLOBAL_SOURCES.map(s=>fetchRss(s.url,s.name)));const okResults=results.filter(Boolean);const merged=dedupeItems(okResults.flat());document.getElementById('sourceCountLabel').textContent=okResults.length;document.getElementById('sourceTotalLabel').textContent=GLOBAL_SOURCES.length;if(merged.length){liveCache=merged;if(okResults.length===GLOBAL_SOURCES.length)setFeedStatus('globalFeedStatus',true);else setFeedStatus('globalFeedStatus',false,true);}else{setFeedStatus('globalFeedStatus',false);}}
+function toggleLayer(name) {
+    layerState[name] = !layerState[name];
+    const btn = document.getElementById('btn-' + name);
+    if (layerState[name]) {
+        layerGroups[name].addTo(window.pipboyMap);
+        btn.style.opacity = '1';
+    } else {
+        window.pipboyMap.removeLayer(layerGroups[name]);
+        btn.style.opacity = '0.35';
+    }
+}
 
-let detectedLabel=null,localCache=[];
-function getCoords(){return new Promise((res,rej)=>{if(!navigator.geolocation)return rej();navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lon:p.coords.longitude}),rej,{timeout:8000});});}
-async function reverseGeo(lat,lon){const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lon,{headers:{Accept:'application/json'}});const d=await r.json();const a=d.address||{};const city=a.city||a.town||a.village||a.county;const label=[city,a.country].filter(Boolean).join(', ');if(!label)throw new Error('no addr');return{label:label,lat:lat,lon:lon};}
-async function ipGeo(){const r=await fetch('https://ipapi.co/json/');const d=await r.json();const label=[d.city,d.country_name].filter(Boolean).join(', ');if(!label)throw new Error('no label');return{label:label,lat:d.latitude,lon:d.longitude};}
-async function detectLoc(){try{const c=await getCoords();return await reverseGeo(c.lat,c.lon);}catch(e){}try{return await ipGeo();}catch(e){}return null;}
-async function refreshLocal(){if(!detectedLabel){const loc=await detectLoc();const el=document.getElementById('localSectorLabel');if(loc){detectedLabel=loc.label;if(el)el.textContent='— TRACKING: '+loc.label.toUpperCase();if(loc.lat&&loc.lon&&window.pipboyUserMarker)window.pipboyUserMarker.setLatLng([loc.lat,loc.lon]).setOpacity(1).bindPopup('YOUR POSITION: '+loc.label);}else{if(el)el.textContent='— LOCATION SERVICES UNAVAILABLE';}}if(!detectedLabel){setFeedStatus('localFeedStatus',false);return;}const url='https://news.google.com/rss/search?q='+encodeURIComponent(detectedLabel)+'&hl=en-US&gl=US&ceid=US:en';const items=await fetchRss(url,'LOCAL-'+detectedLabel.split(',')[0].toUpperCase());if(items&&items.length){localCache=dedupeItems(items);setFeedStatus('localFeedStatus',true);}else setFeedStatus('localFeedStatus',false);}
+function initGlobalMap() {
+    if (typeof L === 'undefined') { console.warn('Leaflet not loaded'); return; }
+    const map = L.map('globalMap', { worldCopyJump: true }).setView([20, 10], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    window.pipboyMap = map;
 
+    // — Conflict hotspots layer
+    const conflictGroup = L.layerGroup();
+    const conflictIcon = L.divIcon({ className: 'pipboy-marker', html: '&#9670;', iconSize: [16,16] });
+    conflictHotspots.forEach(s => {
+        L.marker([s.lat, s.lng], { icon: conflictIcon }).addTo(conflictGroup)
+            .bindPopup(`<strong>${s.name}</strong><br>${s.note}`);
+    });
+    conflictGroup.addTo(map);
+    layerGroups.conflict = conflictGroup;
+
+    // — Primary targets layer
+    const targetGroup = L.layerGroup();
+    const targetIcon  = L.divIcon({ className: 'pipboy-marker-hot', html: '&#9888;', iconSize: [16,16] });
+    primaryTargets.forEach(t => {
+        L.marker([t.lat, t.lng], { icon: targetIcon }).addTo(targetGroup)
+            .bindPopup(`<strong style="color:#ff3b3b">&#9888; ${t.name}</strong><br><span style="font-size:0.8rem">${t.note}</span>`);
+    });
+    targetGroup.addTo(map);
+    layerGroups.targets = targetGroup;
+
+    // — Safe zones layer
+    const safeGroup = L.layerGroup();
+    const safeIcon  = L.divIcon({ className: 'pipboy-marker-safe', html: '&#10022;', iconSize: [16,16] });
+    safeZones.forEach(z => {
+        L.marker([z.lat, z.lng], { icon: safeIcon }).addTo(safeGroup)
+            .bindPopup(`
+                <div class="safe-popup">
+                    <span class="sp-title">&#10022; #${z.rank} — ${z.name}</span>
+                    <span class="sp-score">SURVIVABILITY: ${z.score}</span>
+                    <span class="sp-reason">${z.why}</span>
+                    <span class="sp-caveat">&#9888; ${z.caveat}</span>
+                </div>
+            `);
+    });
+    safeGroup.addTo(map);
+    layerGroups.safezones = safeGroup;
+
+    // — Military & civil nuclear sites layer (toggleable)
+    const milGroup = L.layerGroup();
+    const milIcon  = L.divIcon({ className: 'pipboy-marker-mil',  html: '&#9760;', iconSize: [16,16] });
+    const nukeIcon = L.divIcon({ className: 'pipboy-marker-nuke', html: '&#9762;', iconSize: [16,16] });
+    militaryNuclearSites.forEach(s => {
+        const icon = s.type === 'nuke' ? nukeIcon : milIcon;
+        const color = s.type === 'nuke' ? '#ffe14d' : '#ff7a3d';
+        const tag = s.type === 'nuke' ? 'CIVIL NUCLEAR SITE' : 'MILITARY BASE';
+        L.marker([s.lat, s.lng], { icon }).addTo(milGroup)
+            .bindPopup(`
+                <div class="info-popup">
+                    <span class="ip-title" style="color:${color}">${s.type === 'nuke' ? '&#9762;' : '&#9760;'} ${s.name}</span>
+                    <span class="ip-meta">${tag}</span>
+                    <span class="ip-body">${s.note}</span>
+                </div>
+            `);
+    });
+    milGroup.addTo(map);
+    layerGroups.milnuke = milGroup;
+
+    // — Natural disasters layer (live earthquakes via USGS, populated dynamically — see refreshEarthquakes below)
+    const quakeGroup = L.layerGroup();
+    quakeGroup.addTo(map);
+    layerGroups.quakes = quakeGroup;
+    window.pipboyQuakeGroup = quakeGroup;
+
+    // — Conflict intensity heatmap (permanent overlay, not part of layerGroups
+    //   toggles — always visible alongside whatever other layers are on, same
+    //   way the base tile layer is always on). Implemented as graduated
+    //   translucent circles rather than a separate heatmap library, so no new
+    //   script dependency is introduced.
+    const heatGroup = L.layerGroup();
+    conflictHeatZones.forEach(z => {
+        const baseRadiusM = 90000 + z.intensity * 260000; // 90km-350km depending on intensity
+        const opacity = 0.10 + z.intensity * 0.22;
+        L.circle([z.lat, z.lng], {
+            radius: baseRadiusM,
+            color: 'var(--danger)',
+            weight: 0,
+            fillColor: '#ff3b3b',
+            fillOpacity: opacity
+        }).addTo(heatGroup).bindPopup(`<strong style="color:#ff3b3b">${z.label}</strong><br><span style="font-size:0.75rem">Conflict intensity: ${Math.round(z.intensity*100)}%</span>`);
+        // tighter, hotter core for high-intensity zones
+        if (z.intensity > 0.6) {
+            L.circle([z.lat, z.lng], {
+                radius: baseRadiusM * 0.4,
+                color: 'var(--danger)',
+                weight: 0,
+                fillColor: '#ff3b3b',
+                fillOpacity: opacity * 1.6
+            }).addTo(heatGroup);
+        }
+    });
+    heatGroup.addTo(map);
+    window.pipboyHeatGroup = heatGroup;
+
+    // — News-derived events layer (populated dynamically, see newsEventLayer below)
+    const eventGroup = L.layerGroup();
+    eventGroup.addTo(map);
+    layerGroups.events = eventGroup;
+    window.pipboyEventGroup = eventGroup;
+
+    // — Live aircraft layer (populated dynamically via OpenSky, see refreshAircraft below)
+    const planeGroup = L.layerGroup();
+    planeGroup.addTo(map);
+    layerGroups.planes = planeGroup;
+    window.pipboyPlaneGroup = planeGroup;
+
+    // — User position marker
+    const userIcon = L.divIcon({ className: 'pipboy-marker-user', html: '&#9737;', iconSize:[18,18] });
+    window.pipboyUserMarker = L.marker([0,0], { icon: userIcon, opacity:0 }).addTo(map);
+
+    setTimeout(() => map.invalidateSize(), 200);
+}
+
+// ============================================================
+// NEWS-DERIVED MAP EVENTS
+// ------------------------------------------------------------
+// There is no free equivalent of LiveUAmap's curated incident
+// feed. Rather than fabricate incident coordinates, we derive
+// approximate event markers from real aggregated headlines: each
+// headline is scanned for known place names (the same gazetteer
+// used for hotspots/targets, plus a short extra list of frequently
+// newsworthy capitals/regions). When a place name is matched, a
+// transient marker is plotted at that location with the real
+// headline + source + link in its popup. Markers age out after
+// EVENT_TTL_MS so the layer reflects "recent", not "all-time".
+// ============================================================
+const EVENT_TTL_MS = 90 * 60 * 1000; // 90 minutes
+const EVENT_GAZETTEER = [
+    ...conflictHotspots.map(h => ({ name: h.name.split(' ')[0], lat: h.lat, lng: h.lng, label: h.name })),
+    { name:'Ukraine',    lat:49.0,  lng:31.0,  label:'Ukraine' },
+    { name:'Russia',     lat:61.5,  lng:90.0,  label:'Russia' },
+    { name:'Moscow',     lat:55.75, lng:37.61, label:'Moscow' },
+    { name:'Kyiv',       lat:50.45, lng:30.52, label:'Kyiv' },
+    { name:'Taiwan',     lat:23.7,  lng:121.0, label:'Taiwan' },
+    { name:'China',      lat:35.0,  lng:103.0, label:'China' },
+    { name:'Beijing',    lat:39.90, lng:116.40,label:'Beijing' },
+    { name:'Israel',     lat:31.5,  lng:34.8,  label:'Israel' },
+    { name:'Iran',       lat:32.0,  lng:53.0,  label:'Iran' },
+    { name:'Gaza',       lat:31.4,  lng:34.4,  label:'Gaza' },
+    { name:'Lebanon',    lat:33.85, lng:35.86, label:'Lebanon' },
+    { name:'Syria',      lat:34.8,  lng:38.99, label:'Syria' },
+    { name:'Yemen',      lat:15.5,  lng:48.5,  label:'Yemen' },
+    { name:'Gulf',       lat:27.5,  lng:51.0,  label:'Persian Gulf' },
+    { name:'Korea',      lat:38.0,  lng:127.5, label:'Korean Peninsula' },
+    { name:'Pyongyang',  lat:39.01, lng:125.74,label:'Pyongyang' },
+    { name:'India',      lat:22.0,  lng:79.0,  label:'India' },
+    { name:'Pakistan',   lat:30.0,  lng:70.0,  label:'Pakistan' },
+    { name:'Sudan',      lat:15.5,  lng:30.0,  label:'Sudan' },
+    { name:'Venezuela',  lat:7.0,   lng:-66.0, label:'Venezuela' },
+    { name:'Mexico',     lat:23.0,  lng:-102.0,label:'Mexico' },
+    { name:'Washington', lat:38.89, lng:-77.03,label:'Washington D.C.' },
+    { name:'NATO',       lat:50.85, lng:4.35,  label:'NATO HQ (Brussels)' },
+];
+const eventMarkerRegistry = []; // { marker, expiresAt }
+
+function pruneExpiredEventMarkers() {
+    const now = Date.now();
+    for (let i = eventMarkerRegistry.length - 1; i >= 0; i--) {
+        if (eventMarkerRegistry[i].expiresAt <= now) {
+            window.pipboyEventGroup.removeLayer(eventMarkerRegistry[i].marker);
+            eventMarkerRegistry.splice(i, 1);
+        }
+    }
+}
+
+function plotNewsEvent(item) {
+    if (!window.pipboyEventGroup) return;
+    const text = item.text || '';
+    const hit = EVENT_GAZETTEER.find(g => text.toLowerCase().includes(g.name.toLowerCase()));
+    if (!hit) return;
+    // jitter slightly so repeated hits on the same place don't fully stack
+    const jitter = () => (Math.random() - 0.5) * 1.4;
+    const eventIcon = L.divIcon({ className: 'pipboy-marker-event', html: '&#9889;', iconSize: [15,15] });
+    const marker = L.marker([hit.lat + jitter(), hit.lng + jitter()], { icon: eventIcon });
+    marker.bindPopup(`
+        <div class="info-popup">
+            <span class="ip-title" style="color:var(--warning)">&#9889; ${hit.label}</span>
+            <span class="ip-meta">${item.source || 'NEWS-FEED'} &middot; ${new Date().toLocaleTimeString()}</span>
+            <span class="ip-body">${text}</span>
+        </div>
+    `);
+    marker.addTo(window.pipboyEventGroup);
+    eventMarkerRegistry.push({ marker, expiresAt: Date.now() + EVENT_TTL_MS });
+}
+
+// ============================================================
+// LIVE AIRCRAFT — OpenSky Network (no API key required)
+// ------------------------------------------------------------
+// OpenSky's anonymous REST endpoint is rate-limited (roughly one
+// request per 10s per IP) and occasionally returns 429s under
+// load — handled gracefully below by simply skipping that cycle.
+// We bound the bounding box requested and cap rendered aircraft
+// to keep the Leaflet layer light.
+// ============================================================
+const OPENSKY_URL = 'https://opensky-network.org/api/states/all';
+const MAX_AIRCRAFT_RENDERED = 120;
+let aircraftMarkers = [];
+
+async function refreshAircraft() {
+    if (!window.pipboyPlaneGroup) return;
+    try {
+        const r = await fetch(OPENSKY_URL);
+        if (!r.ok) throw new Error('opensky http ' + r.status);
+        const data = await r.json();
+        const states = Array.isArray(data.states) ? data.states : [];
+
+        // clear previous frame
+        aircraftMarkers.forEach(m => window.pipboyPlaneGroup.removeLayer(m));
+        aircraftMarkers = [];
+
+        // OpenSky state vector indices: 1=callsign, 5=lon, 6=lat, 10=track(heading), 7=baro_altitude, 9=velocity, 8=on_ground
+        const inAir = states.filter(s => s[5] != null && s[6] != null && !s[8]);
+        // sample down if there are more than our render cap (global feed is large)
+        const sampled = inAir.length > MAX_AIRCRAFT_RENDERED
+            ? inAir.filter(() => Math.random() < MAX_AIRCRAFT_RENDERED / inAir.length)
+            : inAir;
+
+        sampled.forEach(s => {
+            const callsign = (s[1] || '').trim() || 'UNKNOWN';
+            const lon = s[5], lat = s[6], heading = s[10] || 0;
+            const altM = s[7]; const velMs = s[9];
+            const icon = L.divIcon({
+                className: 'pipboy-marker-plane',
+                html: `<span style="display:inline-block;transform:rotate(${heading}deg);">&#9992;</span>`,
+                iconSize: [14,14]
+            });
+            const marker = L.marker([lat, lon], { icon });
+            marker.bindPopup(`
+                <div class="info-popup">
+                    <span class="ip-title" style="color:var(--info)">&#9992; ${callsign}</span>
+                    <span class="ip-meta">OpenSky Network &middot; live ADS-B</span>
+                    <span class="ip-body">
+                        Altitude: ${altM != null ? Math.round(altM) + ' m' : 'n/a'}<br>
+                        Speed: ${velMs != null ? Math.round(velMs * 3.6) + ' km/h' : 'n/a'}<br>
+                        Heading: ${Math.round(heading)}&deg;
+                    </span>
+                </div>
+            `);
+            marker.addTo(window.pipboyPlaneGroup);
+            aircraftMarkers.push(marker);
+        });
+
+        document.getElementById('aircraftCountLabel').textContent = sampled.length;
+    } catch (e) {
+        console.warn('OpenSky fetch failed (likely rate-limited), skipping this cycle', e);
+        // leave previous frame's markers in place rather than clearing to blank
+    }
+}
+
+// ============================================================
+// GLOBAL MARKET WATCH — Stooq CSV feed (free, no API key)
+// ------------------------------------------------------------
+// Stooq publishes a simple CSV quote endpoint that works fine
+// from the browser without auth or CORS issues for most symbols.
+// This is delayed/end-of-day style data, not a live exchange feed
+// — fine for a situational-awareness dashboard, explicitly labeled
+// as such in the UI disclaimer rather than implied as real-time.
+//
+// Symbols are grouped into selectable categories (tabs in the UI).
+// Stooq's symbol scheme: ^xxx for indices, currency pairs as
+// e.g. usdclp / eurusd, and commodities/futures with their own
+// short codes (gc.f = gold, cl.f = crude oil).
+// ============================================================
+const MARKET_CATEGORIES = {
+    indices: [
+        { symbol: '^spx',  name: 'S&P 500',    sub: 'US Large Cap' },
+        { symbol: '^dji',  name: 'Dow Jones',  sub: 'US Industrial' },
+        { symbol: '^ndq',  name: 'Nasdaq',     sub: 'US Tech-heavy' },
+        { symbol: '^ipsa', name: 'IPSA',       sub: 'Chile — Bolsa de Santiago' },
+    ],
+    forex: [
+        { symbol: 'usdclp', name: 'USD/CLP', sub: 'Dollar — Chilean Peso' },
+        { symbol: 'eurusd', name: 'EUR/USD', sub: 'Euro — US Dollar' },
+        { symbol: 'usdjpy', name: 'USD/JPY', sub: 'Dollar — Japanese Yen' },
+        { symbol: 'usdrub', name: 'USD/RUB', sub: 'Dollar — Russian Ruble' },
+    ],
+    commodities: [
+        { symbol: 'gc.f',  name: 'Gold',       sub: 'COMEX Futures, $/oz' },
+        { symbol: 'cl.f',  name: 'Crude Oil',  sub: 'WTI Futures, $/bbl' },
+        { symbol: 'si.f',  name: 'Silver',     sub: 'COMEX Futures, $/oz' },
+        { symbol: 'ng.f',  name: 'Natural Gas',sub: 'NYMEX Futures, $/MMBtu' },
+    ],
+};
+const STOOQ_URL = 'https://stooq.com/q/l/?s=SYMBOLS&f=sd2t2ohlcv&h&e=csv';
+let currentMarketCategory = 'indices';
+
+function parseStooqCsv(csvText) {
+    const lines = csvText.trim().split('\n');
+    const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const closeIdx = header.indexOf('close');
+    const openIdx = header.indexOf('open');
+    const symIdx = header.indexOf('symbol');
+    return lines.slice(1).map(line => {
+        const cols = line.split(',');
+        const close = parseFloat(cols[closeIdx]);
+        const open = parseFloat(cols[openIdx]);
+        return {
+            symbol: (cols[symIdx] || '').toLowerCase(),
+            close: isNaN(close) ? null : close,
+            open: isNaN(open) ? null : open
+        };
+    });
+}
+
+function setMarketCategory(category) {
+    if (!MARKET_CATEGORIES[category]) return;
+    currentMarketCategory = category;
+    document.querySelectorAll('.market-tab').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById('tab-' + category);
+    if (activeBtn) activeBtn.classList.add('active');
+    refreshMarkets();
+}
+
+async function refreshMarkets() {
+    const grid = document.getElementById('marketGrid');
+    if (!grid) return;
+    const tickers = MARKET_CATEGORIES[currentMarketCategory] || MARKET_CATEGORIES.indices;
+    try {
+        const url = STOOQ_URL.replace('SYMBOLS', tickers.map(t => t.symbol).join('+'));
+        const r = await fetch(url);
+        if (!r.ok) throw new Error('stooq http ' + r.status);
+        const csv = await r.text();
+        const rows = parseStooqCsv(csv);
+
+        grid.innerHTML = tickers.map(t => {
+            const row = rows.find(x => x.symbol === t.symbol);
+            if (!row || row.close == null) {
+                return `
+                    <div class="ticker-item">
+                        <span class="ticker-name">${t.name}</span>
+                        <span class="ticker-sub">${t.sub}</span>
+                        <span class="ticker-stale">No data returned for this symbol</span>
+                    </div>`;
+            }
+            const change = (row.open != null && row.open !== 0) ? ((row.close - row.open) / row.open) * 100 : null;
+            const dir = change == null ? '' : (change >= 0 ? 'up' : 'down');
+            const arrow = dir === 'up' ? '&#9650;' : (dir === 'down' ? '&#9660;' : '');
+            return `
+                <div class="ticker-item ${dir}">
+                    <span class="ticker-name">${t.name}</span>
+                    <span class="ticker-sub">${t.sub}</span>
+                    <div class="ticker-price-row">
+                        <span class="ticker-price">${row.close.toLocaleString()}</span>
+                        <span class="ticker-change ${dir}">${change != null ? arrow + ' ' + change.toFixed(2) + '%' : 'n/a'}</span>
+                    </div>
+                </div>`;
+        }).join('');
+
+        setFeedStatus('marketFeedStatus', true);
+    } catch (e) {
+        console.warn('Market data fetch failed', e);
+        setFeedStatus('marketFeedStatus', false);
+        if (!grid.innerHTML) {
+            grid.innerHTML = tickers.map(t => `
+                <div class="ticker-item">
+                    <span class="ticker-name">${t.name}</span>
+                    <span class="ticker-sub">${t.sub}</span>
+                    <span class="ticker-stale">Feed unavailable</span>
+                </div>`).join('');
+        }
+    }
+}
+
+// ============================================================
+// NATURAL DISASTERS — live earthquakes via USGS (no API key)
+// ------------------------------------------------------------
+// USGS publishes free, public GeoJSON feeds updated every 5
+// minutes, no key or auth required, CORS-friendly. We use the
+// "past day, magnitude 2.5+" feed as a reasonable balance between
+// global coverage and not flooding the map with thousands of
+// micro-quakes. Marker size/opacity scale with magnitude.
+//
+// Wildfires / hurricanes / floods: there's no equally simple
+// free+keyless GeoJSON equivalent for these (NASA FIRMS requires
+// a free API key for fire data; NOAA hurricane feeds are seasonal
+// and format-heavy). Left undone rather than faked — same
+// principle as the maritime-traffic stub above. To add later:
+//   - Wildfires: NASA FIRMS (https://firms.modaps.eosdis.nasa.gov/api/)
+//     — free key, simple CSV/GeoJSON, drop into a 'fires' layerGroup
+//     using the same marker pattern as refreshEarthquakes below.
+//   - Hurricanes/cyclones: NOAA NHC GIS feeds (no key, but
+//     seasonal/Atlantic+EPac only) — https://www.nhc.noaa.gov/gis/
+// ============================================================
+const USGS_QUAKE_URL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson';
+let quakeMarkers = [];
+
+function quakeColor(mag) {
+    if (mag >= 6) return '#ff3b3b';
+    if (mag >= 5) return '#ff7a3d';
+    return '#d97cff';
+}
+
+async function refreshEarthquakes() {
+    if (!window.pipboyQuakeGroup) return;
+    try {
+        let r = await fetch(USGS_QUAKE_URL);
+        if (!r.ok) throw new Error('usgs http ' + r.status);
+        const data = await r.json();
+        const features = Array.isArray(data.features) ? data.features : [];
+
+        quakeMarkers.forEach(m => window.pipboyQuakeGroup.removeLayer(m));
+        quakeMarkers = [];
+
+        features.forEach(f => {
+            const [lon, lat] = f.geometry?.coordinates || [];
+            if (lon == null || lat == null) return;
+            const mag = f.properties?.mag;
+            const place = f.properties?.place || 'Unknown location';
+            const time = f.properties?.time ? new Date(f.properties.time).toLocaleString() : 'n/a';
+            const url = f.properties?.url;
+            const color = quakeColor(mag || 0);
+            const radiusPx = 5 + (mag || 2) * 2.2;
+            const icon = L.divIcon({
+                className: 'pipboy-marker-quake',
+                html: `<span style="display:inline-block;width:${radiusPx}px;height:${radiusPx}px;border-radius:50%;border:2px solid ${color};box-shadow:0 0 6px ${color};"></span>`,
+                iconSize: [radiusPx, radiusPx]
+            });
+            const marker = L.marker([lat, lon], { icon });
+            const linkHtml = url ? `<br><a class="news-link" href="${url}" target="_blank" rel="noopener noreferrer">USGS report &#8599;</a>` : '';
+            marker.bindPopup(`
+                <div class="info-popup">
+                    <span class="ip-title" style="color:${color}">&#9711; M${mag != null ? mag.toFixed(1) : '?'} — ${place}</span>
+                    <span class="ip-meta">USGS &middot; ${time}</span>
+                    <span class="ip-body">${linkHtml || 'Live earthquake feed, past 24h, magnitude 2.5+'}</span>
+                </div>
+            `);
+            marker.addTo(window.pipboyQuakeGroup);
+            quakeMarkers.push(marker);
+        });
+    } catch (e) {
+        console.warn('USGS earthquake fetch failed, skipping this cycle', e);
+        // leave previous frame's markers in place rather than clearing to blank
+    }
+}
+
+
+const breakingAlarms = [
+    { source:"OSINT-EUR",       text:"Air space safety alerts initialized across eastern corridors. Sub-radar interference noted.",               type:"flash-red"    },
+    { source:"PACIFIC-MONITOR", text:"Task force formations track tactical transits inside contested maritime sectors.",                          type:"flash-orange" },
+    { source:"UN-CLIMATE",      text:"Accelerating water scarcity triggers regional resource mobilization orders.",                               type:"flash-orange" },
+    { source:"CYBER-ALARM",     text:"Malicious framework injections target multi-point energy distribution relays.",                             type:"flash-red"    },
+    { source:"MIDEAST-SIG",     text:"Tactical air surveillance defense grids transition into active sweep configurations.",                      type:"flash-red"    },
+    { source:"ARMS-CTRL",       text:"New START expiration leaves zero active US-Russia bilateral nuclear verification protocols.",               type:"flash-red"    },
+    { source:"GULF-INTEL",      text:"US-Iran ceasefire compliance monitoring ongoing — Iranian projectile activity in Gulf sector unconfirmed.", type:"flash-orange" }
+];
+const localMockAlarms = [
+    { source:"LOCAL-SIM", text:"Regional infrastructure monitoring nominal. No anomalies detected in local sector.",  type:"flash-orange" },
+    { source:"LOCAL-SIM", text:"Civil-defense channels report routine status for this sector.",                        type:"flash-orange" },
+    { source:"LOCAL-SIM", text:"No live local feed available — displaying simulated placeholder traffic.",             type:"flash-orange" }
+];
+
+function injectAlarm(tickerId, getPool) {
+    const ticker = document.getElementById(tickerId);
+    if (!ticker) return;
+    const pool = getPool(); if (!pool.length) return;
+    const a = pool[Math.floor(Math.random() * pool.length)];
+    const el = document.createElement('div');
+    el.className = `news-alarm ${a.type}`;
+    const linkHtml = a.link ? `<br><a class="news-link" href="${a.link}" target="_blank" rel="noopener noreferrer">read source &#8599;</a>` : '';
+    el.innerHTML = `<span class="news-time">[${new Date().toLocaleTimeString()}] - INTEL SOURCE: ${a.source}</span>${a.text}${linkHtml}`;
+    ticker.insertBefore(el, ticker.firstChild);
+    if (ticker.childNodes.length > 8) ticker.removeChild(ticker.lastChild);
+
+    // feed the map's news-derived events layer with the same real item
+    plotNewsEvent(a);
+}
+
+function setFeedStatus(id, live, partial) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (live) {
+        el.textContent = '\u25CF ONLINE';
+        el.className = 'feed-status status-online';
+    } else if (partial) {
+        el.textContent = '\u25CF PARTIAL';
+        el.className = 'feed-status status-partial';
+    } else {
+        el.textContent = '\u25CF OFFLINE — SIMULATED';
+        el.className = 'feed-status status-offline';
+    }
+}
+
+// ============================================================
+// RSS / LIVE FEEDS — multi-source aggregation + dedup
+// ------------------------------------------------------------
+// Originally this app polled a single BBC World RSS feed via
+// rss2json. That's now one entry in a list of independent
+// international sources. Each source is fetched in parallel;
+// failures are isolated per-source (one feed dying doesn't take
+// down the others). Results are merged, then deduplicated by a
+// normalized-title fingerprint so the same story breaking across
+// multiple outlets doesn't show up 3-4 times in the ticker.
+// ============================================================
+const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
+const GLOBAL_SOURCES = [
+    { name: 'BBC World',      url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+    { name: 'Reuters World',  url: 'https://www.reutersagency.com/feed/?best-topics=world&post_type=best' },
+    { name: 'Al Jazeera',     url: 'https://www.aljazeera.com/xml/rss/all.xml' },
+    { name: 'Guardian World', url: 'https://www.theguardian.com/world/rss' },
+    { name: 'NYT World',      url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+];
+const POLL_MS = 5 * 60 * 1000;
+
+function sev(text) {
+    return ['strike','attack','missile','nuclear','invasion','war','ceasefire','explosion','killed','troops']
+        .some(w => text.toLowerCase().includes(w)) ? 'flash-red' : 'flash-orange';
+}
+
+function normalizeForDedup(title) {
+    return title.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 8)   // fingerprint on the first ~8 significant words
+        .join(' ');
+}
+
+async function fetchRss(url, src) {
+    try {
+        const r = await fetch(RSS2JSON + encodeURIComponent(url));
+        if (!r.ok) throw new Error(r.status);
+        const d = await r.json();
+        if (d.status !== 'ok' || !Array.isArray(d.items)) throw new Error('bad payload');
+        return d.items.slice(0,8).map(i => ({
+            source: src || d.feed?.title || 'LIVE-FEED',
+            text: i.title,
+            link: i.link,
+            type: sev(i.title)
+        }));
+    } catch(e) { console.warn('RSS fail', url, e); return null; }
+}
+
+function dedupeItems(items) {
+    const seen = new Set();
+    const out = [];
+    for (const it of items) {
+        const fp = normalizeForDedup(it.text || '');
+        if (seen.has(fp)) continue;
+        seen.add(fp);
+        out.push(it);
+    }
+    return out;
+}
+
+let liveCache = [];
+async function refreshGlobal() {
+    const results = await Promise.all(GLOBAL_SOURCES.map(s => fetchRss(s.url, s.name)));
+    const okResults = results.filter(Boolean);
+    const merged = dedupeItems(okResults.flat());
+
+    document.getElementById('sourceCountLabel').textContent = okResults.length;
+    document.getElementById('sourceTotalLabel').textContent = GLOBAL_SOURCES.length;
+
+    if (merged.length) {
+        liveCache = merged;
+        if (okResults.length === GLOBAL_SOURCES.length) setFeedStatus('globalFeedStatus', true);
+        else setFeedStatus('globalFeedStatus', false, true); // partial: some sources down, still have data
+    } else {
+        setFeedStatus('globalFeedStatus', false);
+    }
+}
+
+let detectedLabel = null, localCache = [];
+function getCoords() {
+    return new Promise((res,rej) => {
+        if (!navigator.geolocation) return rej();
+        navigator.geolocation.getCurrentPosition(p => res({lat:p.coords.latitude,lon:p.coords.longitude}), rej, {timeout:8000});
+    });
+}
+async function reverseGeo(lat,lon) {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {headers:{Accept:'application/json'}});
+    const d = await r.json(); const a = d.address||{};
+    const city = a.city||a.town||a.village||a.county;
+    const label = [city, a.country].filter(Boolean).join(', ');
+    if (!label) throw new Error('no addr');
+    return {label,lat,lon};
+}
+async function ipGeo() {
+    const r = await fetch('https://ipapi.co/json/'); const d = await r.json();
+    const label = [d.city,d.country_name].filter(Boolean).join(', ');
+    if (!label) throw new Error('no label');
+    return {label, lat:d.latitude, lon:d.longitude};
+}
+async function detectLoc() {
+    try { const c = await getCoords(); return await reverseGeo(c.lat,c.lon); } catch{}
+    try { return await ipGeo(); } catch{}
+    return null;
+}
+async function refreshLocal() {
+    if (!detectedLabel) {
+        const loc = await detectLoc();
+        const el = document.getElementById('localSectorLabel');
+        if (loc) {
+            detectedLabel = loc.label;
+            if (el) el.textContent = '— TRACKING: ' + loc.label.toUpperCase();
+            if (loc.lat && loc.lon && window.pipboyUserMarker)
+                window.pipboyUserMarker.setLatLng([loc.lat,loc.lon]).setOpacity(1).bindPopup('YOUR POSITION: '+loc.label);
+        } else { if (el) el.textContent = '— LOCATION SERVICES UNAVAILABLE'; }
+    }
+    if (!detectedLabel) { setFeedStatus('localFeedStatus',false); return; }
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(detectedLabel)}&hl=en-US&gl=US&ceid=US:en`;
+    const items = await fetchRss(url, 'LOCAL-'+detectedLabel.split(',')[0].toUpperCase());
+    if (items?.length) { localCache = dedupeItems(items); setFeedStatus('localFeedStatus',true); }
+    else setFeedStatus('localFeedStatus',false);
+}
+
+// ============================================================
+// MARITIME TRAFFIC — placeholder hook (intentionally disabled)
+// ------------------------------------------------------------
+// Real vessel tracking (MarineTraffic, AISStream, etc.) requires
+// a personal API key with usage limits and terms of service that
+// can't be bundled into a static client-side file. This stub
+// documents exactly where that integration would slot in:
+//
+//   1. Get a free AISStream.io API key: https://aisstream.io
+//   2. Open a WebSocket to wss://stream.aisstream.io/v0/stream
+//   3. Send a subscription message with your API key + bounding box
+//   4. For each PositionReport message, plot a marker similar to
+//      refreshAircraft() above, into a new 'ships' layerGroup
+//      (mirror the .pipboy-marker-plane CSS pattern with a ship glyph)
+//   5. Add a "Live Maritime" button to .map-controls, matching the
+//      existing layer-btn pattern.
+//
+// Left disabled (not stubbed-and-called) so the app makes zero
+// network calls to a service that doesn't have a key configured.
+// ============================================================
+// function refreshVessels() { /* see comment above */ }
+
+// ============================================================
+// BOOT
+// ============================================================
 renderGeoFreshness();
 renderSafeZoneCard();
 runRiskCalculations();
 initGlobalMap();
-restoreMapLegendState();
 
-refreshGlobal().then(()=>injectAlarm('newsTicker',()=>liveCache.length?liveCache:breakingAlarms));
-refreshLocal().then(()=>injectAlarm('localTicker',()=>localCache.length?localCache:localMockAlarms));
+refreshGlobal().then(() => injectAlarm('newsTicker', () => liveCache.length ? liveCache : breakingAlarms));
+refreshLocal().then(()  => injectAlarm('localTicker', () => localCache.length ? localCache : localMockAlarms));
 refreshAircraft();
 refreshMarkets();
 refreshEarthquakes();
 
-setInterval(()=>injectAlarm('newsTicker',()=>liveCache.length?liveCache:breakingAlarms),6000);
-setInterval(()=>injectAlarm('localTicker',()=>localCache.length?localCache:localMockAlarms),7000);
-setInterval(pruneExpiredEventMarkers,60000);
-setInterval(refreshGlobal,POLL_MS);
-setInterval(refreshLocal,POLL_MS);
-setInterval(refreshAircraft,20000);
-setInterval(refreshMarkets,60000);
-setInterval(refreshEarthquakes,90000);
+setInterval(() => injectAlarm('newsTicker', () => liveCache.length ? liveCache : breakingAlarms), 6000);
+setInterval(() => injectAlarm('localTicker', () => localCache.length ? localCache : localMockAlarms), 7000);
+setInterval(pruneExpiredEventMarkers, 60000);
+setInterval(refreshGlobal, POLL_MS);
+setInterval(refreshLocal,  POLL_MS);
+setInterval(refreshAircraft, 15000); // OpenSky anonymous tier: keep well under its rate limit
+setInterval(refreshMarkets, 60000); // markets move slower than news/aircraft; 1min cadence is plenty
+setInterval(refreshEarthquakes, 90000); // USGS feed itself updates every ~5min; polling more often than that is pointless
 </script>
 </body>
 </html>
+
