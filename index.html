@@ -487,61 +487,27 @@ const FIXED_VECTORS = { nuke: 72, geo: 68, climate: 65 };
 // arbitrary browser origins, so direct fetch() calls get blocked
 // by the browser even though the API itself works fine (e.g. via
 // curl, or server-side). Routing through a public CORS proxy adds
-// the missing header.
-//
-// IMPORTANT — free public CORS proxies change their access policy
-// without notice (origin allowlists, paid tiers, rate limits), and
-// that's already broken this feature more than once. corsproxy.io
-// now restricts its free tier to a fixed allowlist of dev origins
-// (localhost, CodePen, Replit, etc.) and rejects everything else —
-// it's been removed from this list for that reason. The three below
-// (different operators, independent infrastructure, no origin
-// allowlist as of mid-2026) are used instead, tried in order so one
-// going down/gating doesn't take out the feature. There is still no
-// guarantee any of them stays this way — that's a structural
-// limitation of doing this without a backend you control. If ALL
-// three start failing again, the durable fix is running a tiny
-// proxy of your own (a 10-line Cloudflare Worker or Vercel function
-// that fetches the target URL and adds Access-Control-Allow-Origin:
-// * is enough) and adding it to the front of this list.
+// the missing header. Two independent proxies are tried in order
+// so one being rate-limited/down doesn't take out every live feed
+// in the app at once.
 // ============================================================
 const CORS_PROXIES = [
+    url => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
     url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-    url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
-    url => 'https://proxy.corsfix.com/?' + url,
 ];
 
 async function fetchViaProxies(targetUrl) {
-    const attempts = [];
+    let lastErr = null;
     for (const buildProxyUrl of CORS_PROXIES) {
-        const proxyUrl = buildProxyUrl(targetUrl);
-        const proxyHost = (() => { try { return new URL(proxyUrl).hostname; } catch { return proxyUrl; } })();
         try {
-            const r = await fetch(proxyUrl);
-            if (!r.ok) { attempts.push(`${proxyHost}: HTTP_${r.status}`); continue; }
+            const r = await fetch(buildProxyUrl(targetUrl));
+            if (!r.ok) { lastErr = new Error('HTTP_' + r.status); continue; }
             return await r.json();
         } catch (e) {
-            attempts.push(`${proxyHost}: ${e.message || 'network error'}`);
+            lastErr = e;
         }
     }
-    const err = new Error('ALL_PROXIES_FAILED');
-    err.attempts = attempts;
-    throw err;
-}
-
-// Try the URL directly first — no proxy hop, no dependency on a third
-// party's access policy. Only falls back to the proxy chain if the direct
-// call fails (CORS-blocked, network error, or non-2xx). Use this for
-// endpoints that are known/confirmed to send their own CORS headers (e.g.
-// OpenSky's /states/all), where a proxy was historically unnecessary.
-async function fetchDirectOrProxied(targetUrl) {
-    try {
-        const r = await fetch(targetUrl);
-        if (r.ok) return await r.json();
-    } catch (e) {
-        // direct call blocked (CORS) or network error — fall through to proxies
-    }
-    return fetchViaProxies(targetUrl);
+    throw lastErr || new Error('ALL_PROXIES_FAILED');
 }
 
 
@@ -1041,12 +1007,11 @@ function scheduleNextAircraftRefresh() {
 async function refreshAircraft() {
     if (!window.pipboyPlaneGroup) return;
     try {
-        // OpenSky's /states/all is confirmed to send its own CORS headers
-        // (independently verified as of mid-2026 — "CORS: Enabled", 100%
-        // reliability over the trailing 30 days), so try it directly first.
-        // Only fall back to the proxy chain if that direct call fails —
-        // proxies are the less reliable link in this chain, not OpenSky.
-        const data = await fetchDirectOrProxied(buildOpenSkyUrl());
+        // OpenSky doesn't reliably send Access-Control-Allow-Origin for
+        // browser-origin requests (confirmed open issue on their own repo),
+        // so this goes through the shared CORS proxy chain rather than a
+        // direct fetch — the direct call was failing silently every time.
+        const data = await fetchViaProxies(buildOpenSkyUrl());
         const states = Array.isArray(data?.states) ? data.states : [];
         aircraftFailStreak = 0;
 
@@ -1095,14 +1060,12 @@ async function refreshAircraft() {
         setAircraftStatus(String(sampled.length));
     } catch (e) {
         aircraftFailStreak++;
-        const reason = e.message === 'ALL_PROXIES_FAILED' ? 'all CORS proxies failed/rejected — see console for per-proxy detail'
-                     : e.message === 'HTTP_429' ? 'rate-limited (daily anonymous quota likely exhausted)'
+        const reason = e.message === 'HTTP_429' ? 'rate-limited (daily anonymous quota likely exhausted)'
                      : (e.message === 'HTTP_401' || e.message === 'HTTP_403') ? 'OpenSky rejected this request (auth/quota)'
                      : e.message?.startsWith('HTTP_') ? 'feed error (' + e.message.replace('HTTP_','') + ')'
-                     : 'feed unreachable';
+                     : 'feed unreachable (proxy and upstream both failed)';
         setAircraftStatus('0 — ' + reason);
-        console.warn('OpenSky fetch failed:', e.message, '— fail streak:', aircraftFailStreak,
-                     e.attempts ? '— per-proxy attempts: ' + e.attempts.join(' | ') : '');
+        console.warn('OpenSky fetch failed:', e.message, '— fail streak:', aircraftFailStreak);
         // leave previous frame's markers in place rather than clearing to blank
     }
     scheduleNextAircraftRefresh();
@@ -1193,12 +1156,7 @@ async function refreshMarkets() {
     try {
         const settled = await Promise.allSettled(tickers.map(t => fetchOneQuote(t.symbol)));
         const anySucceeded = settled.some(s => s.status === 'fulfilled' && s.value != null);
-        if (!anySucceeded) {
-            const firstRejection = settled.find(s => s.status === 'rejected');
-            const err = new Error('ALL_SYMBOLS_FAILED');
-            err.attempts = firstRejection?.reason?.attempts;
-            throw err;
-        }
+        if (!anySucceeded) throw new Error('ALL_SYMBOLS_FAILED');
 
         grid.innerHTML = tickers.map((t, i) => {
             const outcome = settled[i];
@@ -1227,8 +1185,7 @@ async function refreshMarkets() {
 
         setFeedStatus('marketFeedStatus', true);
     } catch (e) {
-        console.warn('Market data fetch failed:', e.message,
-                     e.attempts ? '— per-proxy attempts: ' + e.attempts.join(' | ') : '');
+        console.warn('Market data fetch failed:', e.message);
         setFeedStatus('marketFeedStatus', false);
         const reason = e.message === 'BAD_PAYLOAD' ? 'Unexpected response format from feed'
                      : e.message?.startsWith('HTTP_') ? 'Feed error (' + e.message.replace('HTTP_','') + ') — proxy or upstream may be temporarily down'
@@ -1528,3 +1485,5 @@ setInterval(refreshEarthquakes, 90000); // USGS feed itself updates every ~5min;
 </script>
 </body>
 </html>
+
+
