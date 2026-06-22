@@ -109,11 +109,29 @@
             position: absolute; bottom: 12px; left: 12px; z-index: 1000;
             background: rgba(8,31,16,0.92);
             border: 1px solid var(--border);
-            border-radius: 3px; padding: 10px 14px;
+            border-radius: 3px; padding: 0;
             font-size: 0.72rem; font-family: monospace;
             color: var(--text-light);
-            pointer-events: none;
             max-width: 220px;
+            overflow: hidden;
+        }
+        .legend-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px;
+            cursor: pointer; pointer-events: auto;
+            letter-spacing: 1px; color: var(--text-dark);
+            user-select: none;
+        }
+        .legend-header:hover { color: var(--text-light); }
+        .legend-body {
+            padding: 0 14px 10px 14px;
+            pointer-events: none;
+            max-height: 260px;
+            transition: max-height 0.2s ease, padding 0.2s ease, opacity 0.15s ease;
+            opacity: 1;
+        }
+        .map-legend.collapsed .legend-body {
+            max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0;
         }
         .legend-row { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
         .legend-row:last-child { margin-bottom:0; }
@@ -320,17 +338,23 @@
 
             <div class="map-wrapper">
                 <div id="globalMap"></div>
-                <div class="map-legend">
-                    <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9670;</span> Conflict / OSINT Hotspot</div>
-                    <div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9888;</span> Primary Nuclear Target</div>
-                    <div class="legend-row"><span class="legend-dot" style="color:var(--success)">&#10022;</span> Probable Safe Zone</div>
-                    <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9889;</span> News-Derived Event</div>
-                    <div class="legend-row"><span class="legend-dot" style="color:var(--info)">&#9992;</span> Live Aircraft</div>
-                    <div class="legend-row"><span class="legend-dot" style="color:#ff7a3d">&#9760;</span> Military Base</div>
-                    <div class="legend-row"><span class="legend-dot" style="color:#ffe14d">&#9762;</span> Civil Nuclear Plant</div>
-                    <div class="legend-row"><span class="legend-dot" style="color:#d97cff">&#9711;</span> Earthquake (live, USGS)</div>
-                    <div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9679;</span> Conflict Intensity (heatmap)</div>
-                    <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9737;</span> Your Position</div>
+                <div class="map-legend" id="mapLegend">
+                    <div class="legend-header" onclick="toggleLegend()">
+                        <span>MAP KEY</span>
+                        <span id="legendToggleIcon">&#9650;</span>
+                    </div>
+                    <div class="legend-body" id="legendBody">
+                        <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9670;</span> Conflict / OSINT Hotspot</div>
+                        <div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9888;</span> Primary Nuclear Target</div>
+                        <div class="legend-row"><span class="legend-dot" style="color:var(--success)">&#10022;</span> Probable Safe Zone</div>
+                        <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9889;</span> News-Derived Event</div>
+                        <div class="legend-row"><span class="legend-dot" style="color:var(--info)">&#9992;</span> Live Aircraft</div>
+                        <div class="legend-row"><span class="legend-dot" style="color:#ff7a3d">&#9760;</span> Military Base</div>
+                        <div class="legend-row"><span class="legend-dot" style="color:#ffe14d">&#9762;</span> Civil Nuclear Plant</div>
+                        <div class="legend-row"><span class="legend-dot" style="color:#d97cff">&#9711;</span> Earthquake (live, USGS)</div>
+                        <div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9679;</span> Conflict Intensity (heatmap)</div>
+                        <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9737;</span> Your Position</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -691,6 +715,15 @@ function toggleLayer(name) {
     }
 }
 
+let legendCollapsed = false;
+function toggleLegend() {
+    legendCollapsed = !legendCollapsed;
+    const legend = document.getElementById('mapLegend');
+    const icon = document.getElementById('legendToggleIcon');
+    legend.classList.toggle('collapsed', legendCollapsed);
+    icon.innerHTML = legendCollapsed ? '&#9660;' : '&#9650;';
+}
+
 function initGlobalMap() {
     if (typeof L === 'undefined') { console.warn('Leaflet not loaded'); return; }
     const map = L.map('globalMap', { worldCopyJump: true }).setView([20, 10], 2);
@@ -886,27 +919,79 @@ function plotNewsEvent(item) {
 // ============================================================
 // LIVE AIRCRAFT — OpenSky Network (no API key required)
 // ------------------------------------------------------------
-// OpenSky's anonymous REST endpoint is rate-limited (roughly one
-// request per 10s per IP) and occasionally returns 429s under
-// load — handled gracefully below by simply skipping that cycle.
-// We bound the bounding box requested and cap rendered aircraft
-// to keep the Leaflet layer light.
+// IMPORTANT — OpenSky tightened anonymous access after this was
+// first written: anonymous (unauthenticated) requests now draw
+// from a shared pool of only ~400 API credits/day, and that pool
+// is shared across everyone hitting the endpoint from the same
+// network egress, not per-person. A global, no-bbox query (the
+// whole world) costs more credits per call than a bounded query.
+// Once the daily pool is exhausted, every request gets rejected
+// until the next day — silently, from the page's point of view,
+// unless we surface the HTTP status (done below).
+//
+// Mitigations applied:
+//   1. A bounding box is now sent so each call costs fewer
+//      credits than a whole-planet query (tune REGION below).
+//   2. Poll interval backed off from 15s to 45s baseline.
+//   3. On repeated failure, backs off further (up to 5min) instead
+//      of hammering an exhausted quota every 45s for nothing.
+//   4. Failures are now shown in the UI label, not just console.warn,
+//      so "why is it empty" has a visible answer in the app itself.
+//
+// If this keeps failing for you, the most reliable fix is a free
+// OpenSky account + OAuth2 client (see comment block further down)
+// — anonymous access on a shared endpoint is best-effort only.
 // ============================================================
 const OPENSKY_URL = 'https://opensky-network.org/api/states/all';
+const OPENSKY_REGION = { lamin: -60, lomin: -170, lamax: 75, lomax: 170 }; // near-global but bounded, cheaper per OpenSky's credit model than no bbox at all
 const MAX_AIRCRAFT_RENDERED = 120;
+const AIRCRAFT_BASE_INTERVAL_MS = 45000;
+const AIRCRAFT_MAX_INTERVAL_MS = 5 * 60 * 1000;
 let aircraftMarkers = [];
+let aircraftFailStreak = 0;
+let aircraftTimer = null;
+
+function buildOpenSkyUrl() {
+    const { lamin, lomin, lamax, lomax } = OPENSKY_REGION;
+    return `${OPENSKY_URL}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
+}
+
+function setAircraftStatus(msg) {
+    const el = document.getElementById('aircraftCountLabel');
+    if (el) el.textContent = msg;
+}
+
+// Self-adjusting poll loop: doubles the wait after each consecutive
+// failure (capped at AIRCRAFT_MAX_INTERVAL_MS) instead of hammering
+// an exhausted daily quota every 45s for nothing. Resets to the base
+// interval as soon as a request succeeds again.
+function scheduleNextAircraftRefresh() {
+    if (aircraftTimer) clearTimeout(aircraftTimer);
+    const backoffMultiplier = Math.min(2 ** aircraftFailStreak, AIRCRAFT_MAX_INTERVAL_MS / AIRCRAFT_BASE_INTERVAL_MS);
+    const delay = Math.min(AIRCRAFT_BASE_INTERVAL_MS * backoffMultiplier, AIRCRAFT_MAX_INTERVAL_MS);
+    aircraftTimer = setTimeout(refreshAircraft, delay);
+}
 
 async function refreshAircraft() {
     if (!window.pipboyPlaneGroup) return;
     try {
-        const r = await fetch(OPENSKY_URL);
-        if (!r.ok) throw new Error('opensky http ' + r.status);
+        const r = await fetch(buildOpenSkyUrl());
+        if (r.status === 429) throw new Error('RATE_LIMITED');
+        if (r.status === 401 || r.status === 403) throw new Error('AUTH_REQUIRED');
+        if (!r.ok) throw new Error('HTTP_' + r.status);
         const data = await r.json();
         const states = Array.isArray(data.states) ? data.states : [];
+        aircraftFailStreak = 0;
 
         // clear previous frame
         aircraftMarkers.forEach(m => window.pipboyPlaneGroup.removeLayer(m));
         aircraftMarkers = [];
+
+        if (states.length === 0) {
+            setAircraftStatus('0 (feed returned no aircraft this cycle)');
+            scheduleNextAircraftRefresh();
+            return;
+        }
 
         // OpenSky state vector indices: 1=callsign, 5=lon, 6=lat, 10=track(heading), 7=baro_altitude, 9=velocity, 8=on_ground
         const inAir = states.filter(s => s[5] != null && s[6] != null && !s[8]);
@@ -940,67 +1025,64 @@ async function refreshAircraft() {
             aircraftMarkers.push(marker);
         });
 
-        document.getElementById('aircraftCountLabel').textContent = sampled.length;
+        setAircraftStatus(String(sampled.length));
     } catch (e) {
-        console.warn('OpenSky fetch failed (likely rate-limited), skipping this cycle', e);
+        aircraftFailStreak++;
+        const reason = e.message === 'RATE_LIMITED' ? 'rate-limited (daily anonymous quota likely exhausted)'
+                     : e.message === 'AUTH_REQUIRED' ? 'OpenSky now requires auth for this request'
+                     : e.message?.startsWith('HTTP_') ? 'feed error (' + e.message.replace('HTTP_','') + ')'
+                     : 'feed unreachable';
+        setAircraftStatus('0 — ' + reason);
+        console.warn('OpenSky fetch failed:', e.message, '— fail streak:', aircraftFailStreak);
         // leave previous frame's markers in place rather than clearing to blank
     }
+    scheduleNextAircraftRefresh();
 }
 
 // ============================================================
-// GLOBAL MARKET WATCH — Stooq CSV feed (free, no API key)
+// GLOBAL MARKET WATCH — Yahoo Finance quote API via CORS proxy
 // ------------------------------------------------------------
-// Stooq publishes a simple CSV quote endpoint that works fine
-// from the browser without auth or CORS issues for most symbols.
-// This is delayed/end-of-day style data, not a live exchange feed
-// — fine for a situational-awareness dashboard, explicitly labeled
-// as such in the UI disclaimer rather than implied as real-time.
+// The original implementation called Stooq's "q/l" quote endpoint
+// directly from the browser. That endpoint isn't a real public
+// API — Stooq has no documented API at all, the q/l URL is a
+// legacy/manual-use pattern, it doesn't send permissive CORS
+// headers for arbitrary origins, and it has tightened against
+// automated access over time. The browser was silently blocking
+// or failing on every call, which is why the card never populated.
 //
-// Symbols are grouped into selectable categories (tabs in the UI).
-// Stooq's symbol scheme: ^xxx for indices, currency pairs as
-// e.g. usdclp / eurusd, and commodities/futures with their own
-// short codes (gc.f = gold, cl.f = crude oil).
+// Fix: use Yahoo Finance's public (undocumented but widely used,
+// stable for years) quote endpoint instead, routed through a free
+// CORS proxy — the same pattern already used elsewhere in this
+// file for RSS (rss2json). corsproxy.io adds the Access-Control-
+// Allow-Origin header Yahoo doesn't send, so fetch() from the
+// browser succeeds instead of being blocked.
 // ============================================================
 const MARKET_CATEGORIES = {
     indices: [
-        { symbol: '^spx',  name: 'S&P 500',    sub: 'US Large Cap' },
-        { symbol: '^dji',  name: 'Dow Jones',  sub: 'US Industrial' },
-        { symbol: '^ndq',  name: 'Nasdaq',     sub: 'US Tech-heavy' },
-        { symbol: '^ipsa', name: 'IPSA',       sub: 'Chile — Bolsa de Santiago' },
+        { symbol: '^GSPC',   name: 'S&P 500',    sub: 'US Large Cap' },
+        { symbol: '^DJI',    name: 'Dow Jones',  sub: 'US Industrial' },
+        { symbol: '^IXIC',   name: 'Nasdaq',     sub: 'US Tech-heavy' },
+        { symbol: '^IPSA',   name: 'IPSA',       sub: 'Chile — Bolsa de Santiago' },
     ],
     forex: [
-        { symbol: 'usdclp', name: 'USD/CLP', sub: 'Dollar — Chilean Peso' },
-        { symbol: 'eurusd', name: 'EUR/USD', sub: 'Euro — US Dollar' },
-        { symbol: 'usdjpy', name: 'USD/JPY', sub: 'Dollar — Japanese Yen' },
-        { symbol: 'usdrub', name: 'USD/RUB', sub: 'Dollar — Russian Ruble' },
+        { symbol: 'CLP=X',     name: 'USD/CLP', sub: 'Dollar — Chilean Peso' },
+        { symbol: 'EURUSD=X',  name: 'EUR/USD', sub: 'Euro — US Dollar' },
+        { symbol: 'JPY=X',     name: 'USD/JPY', sub: 'Dollar — Japanese Yen' },
+        { symbol: 'RUB=X',     name: 'USD/RUB', sub: 'Dollar — Russian Ruble' },
     ],
     commodities: [
-        { symbol: 'gc.f',  name: 'Gold',       sub: 'COMEX Futures, $/oz' },
-        { symbol: 'cl.f',  name: 'Crude Oil',  sub: 'WTI Futures, $/bbl' },
-        { symbol: 'si.f',  name: 'Silver',     sub: 'COMEX Futures, $/oz' },
-        { symbol: 'ng.f',  name: 'Natural Gas',sub: 'NYMEX Futures, $/MMBtu' },
+        { symbol: 'GC=F',  name: 'Gold',        sub: 'COMEX Futures, $/oz' },
+        { symbol: 'CL=F',  name: 'Crude Oil',   sub: 'WTI Futures, $/bbl' },
+        { symbol: 'SI=F',  name: 'Silver',      sub: 'COMEX Futures, $/oz' },
+        { symbol: 'NG=F',  name: 'Natural Gas', sub: 'NYMEX Futures, $/MMBtu' },
     ],
 };
-const STOOQ_URL = 'https://stooq.com/q/l/?s=SYMBOLS&f=sd2t2ohlcv&h&e=csv';
+const YF_QUOTE_URL = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=';
+const CORS_PROXIES = [
+    url => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
+    url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+];
 let currentMarketCategory = 'indices';
-
-function parseStooqCsv(csvText) {
-    const lines = csvText.trim().split('\n');
-    const header = lines[0].split(',').map(h => h.trim().toLowerCase());
-    const closeIdx = header.indexOf('close');
-    const openIdx = header.indexOf('open');
-    const symIdx = header.indexOf('symbol');
-    return lines.slice(1).map(line => {
-        const cols = line.split(',');
-        const close = parseFloat(cols[closeIdx]);
-        const open = parseFloat(cols[openIdx]);
-        return {
-            symbol: (cols[symIdx] || '').toLowerCase(),
-            close: isNaN(close) ? null : close,
-            open: isNaN(open) ? null : open
-        };
-    });
-}
 
 function setMarketCategory(category) {
     if (!MARKET_CATEGORIES[category]) return;
@@ -1011,20 +1093,45 @@ function setMarketCategory(category) {
     refreshMarkets();
 }
 
+function renderMarketError(tickers, label) {
+    const grid = document.getElementById('marketGrid');
+    if (!grid) return;
+    grid.innerHTML = tickers.map(t => `
+        <div class="ticker-item">
+            <span class="ticker-name">${t.name}</span>
+            <span class="ticker-sub">${t.sub}</span>
+            <span class="ticker-stale">${label}</span>
+        </div>`).join('');
+}
+
+async function fetchViaProxies(targetUrl) {
+    let lastErr = null;
+    for (const buildProxyUrl of CORS_PROXIES) {
+        try {
+            const r = await fetch(buildProxyUrl(targetUrl));
+            if (!r.ok) { lastErr = new Error('HTTP_' + r.status); continue; }
+            return await r.json();
+        } catch (e) {
+            lastErr = e;
+        }
+    }
+    throw lastErr || new Error('ALL_PROXIES_FAILED');
+}
+
 async function refreshMarkets() {
     const grid = document.getElementById('marketGrid');
     if (!grid) return;
     const tickers = MARKET_CATEGORIES[currentMarketCategory] || MARKET_CATEGORIES.indices;
     try {
-        const url = STOOQ_URL.replace('SYMBOLS', tickers.map(t => t.symbol).join('+'));
-        const r = await fetch(url);
-        if (!r.ok) throw new Error('stooq http ' + r.status);
-        const csv = await r.text();
-        const rows = parseStooqCsv(csv);
+        const symbols = tickers.map(t => encodeURIComponent(t.symbol)).join(',');
+        const targetUrl = YF_QUOTE_URL + symbols;
+        const data = await fetchViaProxies(targetUrl);
+        const results = data?.quoteResponse?.result;
+        if (!Array.isArray(results)) throw new Error('BAD_PAYLOAD');
 
         grid.innerHTML = tickers.map(t => {
-            const row = rows.find(x => x.symbol === t.symbol);
-            if (!row || row.close == null) {
+            const row = results.find(x => x.symbol === t.symbol);
+            if (!row || row.regularMarketPrice == null) {
                 return `
                     <div class="ticker-item">
                         <span class="ticker-name">${t.name}</span>
@@ -1032,7 +1139,8 @@ async function refreshMarkets() {
                         <span class="ticker-stale">No data returned for this symbol</span>
                     </div>`;
             }
-            const change = (row.open != null && row.open !== 0) ? ((row.close - row.open) / row.open) * 100 : null;
+            const price = row.regularMarketPrice;
+            const change = row.regularMarketChangePercent;
             const dir = change == null ? '' : (change >= 0 ? 'up' : 'down');
             const arrow = dir === 'up' ? '&#9650;' : (dir === 'down' ? '&#9660;' : '');
             return `
@@ -1040,24 +1148,20 @@ async function refreshMarkets() {
                     <span class="ticker-name">${t.name}</span>
                     <span class="ticker-sub">${t.sub}</span>
                     <div class="ticker-price-row">
-                        <span class="ticker-price">${row.close.toLocaleString()}</span>
-                        <span class="ticker-change ${dir}">${change != null ? arrow + ' ' + change.toFixed(2) + '%' : 'n/a'}</span>
+                        <span class="ticker-price">${price.toLocaleString(undefined, {maximumFractionDigits: 2})}</span>
+                        <span class="ticker-change ${dir}">${change != null ? arrow + ' ' + Math.abs(change).toFixed(2) + '%' : 'n/a'}</span>
                     </div>
                 </div>`;
         }).join('');
 
         setFeedStatus('marketFeedStatus', true);
     } catch (e) {
-        console.warn('Market data fetch failed', e);
+        console.warn('Market data fetch failed:', e.message);
         setFeedStatus('marketFeedStatus', false);
-        if (!grid.innerHTML) {
-            grid.innerHTML = tickers.map(t => `
-                <div class="ticker-item">
-                    <span class="ticker-name">${t.name}</span>
-                    <span class="ticker-sub">${t.sub}</span>
-                    <span class="ticker-stale">Feed unavailable</span>
-                </div>`).join('');
-        }
+        const reason = e.message === 'BAD_PAYLOAD' ? 'Unexpected response format from feed'
+                     : e.message?.startsWith('HTTP_') ? 'Feed error (' + e.message.replace('HTTP_','') + ') — proxy or upstream may be temporarily down'
+                     : 'Feed unreachable';
+        renderMarketError(tickers, reason);
     }
 }
 
@@ -1345,10 +1449,10 @@ setInterval(() => injectAlarm('localTicker', () => localCache.length ? localCach
 setInterval(pruneExpiredEventMarkers, 60000);
 setInterval(refreshGlobal, POLL_MS);
 setInterval(refreshLocal,  POLL_MS);
-setInterval(refreshAircraft, 15000); // OpenSky anonymous tier: keep well under its rate limit
+// refreshAircraft no longer uses setInterval — it self-schedules via
+// scheduleNextAircraftRefresh() with progressive backoff on failure (see above)
 setInterval(refreshMarkets, 60000); // markets move slower than news/aircraft; 1min cadence is plenty
 setInterval(refreshEarthquakes, 90000); // USGS feed itself updates every ~5min; polling more often than that is pointless
 </script>
 </body>
 </html>
-
