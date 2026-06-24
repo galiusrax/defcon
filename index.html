@@ -154,6 +154,7 @@
         .layer-btn.active-warning { border-color:var(--warning); color:var(--warning); background:rgba(255,176,0,0.08);  text-shadow:0 0 5px var(--warning); }
         .layer-btn.active-safe    { border-color:var(--success); color:var(--success); background:rgba(57,255,20,0.06);  text-shadow:0 0 5px var(--success); }
         .layer-btn.active-info    { border-color:var(--info);    color:var(--info);    background:rgba(77,216,255,0.07); text-shadow:0 0 5px var(--info); }
+        .key-hint { opacity: 0.55; font-size: 0.62rem; margin-left: 2px; }
         .layer-btn.active-mil     { border-color:#ff7a3d;        color:#ff7a3d;        background:rgba(255,122,61,0.08); text-shadow:0 0 5px #ff7a3d; }
         .layer-btn.active-quake   { border-color:#d97cff;        color:#d97cff;        background:rgba(217,124,255,0.08); text-shadow:0 0 5px #d97cff; }
 
@@ -175,6 +176,7 @@
         .pipboy-marker-safe  { color:var(--success);     font-size:14px; text-align:center; line-height:16px; text-shadow:0 0 8px var(--success); animation: pulseSafe 2.5s infinite; }
         .pipboy-marker-user  { color:var(--warning);     font-size:16px; text-shadow:0 0 8px var(--warning); animation:pulseUser 1.6s infinite; }
         .pipboy-marker-event { color:var(--warning);     font-size:13px; text-align:center; line-height:14px; text-shadow:0 0 6px var(--warning); animation: pulseRed 2.2s infinite; }
+        .pipboy-marker-plane { color:var(--info);        font-size:13px; text-align:center; line-height:14px; text-shadow:0 0 6px var(--info); }
         .pipboy-marker-mil   { color:#ff7a3d;             font-size:14px; text-align:center; line-height:15px; text-shadow:0 0 6px #ff7a3d; }
         .pipboy-marker-nuke  { color:#ffe14d;             font-size:14px; text-align:center; line-height:15px; text-shadow:0 0 7px #ffe14d; }
         .pipboy-marker-quake { color:#d97cff;             text-align:center; text-shadow:0 0 7px #d97cff; animation: pulseRed 2.6s infinite; }
@@ -310,13 +312,52 @@
             border-top: 1px solid var(--border); padding-top: 10px;
             text-align: center; font-style: italic;
         }
+
+        /* STRATEGIC ASSESSMENT MATRIX */
+        .scenario-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+        }
+        .scenario-panel {
+            display: flex; flex-direction: column; gap: 8px;
+            padding: 14px 16px;
+            background: rgba(93,255,163,0.025);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--text-dark);
+            border-radius: 2px;
+        }
+        .scenario-panel.path-status_quo     { border-left-color: var(--text-light); }
+        .scenario-panel.path-escalation     { border-left-color: var(--danger); }
+        .scenario-panel.path-de_escalation  { border-left-color: var(--success); }
+        .scenario-title {
+            font-size: 0.82rem; font-weight: 700; letter-spacing: 0.5px;
+            text-transform: uppercase; color: var(--text-light);
+        }
+        .scenario-score-row { display: flex; align-items: baseline; gap: 8px; }
+        .scenario-score {
+            font-size: 1.8rem; font-weight: 800; font-family: monospace;
+        }
+        .scenario-score-label { font-size: 0.62rem; color: var(--text-dark); letter-spacing: 0.5px; }
+        .scenario-bar-track { width: 100%; height: 5px; background: #0d2e16; border-radius: 2px; overflow: hidden; }
+        .scenario-bar-fill { height: 100%; border-radius: 2px; box-shadow: 0 0 6px currentColor; }
+        .scenario-driver {
+            font-size: 0.74rem; color: var(--text-light); line-height: 1.4;
+        }
+        .scenario-driver strong { color: inherit; }
+        .scenario-confidence {
+            font-size: 0.65rem; color: var(--text-dark); font-style: italic;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <header>
         <h1>QUANTUM RISK DESK v2026.3<span class="blink-cursor">&nbsp;</span></h1>
-        <div style="font-family:monospace;font-size:0.9rem;color:var(--warning);text-shadow:0 0 6px var(--warning);">[ SIMULATOR ACTIVE — JUNE 2026 ]</div>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            <div style="font-family:monospace;font-size:0.9rem;color:var(--warning);text-shadow:0 0 6px var(--warning);">[ SIMULATOR ACTIVE — JUNE 2026 ]</div>
+            <button class="layer-btn active-info" id="btn-sitrep" onclick="UIManager.exportSitrep()" title="Export dashboard as PNG (S)">&#128247; SITREP EXPORT</button>
+            <button class="layer-btn active-mil" id="btn-fullscreen" onclick="UIManager.toggleFullscreen()" title="Toggle fullscreen (F)">&#9974; FULLSCREEN</button>
+        </div>
     </header>
 
     <!-- MAP + ALARMS -->
@@ -324,20 +365,21 @@
         <div class="card">
             <h2>Global Sector Map — Threat &amp; Survival Overlay</h2>
 
-            <!-- Layer toggle buttons -->
+            <!-- Layer toggle buttons (also bound to keyboard shortcuts — see legend footer) -->
             <div class="map-controls">
-                <button class="layer-btn active-warning" id="btn-conflict"  onclick="toggleLayer('conflict')">&#9670; Conflict Hotspots</button>
-                <button class="layer-btn active-danger"  id="btn-targets"   onclick="toggleLayer('targets')">&#9888; Primary Targets</button>
-                <button class="layer-btn active-safe"    id="btn-safezones" onclick="toggleLayer('safezones')">&#10003; Safe Zones</button>
-                <button class="layer-btn active-warning" id="btn-events"    onclick="toggleLayer('events')">&#9889; News Events</button>
-                <button class="layer-btn active-mil"     id="btn-milnuke"   onclick="toggleLayer('milnuke')">&#9760; Military &amp; Nuclear Sites</button>
-                <button class="layer-btn active-quake"   id="btn-quakes"    onclick="toggleLayer('quakes')">&#9889; Natural Disasters (Live Quakes)</button>
+                <button class="layer-btn active-warning" id="btn-conflict"  onclick="MapManager.toggleLayer('conflict')">&#9670; Conflict Hotspots <span class="key-hint">[C]</span></button>
+                <button class="layer-btn active-danger"  id="btn-targets"   onclick="MapManager.toggleLayer('targets')">&#9888; Primary Targets <span class="key-hint">[T]</span></button>
+                <button class="layer-btn active-safe"    id="btn-safezones" onclick="MapManager.toggleLayer('safezones')">&#10003; Safe Zones <span class="key-hint">[S]</span></button>
+                <button class="layer-btn active-warning" id="btn-events"    onclick="MapManager.toggleLayer('events')">&#9889; News Events <span class="key-hint">[N]</span></button>
+                <button class="layer-btn active-mil"     id="btn-milnuke"   onclick="MapManager.toggleLayer('milnuke')">&#9760; Military &amp; Nuclear Sites <span class="key-hint">[M]</span></button>
+                <button class="layer-btn active-quake"   id="btn-quakes"    onclick="MapManager.toggleLayer('quakes')">&#9889; Natural Disasters <span class="key-hint">[Q]</span></button>
+                <button class="layer-btn active-info"    id="btn-planes"    onclick="MapManager.toggleLayer('planes')">&#9992; Live Air Traffic <span class="key-hint">[A]</span></button>
             </div>
 
             <div class="map-wrapper">
                 <div id="globalMap"></div>
                 <div class="map-legend" id="mapLegend">
-                    <div class="legend-header" onclick="toggleLegend()">
+                    <div class="legend-header" onclick="UIManager.toggleLegend()">
                         <span>MAP KEY</span>
                         <span id="legendToggleIcon">&#9650;</span>
                     </div>
@@ -349,8 +391,10 @@
                         <div class="legend-row"><span class="legend-dot" style="color:#ff7a3d">&#9760;</span> Military Base</div>
                         <div class="legend-row"><span class="legend-dot" style="color:#ffe14d">&#9762;</span> Civil Nuclear Plant</div>
                         <div class="legend-row"><span class="legend-dot" style="color:#d97cff">&#9711;</span> Earthquake (live, USGS)</div>
+                        <div class="legend-row"><span class="legend-dot" style="color:var(--info)">&#9992;</span> Live Aircraft (best-effort, no auth)</div>
                         <div class="legend-row"><span class="legend-dot" style="color:var(--danger)">&#9679;</span> Conflict Intensity (heatmap)</div>
                         <div class="legend-row"><span class="legend-dot" style="color:var(--warning)">&#9737;</span> Your Position</div>
+                        <div class="legend-row" style="margin-top:6px; padding-top:6px; border-top:1px solid var(--border); color:var(--text-dark); font-size:0.65rem;">Keys: C/T/S/N/M/Q/A toggle layers &middot; F fullscreen &middot; X export PNG</div>
                     </div>
                 </div>
             </div>
@@ -423,6 +467,20 @@
 
     </div><!-- /grid -->
 
+    <!-- STRATEGIC ASSESSMENT MATRIX -->
+    <div class="card" id="strategicAssessmentCard" style="margin-top:24px;">
+        <h2 class="card-header-row">
+            <span>Strategic Assessment Matrix</span>
+            <span id="scenarioUpdatedLabel" class="feed-status status-online">&#9679; LIVE</span>
+        </h2>
+        <div class="scenario-grid" id="scenarioGrid">
+            <!-- three sub-panels rendered by StrategicAssessment.render() -->
+        </div>
+        <p class="safezone-disclaimer">
+            Disclaimer: Projections are heuristic models based on current data trends. These do not constitute geopolitical intelligence.
+        </p>
+    </div>
+
     <!-- SAFE ZONES CARD — full width -->
     <div class="card" style="margin-top:24px;">
         <h2>&#10022; Probable Nuclear Survival Zones — Analysis Based on June 2026 Intelligence</h2>
@@ -449,9 +507,9 @@
             <span id="marketFeedStatus" class="feed-status status-offline">&#9679; OFFLINE</span>
         </h2>
         <div class="market-tabs" id="marketTabs">
-            <button class="market-tab active" id="tab-indices"     onclick="setMarketCategory('indices')">Indices</button>
-            <button class="market-tab"        id="tab-forex"       onclick="setMarketCategory('forex')">Forex</button>
-            <button class="market-tab"        id="tab-commodities" onclick="setMarketCategory('commodities')">Commodities</button>
+            <button class="market-tab active" id="tab-indices"     onclick="MarketManager.setCategory('indices')">Indices</button>
+            <button class="market-tab"        id="tab-forex"       onclick="MarketManager.setCategory('forex')">Forex</button>
+            <button class="market-tab"        id="tab-commodities" onclick="MarketManager.setCategory('commodities')">Commodities</button>
         </div>
         <div class="ticker-grid" id="marketGrid"></div>
         <p class="market-disclaimer">
@@ -464,347 +522,448 @@
         <span>GEODATA VECTORS REV: <strong id="geoRevLabel">--</strong></span>
         <span>NEXT SCHEDULED REVIEW: <strong id="geoNextLabel">--</strong></span>
         <span>NEWS SOURCES ACTIVE: <strong id="sourceCountLabel">0</strong> / <span id="sourceTotalLabel">0</span></span>
+        <span>AIRCRAFT TRACKED: <strong id="aircraftCountLabel">0</strong></span>
     </div>
 
 </div><!-- /container -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-// ============================================================
-// FIXED VECTORS
-// ============================================================
-const FIXED_VECTORS = { nuke: 72, geo: 68, climate: 65 };
+/* ============================================================
+ * QUANTUM RISK DESK — MODULE ARCHITECTURE
+ * ------------------------------------------------------------
+ * Organized as plain IIFE namespaces (no bundler/ES-modules,
+ * since this stays a single static HTML file with no build
+ * step). Each module owns one concern and exposes a small
+ * public surface; everything else is private via closure.
+ * Load order matters: DataFetcher has no dependencies,
+ * IntelEngine is standalone, MapManager depends on DataFetcher
+ * for the layers it populates, AlarmManager depends on
+ * DataFetcher for feeds and on MapManager to plot news events,
+ * MarketManager depends on DataFetcher + AlarmManager (for
+ * shared feed-status styling), UIManager depends on all of the
+ * above for the actions it wires up (keyboard, export,
+ * persistence).
+ * ============================================================ */
 
 // ============================================================
-// SHARED CORS PROXY HELPERS
-// ------------------------------------------------------------
-// Some upstream feeds in this file (e.g. Yahoo Finance) don't reliably
-// don't reliably send Access-Control-Allow-Origin headers for
-// arbitrary browser origins, so direct fetch() calls get blocked
-// by the browser even though the API itself works fine (e.g. via
-// curl, or server-side). Routing through a public CORS proxy adds
-// the missing header.
-//
-// IMPORTANT — free public CORS proxies change their access policy
-// without notice (origin allowlists, paid tiers, rate limits), and
-// that's already broken this feature more than once. corsproxy.io
-// now restricts its free tier to a fixed allowlist of dev origins
-// (localhost, CodePen, Replit, etc.) and rejects everything else —
-// it's been removed from this list for that reason. The three below
-// (different operators, independent infrastructure, no origin
-// allowlist as of mid-2026) are used instead, tried in order so one
-// going down/gating doesn't take out the feature. There is still no
-// guarantee any of them stays this way — that's a structural
-// limitation of doing this without a backend you control. If ALL
-// three start failing again, the durable fix is running a tiny
-// proxy of your own (a 10-line Cloudflare Worker or Vercel function
-// that fetches the target URL and adds Access-Control-Allow-Origin:
-// * is enough) and adding it to the front of this list.
+// DataFetcher — all network access lives here. Nothing else in
+// the app calls fetch() directly. This is the in-browser
+// equivalent of the "fetcher.js" module requested: a primary
+// path (direct fetch) with a documented proxy fallback for
+// endpoints that need it, isolated per-call so one feed's
+// failure can't cascade into another's.
 // ============================================================
-const CORS_PROXIES = [
-    url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-    url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
-    url => 'https://proxy.corsfix.com/?' + url,
-];
+const DataFetcher = (() => {
 
-async function fetchViaProxies(targetUrl) {
-    const attempts = [];
-    for (const buildProxyUrl of CORS_PROXIES) {
-        const proxyUrl = buildProxyUrl(targetUrl);
-        const proxyHost = (() => { try { return new URL(proxyUrl).hostname; } catch { return proxyUrl; } })();
+    // ---- Shared CORS proxy chain -----------------------------
+    // Some upstream feeds (Yahoo Finance) don't send
+    // Access-Control-Allow-Origin for arbitrary browser origins,
+    // so direct fetch() gets blocked even though the API itself
+    // works fine server-side. A public proxy adds the missing
+    // header. OTHER feeds (OpenSky, USGS) are confirmed to send
+    // their own CORS headers as of mid-2026, so those go direct
+    // and never touch this chain — proxy-first is reserved for
+    // endpoints that actually need it.
+    //
+    // Free public proxies change access policy without notice
+    // (origin allowlists, paid tiers) — that's broken this
+    // feature before. If you stand up your own backend proxy
+    // later (the brief's "primary backend proxy" idea — a 10-line
+    // Cloudflare Worker or Vercel function adding
+    // Access-Control-Allow-Origin: * is enough), add it as the
+    // FIRST entry in PROXIES below and everything in this file
+    // automatically prefers it.
+    const PROXIES = [
+        url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+        url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
+        url => 'https://proxy.corsfix.com/?' + url,
+    ];
+
+    async function viaProxies(targetUrl) {
+        const attempts = [];
+        for (const buildProxyUrl of PROXIES) {
+            const proxyUrl = buildProxyUrl(targetUrl);
+            const proxyHost = (() => { try { return new URL(proxyUrl).hostname; } catch { return proxyUrl; } })();
+            try {
+                const r = await fetch(proxyUrl);
+                if (!r.ok) { attempts.push(`${proxyHost}: HTTP_${r.status}`); continue; }
+                return await r.json();
+            } catch (e) {
+                attempts.push(`${proxyHost}: ${e.message || 'network error'}`);
+            }
+        }
+        const err = new Error('ALL_PROXIES_FAILED');
+        err.attempts = attempts;
+        throw err;
+    }
+
+    // Direct call (no proxy hop, no third-party dependency). Used for
+    // endpoints confirmed to send their own CORS headers (OpenSky, USGS).
+    async function direct(targetUrl) {
+        const r = await fetch(targetUrl);
+        if (!r.ok) throw new Error('HTTP_' + r.status);
+        return await r.json();
+    }
+
+    // ---- RSS (rss2json passthrough — closest browser-only
+    // equivalent to a server-side rss-parser; a real backend
+    // proxy could swap this for actual rss-parser output without
+    // changing any caller here, since callers just get back
+    // { source, text, link, type } objects either way) ----------
+    const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
+
+    async function fetchRss(url, sourceName, severityFn) {
         try {
-            const r = await fetch(proxyUrl);
-            if (!r.ok) { attempts.push(`${proxyHost}: HTTP_${r.status}`); continue; }
-            return await r.json();
+            const r = await fetch(RSS2JSON + encodeURIComponent(url));
+            if (!r.ok) throw new Error(r.status);
+            const d = await r.json();
+            if (d.status !== 'ok' || !Array.isArray(d.items)) throw new Error('bad payload');
+            return d.items.slice(0, 8).map(i => ({
+                source: sourceName || d.feed?.title || 'LIVE-FEED',
+                text: i.title,
+                link: i.link,
+                type: severityFn(i.title)
+            }));
         } catch (e) {
-            attempts.push(`${proxyHost}: ${e.message || 'network error'}`);
+            console.warn('RSS fail', url, e);
+            return null;
         }
     }
-    const err = new Error('ALL_PROXIES_FAILED');
-    err.attempts = attempts;
-    throw err;
-}
 
+    return { direct, viaProxies, fetchRss };
+})();
 
-const DEFCON_THRESHOLDS = [
-    { level:1, minScore:95, label:'COCKED PISTOL', color:'var(--danger)',  legendClass:'active-danger'  },
-    { level:2, minScore:68, label:'FAST PACE',     color:'var(--danger)',  legendClass:'active-danger'  },
-    { level:3, minScore:50, label:'ROUND HOUSE',   color:'var(--warning)', legendClass:'active-warning' },
-    { level:4, minScore:28, label:'DOUBLE TAKE',   color:'var(--warning)', legendClass:'active-warning' },
-    { level:5, minScore:0,  label:'FADE OUT',      color:'var(--success)', legendClass:'active'         }
-];
-const DEFCON_DESCRIPTIONS = {
-    1: "COCKED PISTOL. Nuclear conflict imminent or underway. Maximum force deployment. This threshold has never been officially declared in US history.",
-    2: "FAST PACE. Armed forces ready for combat within 6 hours. Highest DEFCON ever officially reached — Cuban Missile Crisis, October 1962. Current vectors place the simulator here.",
-    3: "ROUND HOUSE. Air Force ready to mobilize within 15 minutes. Declared twice: 1973 Yom Kippur War, September 11 2001.",
-    4: "DOUBLE TAKE. Heightened intelligence watch and strengthened security measures. Analyst consensus for real-world US posture as of June 2026.",
-    5: "FADE OUT. Normal peacetime readiness. Standard intelligence monitoring loops active."
-};
 
 // ============================================================
-// GEODATA VERSIONING
-// ------------------------------------------------------------
-// This block is the single source of truth for "how fresh are
-// the hand-curated geo datasets" (hotspots / targets / safe
-// zones below). Since this app has no backend/cron, the dataset
-// can't silently refresh itself — but we track a revision date
-// and compute a "next review due" date (+30 days) so the UI is
-// honest about staleness, and so any future automated job (a
-// GitHub Action, a small Worker, etc.) has a clear hook: bump
-// GEO_DATASET_REVISION and it propagates everywhere automatically.
+// IntelEngine — DEFCON / doomsday-clock math, kept separate from
+// rendering. calculateDefcon() is pure (vectors in, result out);
+// the DOM-touching part is a thin wrapper so the calculation
+// itself stays testable/inspectable on its own.
 // ============================================================
-const GEO_DATASET_REVISION = '2026-06-21';
-const GEO_REVIEW_INTERVAL_DAYS = 30;
+const IntelEngine = (() => {
+    const FIXED_VECTORS = { nuke: 72, geo: 68, climate: 65 };
 
-function renderGeoFreshness() {
-    const rev = new Date(GEO_DATASET_REVISION + 'T00:00:00Z');
-    const next = new Date(rev.getTime() + GEO_REVIEW_INTERVAL_DAYS * 86400000);
-    document.getElementById('geoRevLabel').textContent = GEO_DATASET_REVISION;
-    document.getElementById('geoNextLabel').textContent = next.toISOString().slice(0,10);
-}
+    const DEFCON_THRESHOLDS = [
+        { level:1, minScore:95, label:'COCKED PISTOL', color:'var(--danger)',  legendClass:'active-danger'  },
+        { level:2, minScore:68, label:'FAST PACE',     color:'var(--danger)',  legendClass:'active-danger'  },
+        { level:3, minScore:50, label:'ROUND HOUSE',   color:'var(--warning)', legendClass:'active-warning' },
+        { level:4, minScore:28, label:'DOUBLE TAKE',   color:'var(--warning)', legendClass:'active-warning' },
+        { level:5, minScore:0,  label:'FADE OUT',      color:'var(--success)', legendClass:'active'         }
+    ];
+    const DEFCON_DESCRIPTIONS = {
+        1: "COCKED PISTOL. Nuclear conflict imminent or underway. Maximum force deployment. This threshold has never been officially declared in US history.",
+        2: "FAST PACE. Armed forces ready for combat within 6 hours. Highest DEFCON ever officially reached — Cuban Missile Crisis, October 1962. Current vectors place the simulator here.",
+        3: "ROUND HOUSE. Air Force ready to mobilize within 15 minutes. Declared twice: 1973 Yom Kippur War, September 11 2001.",
+        4: "DOUBLE TAKE. Heightened intelligence watch and strengthened security measures. Analyst consensus for real-world US posture as of June 2026.",
+        5: "FADE OUT. Normal peacetime readiness. Standard intelligence monitoring loops active."
+    };
 
-// ============================================================
-// MAP DATA — hand-curated, reviewed on GEO_DATASET_REVISION
-// ============================================================
-const conflictHotspots = [
-    { name:'Eastern Corridor Watch',  lat:50.45, lng:30.52,  note:'Russia-Ukraine active front — OSINT-EUR monitoring' },
-    { name:'Pacific Maritime Sector', lat:16.0,  lng:114.0,  note:'Taiwan Strait / South China Sea — PLA naval activity' },
-    { name:'Mideast Signal Relay',    lat:32.0,  lng:35.0,   note:'Iran-Israel theater — active strike exchange monitoring' },
-    { name:'Arctic Approach',         lat:71.0,  lng:25.0,   note:'NATO-Russia northern flank proximity watch' },
-    { name:'Gulf Sector',             lat:29.5,  lng:47.8,   note:'US-Iran ceasefire compliance — Kuwait projectile interceptions ongoing' }
-];
+    let lastScore = null;
+    let lastResult = null; // full {score, defcon, secondsToMidnight} from the most recent calculation, change or not
+    const subscribers = []; // fns called only when the score actually changes — see refreshAndRender()
 
-// Primary nuclear target zones — sourced from open-source targeting doctrine
-const primaryTargets = [
-    { name:'Washington D.C.',        lat:38.89,  lng:-77.03, note:'National command authority. Pentagon. Top priority counterforce + countervalue target.' },
-    { name:'New York City',          lat:40.71,  lng:-74.00, note:'Largest US population center. Financial hub. High-priority countervalue target.' },
-    { name:'Los Angeles',            lat:34.05,  lng:-118.24,note:'Major port, industry, population. Secondary priority target.' },
-    { name:'Chicago',                lat:41.87,  lng:-87.63, note:'Rail/industrial hub. High-priority countervalue.' },
-    { name:'Minot AFB / ND Silos',   lat:48.41,  lng:-101.35,note:'Minuteman III ICBM silo belt. North Dakota / Montana / Wyoming. First-wave counterforce priority.' },
-    { name:'Norfolk Naval Station',  lat:36.94,  lng:-76.32, note:'Largest US naval base. Fleet Forces Command HQ. Top counterforce target.' },
-    { name:'Offutt AFB / STRATCOM',  lat:41.12,  lng:-95.91, note:'US Strategic Command HQ. High-priority C2 decapitation target.' },
-    { name:'Moscow',                 lat:55.75,  lng:37.61,  note:'Russian national command authority. Kremlin. Top US countervalue target.' },
-    { name:'Beijing',                lat:39.90,  lng:116.40, note:'Chinese NCA. PLA General Staff HQ. US countervalue target in extended scenario.' },
-    { name:'London',                 lat:51.50,  lng:-0.12,  note:'UK NCA. NATO nuclear partner. Russian counterforce target in escalation scenario.' },
-    { name:'Paris',                  lat:48.85,  lng:2.35,   note:'French NCA. NATO nuclear partner. Independent deterrent command.' },
-    { name:'Pyongyang',              lat:39.01,  lng:125.74, note:'DPRK NCA. US/ROK first-strike priority in peninsula scenario.' }
-];
-
-// Military bases (NATO/US/Russia/China) and major civil nuclear power plants —
-// distinct from primaryTargets above: these are operational installations
-// (troop presence, reactors), not strategic command/launch targets.
-const militaryNuclearSites = [
-    // — NATO / US bases
-    { type:'mil', name:'Ramstein Air Base (USAFE)',     lat:49.44,  lng:7.60,   note:'NATO/US Air Forces Europe HQ. Major logistics and airlift hub, Germany.' },
-    { type:'mil', name:'RAF Lakenheath',                lat:52.41,  lng:0.56,   note:'US Air Force base, UK. F-35 fighter wing.' },
-    { type:'mil', name:'Incirlik Air Base',              lat:37.00,  lng:35.43,  note:'US/NATO base, Turkey. Forward presence near Mideast theater.' },
-    { type:'mil', name:'Camp Humphreys',                 lat:36.97,  lng:127.03, note:'Largest US overseas base. South Korea, peninsula deterrence.' },
-    { type:'mil', name:'Yokota Air Base',                lat:35.75,  lng:139.35, note:'US Forces Japan HQ. Western Pacific logistics.' },
-    { type:'mil', name:'Diego Garcia',                   lat:-7.31,  lng:72.41,  note:'US/UK joint base, Indian Ocean. Strategic bomber and naval staging.' },
-    // — Russia
-    { type:'mil', name:'Kaliningrad Garrison',           lat:54.71,  lng:20.51,  note:'Russian exclave base. Baltic Fleet, Iskander missile presence.' },
-    { type:'mil', name:'Severomorsk Naval Base',         lat:69.07,  lng:33.42,  note:'Russian Northern Fleet HQ. Arctic/Atlantic naval power projection.' },
-    { type:'mil', name:'Hmeimim Air Base',               lat:35.40,  lng:35.95,  note:'Russian base in Syria. Mediterranean/Mideast forward presence.' },
-    // — China
-    { type:'mil', name:'Yulin Naval Base',               lat:18.22,  lng:109.49, note:'PLAN submarine base, Hainan Island. South China Sea power projection.' },
-    { type:'mil', name:'Djibouti Support Base',          lat:11.59,  lng:43.15,  note:'China\u2019s only overseas military base. Horn of Africa / Red Sea access.' },
-    { type:'mil', name:'Fiery Cross Reef',               lat:9.55,   lng:112.89, note:'PLA militarized artificial island, Spratly Islands, South China Sea.' },
-    // — Civil nuclear power plants (major, high public-data visibility)
-    { type:'nuke', name:'Zaporizhzhia NPP',              lat:47.51,  lng:34.59,  note:'Largest nuclear plant in Europe, Ukraine. Active conflict-zone safety concern (IAEA monitored).' },
-    { type:'nuke', name:'Bushehr NPP',                   lat:28.83,  lng:50.89,  note:'Iran\u2019s sole operating commercial nuclear power plant.' },
-    { type:'nuke', name:'Kori NPP',                      lat:35.32,  lng:129.30, note:'South Korea\u2019s first and largest nuclear power complex.' },
-    { type:'nuke', name:'Fukushima Daiichi (decommissioning)', lat:37.42, lng:141.03, note:'Site of 2011 meltdown. Long-term decommissioning and water-release operations ongoing.' },
-    { type:'nuke', name:'Three Mile Island',             lat:40.15,  lng:-76.72, note:'US plant, site of 1979 partial meltdown. Restart efforts underway as of 2026.' },
-    { type:'nuke', name:'Diablo Canyon Power Plant',     lat:35.21,  lng:-120.85,note:'Last operating nuclear plant in California, US.' },
-    { type:'nuke', name:'Gravelines Nuclear Power Station', lat:51.02, lng:2.14, note:'Largest nuclear power plant in Western Europe, France.' },
-    { type:'nuke', name:'Kursk NPP',                     lat:51.68,  lng:35.60,  note:'Russian nuclear plant near Ukraine border region.' },
-];
-
-
-const safeZones = [
-    {
-        name:'Patagonia, Argentina',
-        lat:-46.5, lng:-71.5,
-        rank:1, score:'HIGH',
-        why:'Remote Southern Hemisphere. No strategic value. Strong agricultural base. Prevailing winds push Northern Hemisphere fallout away. Low population density. Argentina has no nuclear alliance obligations.',
-        caveat:'Nuclear winter food disruption remains a risk globally. Argentine urban centers still exposed.'
-    },
-    {
-        name:'South Island, New Zealand',
-        lat:-44.5, lng:170.0,
-        rank:2, score:'HIGH',
-        why:'Extreme geographic isolation. No nuclear targets on island. Strong food/water self-sufficiency. Southern Pacific location minimizes fallout from Northern Hemisphere exchanges. Stable governance.',
-        caveat:'Nuclear soot stratospheric injection could still reduce NZ crop yields 20–40%.'
-    },
-    {
-        name:'Iceland',
-        lat:64.9,  lng:-18.5,
-        rank:3, score:'HIGH',
-        why:'Geothermal energy independence. No nuclear weapons or hosting obligations. Remote North Atlantic. Limited strategic value. ~370,000 population — manageable resource load. NATO member but no deployed assets.',
-        caveat:'Proximity to Northern Hemisphere fallout corridors. Ocean currents may carry contamination.'
-    },
-    {
-        name:'Uruguay',
-        lat:-32.5, lng:-56.0,
-        rank:4, score:'MODERATE-HIGH',
-        why:'Small, politically stable, no military alliances. Southern Hemisphere. Strong agricultural output. No nuclear target value. Low population density in interior regions.',
-        caveat:'Proximity to Argentine and Brazilian urban centers creates secondary risk.'
-    },
-    {
-        name:'Tasmania, Australia',
-        lat:-42.0, lng:146.5,
-        rank:5, score:'MODERATE-HIGH',
-        why:'Island geography. Remote from Northern Hemisphere exchanges. Australia has no nuclear weapons. Strong food production. Low population. Prevailing southern winds favorable.',
-        caveat:'Australia\'s alliance with US (ANZUS) may make mainland bases targets, not Tasmania directly.'
-    },
-    {
-        name:'Paraguay Interior',
-        lat:-22.0, lng:-58.0,
-        rank:6, score:'MODERATE',
-        why:'Landlocked, no strategic military value. Southern Hemisphere. Agricultural capacity. Geographic buffer from coastal exposure. No nuclear alliance.',
-        caveat:'Limited medical infrastructure. River systems could carry contamination from regional fallout.'
-    },
-    {
-        name:'Ireland',
-        lat:53.1,  lng:-8.1,
-        rank:7, score:'MODERATE',
-        why:'Neutral state — not a NATO member, no nuclear hosting. No strategic military targets. Self-sufficient food production. English-speaking, stable institutions.',
-        caveat:'Proximity to UK (primary target) and Northern Europe fallout corridor is a significant risk factor.'
+    // Pure function: weighted average of FIXED_VECTORS → { score, defcon, secondsToMidnight }.
+    // Re-run any time vectors change (they're currently locked/read-only in the
+    // UI, but this is the hook a future "live vector" feed would call into).
+    function calculateDefcon(vectors = FIXED_VECTORS) {
+        const { nuke: n, geo: g, climate: c } = vectors;
+        const climateImpactModifier = c * 0.18;
+        const score = Math.min(100, Math.max(0,
+            (n * 0.40) + ((g + climateImpactModifier) * 0.35) + (c * 0.25)
+        ));
+        const secondsToMidnight = Math.max(0, Math.round(600 - (score / 100) * 600));
+        const matched = DEFCON_THRESHOLDS.find(t => score >= t.minScore) || DEFCON_THRESHOLDS[DEFCON_THRESHOLDS.length - 1];
+        return { score, defcon: matched, secondsToMidnight };
     }
-];
 
-// Conflict intensity heatmap — permanent overlay, not click-triggered.
-// Centers reuse the existing conflictHotspots coordinates (single source of
-// truth — if a hotspot moves, its heat blob moves with it) plus a short list
-// of additional active-conflict zones not otherwise pinned on the map.
-// "intensity" (0-1) drives radius + opacity; it is a coarse editorial label
-// (high/medium/low based on ACLED/UCDP active-conflict counts), not a live feed.
-const conflictHeatZones = [
-    { lat:50.45, lng:30.52,  intensity:1.0,  label:'Ukraine theater' },
-    { lat:32.0,  lng:35.0,   intensity:0.95, label:'Israel-Gaza-Lebanon corridor' },
-    { lat:15.5,  lng:48.5,   intensity:0.75, label:'Yemen civil conflict' },
-    { lat:15.5,  lng:30.0,   intensity:0.85, label:'Sudan civil war' },
-    { lat:16.0,  lng:114.0,  intensity:0.55, label:'South China Sea / Taiwan Strait tension' },
-    { lat:29.5,  lng:47.8,   intensity:0.5,  label:'Gulf sector friction' },
-    { lat:9.0,   lng:38.7,   intensity:0.45, label:'Horn of Africa instability' },
-    { lat:12.0,  lng:8.0,    intensity:0.6,  label:'Sahel insurgency belt' },
-    { lat:4.5,   lng:27.0,   intensity:0.5,  label:'DR Congo / Great Lakes conflict' },
-    { lat:34.8,  lng:38.99,  intensity:0.6,  label:'Syria residual conflict' },
-    { lat:33.3,  lng:44.4,   intensity:0.4,  label:'Iraq instability' },
-    { lat:6.5,   lng:2.5,    intensity:0.3,  label:'Gulf of Guinea piracy/insurgency' },
-];
+    function highlightDefconLegend(level) {
+        for (let i = 1; i <= 5; i++) {
+            const el = document.getElementById('legend-' + i);
+            if (!el) continue;
+            el.className = 'defcon-row';
+            if (i === level) {
+                const t = DEFCON_THRESHOLDS.find(d => d.level === level);
+                el.classList.add(t ? t.legendClass : 'active');
+            }
+        }
+    }
+
+    // Other modules (StrategicAssessment) register here instead of polling
+    // IntelEngine on their own timer — keeps re-calculation tied to actual
+    // data changes rather than duplicating a second interval.
+    function onUpdate(fn) {
+        if (typeof fn === 'function') subscribers.push(fn);
+    }
+
+    // DOM-touching wrapper: runs the calculation, and — per the brief —
+    // only triggers a UI update / clock-hand animation if the score
+    // actually changed since last run, rather than re-animating on every
+    // poll even when nothing moved. Subscribers fire on the same condition.
+    function refreshAndRender() {
+        const result = calculateDefcon();
+        lastResult = result;
+        if (lastScore !== null && Math.abs(result.score - lastScore) < 0.01) return; // no change, skip re-render
+        lastScore = result.score;
+
+        document.getElementById('clockMetric').innerText = result.secondsToMidnight + 's';
+        document.getElementById('clockHand').style.transform = `rotate(${-(result.secondsToMidnight * 0.1)}deg)`;
+
+        const dMetric = document.getElementById('defconMetric');
+        dMetric.innerText = 'DEFCON ' + result.defcon.level;
+        dMetric.style.color = result.defcon.color;
+        dMetric.style.textShadow = '0 0 16px ' + result.defcon.color;
+        document.getElementById('defconDesc').innerText = DEFCON_DESCRIPTIONS[result.defcon.level];
+        highlightDefconLegend(result.defcon.level);
+
+        subscribers.forEach(fn => { try { fn(result); } catch (e) { console.warn('IntelEngine subscriber failed', e); } });
+    }
+
+    return {
+        FIXED_VECTORS, calculateDefcon, refreshAndRender, onUpdate,
+        getLastResult: () => lastResult,
+    };
+})();
 
 
-function renderSafeZoneCard() {
-    const container = document.getElementById('safezoneList');
-    container.innerHTML = safeZones.map(z => `
-        <div class="safezone-item">
-            <div class="safezone-rank">#${z.rank}</div>
-            <div>
-                <span class="safezone-name">${z.name}</span>
-                <span class="safezone-score">SURVIVABILITY: ${z.score}</span>
-                <span class="safezone-why">${z.why}</span>
-                <span class="safezone-caveat">&#9888; ${z.caveat}</span>
+// ============================================================
+// MapManager — owns the Leaflet instance, every layerGroup, and
+// all map-rendering datasets (hotspots, targets, safe zones,
+// military/nuclear sites, conflict heatmap, news events,
+// earthquakes, aircraft). Anything that puts a marker on the
+// map goes through here.
+// ============================================================
+const MapManager = (() => {
+    const GEO_DATASET_REVISION = '2026-06-21';
+    const GEO_REVIEW_INTERVAL_DAYS = 30;
+
+    const conflictHotspots = [
+        { name:'Eastern Corridor Watch',  lat:50.45, lng:30.52,  note:'Russia-Ukraine active front — OSINT-EUR monitoring' },
+        { name:'Pacific Maritime Sector', lat:16.0,  lng:114.0,  note:'Taiwan Strait / South China Sea — PLA naval activity' },
+        { name:'Mideast Signal Relay',    lat:32.0,  lng:35.0,   note:'Iran-Israel theater — active strike exchange monitoring' },
+        { name:'Arctic Approach',         lat:71.0,  lng:25.0,   note:'NATO-Russia northern flank proximity watch' },
+        { name:'Gulf Sector',             lat:29.5,  lng:47.8,   note:'US-Iran ceasefire compliance — Kuwait projectile interceptions ongoing' }
+    ];
+
+    const primaryTargets = [
+        { name:'Washington D.C.',        lat:38.89,  lng:-77.03, note:'National command authority. Pentagon. Top priority counterforce + countervalue target.' },
+        { name:'New York City',          lat:40.71,  lng:-74.00, note:'Largest US population center. Financial hub. High-priority countervalue target.' },
+        { name:'Los Angeles',            lat:34.05,  lng:-118.24,note:'Major port, industry, population. Secondary priority target.' },
+        { name:'Chicago',                lat:41.87,  lng:-87.63, note:'Rail/industrial hub. High-priority countervalue.' },
+        { name:'Minot AFB / ND Silos',   lat:48.41,  lng:-101.35,note:'Minuteman III ICBM silo belt. North Dakota / Montana / Wyoming. First-wave counterforce priority.' },
+        { name:'Norfolk Naval Station',  lat:36.94,  lng:-76.32, note:'Largest US naval base. Fleet Forces Command HQ. Top counterforce target.' },
+        { name:'Offutt AFB / STRATCOM',  lat:41.12,  lng:-95.91, note:'US Strategic Command HQ. High-priority C2 decapitation target.' },
+        { name:'Moscow',                 lat:55.75,  lng:37.61,  note:'Russian national command authority. Kremlin. Top US countervalue target.' },
+        { name:'Beijing',                lat:39.90,  lng:116.40, note:'Chinese NCA. PLA General Staff HQ. US countervalue target in extended scenario.' },
+        { name:'London',                 lat:51.50,  lng:-0.12,  note:'UK NCA. NATO nuclear partner. Russian counterforce target in escalation scenario.' },
+        { name:'Paris',                  lat:48.85,  lng:2.35,   note:'French NCA. NATO nuclear partner. Independent deterrent command.' },
+        { name:'Pyongyang',              lat:39.01,  lng:125.74, note:'DPRK NCA. US/ROK first-strike priority in peninsula scenario.' }
+    ];
+
+    const militaryNuclearSites = [
+        { type:'mil', name:'Ramstein Air Base (USAFE)',     lat:49.44,  lng:7.60,   note:'NATO/US Air Forces Europe HQ. Major logistics and airlift hub, Germany.' },
+        { type:'mil', name:'RAF Lakenheath',                lat:52.41,  lng:0.56,   note:'US Air Force base, UK. F-35 fighter wing.' },
+        { type:'mil', name:'Incirlik Air Base',              lat:37.00,  lng:35.43,  note:'US/NATO base, Turkey. Forward presence near Mideast theater.' },
+        { type:'mil', name:'Camp Humphreys',                 lat:36.97,  lng:127.03, note:'Largest US overseas base. South Korea, peninsula deterrence.' },
+        { type:'mil', name:'Yokota Air Base',                lat:35.75,  lng:139.35, note:'US Forces Japan HQ. Western Pacific logistics.' },
+        { type:'mil', name:'Diego Garcia',                   lat:-7.31,  lng:72.41,  note:'US/UK joint base, Indian Ocean. Strategic bomber and naval staging.' },
+        { type:'mil', name:'Kaliningrad Garrison',           lat:54.71,  lng:20.51,  note:'Russian exclave base. Baltic Fleet, Iskander missile presence.' },
+        { type:'mil', name:'Severomorsk Naval Base',         lat:69.07,  lng:33.42,  note:'Russian Northern Fleet HQ. Arctic/Atlantic naval power projection.' },
+        { type:'mil', name:'Hmeimim Air Base',               lat:35.40,  lng:35.95,  note:'Russian base in Syria. Mediterranean/Mideast forward presence.' },
+        { type:'mil', name:'Yulin Naval Base',               lat:18.22,  lng:109.49, note:'PLAN submarine base, Hainan Island. South China Sea power projection.' },
+        { type:'mil', name:'Djibouti Support Base',          lat:11.59,  lng:43.15,  note:'China\u2019s only overseas military base. Horn of Africa / Red Sea access.' },
+        { type:'mil', name:'Fiery Cross Reef',               lat:9.55,   lng:112.89, note:'PLA militarized artificial island, Spratly Islands, South China Sea.' },
+        { type:'nuke', name:'Zaporizhzhia NPP',              lat:47.51,  lng:34.59,  note:'Largest nuclear plant in Europe, Ukraine. Active conflict-zone safety concern (IAEA monitored).' },
+        { type:'nuke', name:'Bushehr NPP',                   lat:28.83,  lng:50.89,  note:'Iran\u2019s sole operating commercial nuclear power plant.' },
+        { type:'nuke', name:'Kori NPP',                      lat:35.32,  lng:129.30, note:'South Korea\u2019s first and largest nuclear power complex.' },
+        { type:'nuke', name:'Fukushima Daiichi (decommissioning)', lat:37.42, lng:141.03, note:'Site of 2011 meltdown. Long-term decommissioning and water-release operations ongoing.' },
+        { type:'nuke', name:'Three Mile Island',             lat:40.15,  lng:-76.72, note:'US plant, site of 1979 partial meltdown. Restart efforts underway as of 2026.' },
+        { type:'nuke', name:'Diablo Canyon Power Plant',     lat:35.21,  lng:-120.85,note:'Last operating nuclear plant in California, US.' },
+        { type:'nuke', name:'Gravelines Nuclear Power Station', lat:51.02, lng:2.14, note:'Largest nuclear power plant in Western Europe, France.' },
+        { type:'nuke', name:'Kursk NPP',                     lat:51.68,  lng:35.60,  note:'Russian nuclear plant near Ukraine border region.' },
+    ];
+
+    const safeZones = [
+        { name:'Patagonia, Argentina', lat:-46.5, lng:-71.5, rank:1, score:'HIGH',
+          why:'Remote Southern Hemisphere. No strategic value. Strong agricultural base. Prevailing winds push Northern Hemisphere fallout away. Low population density. Argentina has no nuclear alliance obligations.',
+          caveat:'Nuclear winter food disruption remains a risk globally. Argentine urban centers still exposed.' },
+        { name:'South Island, New Zealand', lat:-44.5, lng:170.0, rank:2, score:'HIGH',
+          why:'Extreme geographic isolation. No nuclear targets on island. Strong food/water self-sufficiency. Southern Pacific location minimizes fallout from Northern Hemisphere exchanges. Stable governance.',
+          caveat:'Nuclear soot stratospheric injection could still reduce NZ crop yields 20–40%.' },
+        { name:'Iceland', lat:64.9, lng:-18.5, rank:3, score:'HIGH',
+          why:'Geothermal energy independence. No nuclear weapons or hosting obligations. Remote North Atlantic. Limited strategic value. ~370,000 population — manageable resource load. NATO member but no deployed assets.',
+          caveat:'Proximity to Northern Hemisphere fallout corridors. Ocean currents may carry contamination.' },
+        { name:'Uruguay', lat:-32.5, lng:-56.0, rank:4, score:'MODERATE-HIGH',
+          why:'Small, politically stable, no military alliances. Southern Hemisphere. Strong agricultural output. No nuclear target value. Low population density in interior regions.',
+          caveat:'Proximity to Argentine and Brazilian urban centers creates secondary risk.' },
+        { name:'Tasmania, Australia', lat:-42.0, lng:146.5, rank:5, score:'MODERATE-HIGH',
+          why:'Island geography. Remote from Northern Hemisphere exchanges. Australia has no nuclear weapons. Strong food production. Low population. Prevailing southern winds favorable.',
+          caveat:'Australia\'s alliance with US (ANZUS) may make mainland bases targets, not Tasmania directly.' },
+        { name:'Paraguay Interior', lat:-22.0, lng:-58.0, rank:6, score:'MODERATE',
+          why:'Landlocked, no strategic military value. Southern Hemisphere. Agricultural capacity. Geographic buffer from coastal exposure. No nuclear alliance.',
+          caveat:'Limited medical infrastructure. River systems could carry contamination from regional fallout.' },
+        { name:'Ireland', lat:53.1, lng:-8.1, rank:7, score:'MODERATE',
+          why:'Neutral state — not a NATO member, no nuclear hosting. No strategic military targets. Self-sufficient food production. English-speaking, stable institutions.',
+          caveat:'Proximity to UK (primary target) and Northern Europe fallout corridor is a significant risk factor.' },
+    ];
+
+    const conflictHeatZones = [
+        { lat:50.45, lng:30.52,  intensity:1.0,  label:'Ukraine theater' },
+        { lat:32.0,  lng:35.0,   intensity:0.95, label:'Israel-Gaza-Lebanon corridor' },
+        { lat:15.5,  lng:48.5,   intensity:0.75, label:'Yemen civil conflict' },
+        { lat:15.5,  lng:30.0,   intensity:0.85, label:'Sudan civil war' },
+        { lat:16.0,  lng:114.0,  intensity:0.55, label:'South China Sea / Taiwan Strait tension' },
+        { lat:29.5,  lng:47.8,   intensity:0.5,  label:'Gulf sector friction' },
+        { lat:9.0,   lng:38.7,   intensity:0.45, label:'Horn of Africa instability' },
+        { lat:12.0,  lng:8.0,    intensity:0.6,  label:'Sahel insurgency belt' },
+        { lat:4.5,   lng:27.0,   intensity:0.5,  label:'DR Congo / Great Lakes conflict' },
+        { lat:34.8,  lng:38.99,  intensity:0.6,  label:'Syria residual conflict' },
+        { lat:33.3,  lng:44.4,   intensity:0.4,  label:'Iraq instability' },
+        { lat:6.5,   lng:2.5,    intensity:0.3,  label:'Gulf of Guinea piracy/insurgency' },
+    ];
+
+    const EVENT_TTL_MS = 90 * 60 * 1000;
+    const EVENT_GAZETTEER = [
+        ...conflictHotspots.map(h => ({ name: h.name.split(' ')[0], lat: h.lat, lng: h.lng, label: h.name })),
+        { name:'Ukraine', lat:49.0, lng:31.0, label:'Ukraine' },
+        { name:'Russia', lat:61.5, lng:90.0, label:'Russia' },
+        { name:'Moscow', lat:55.75, lng:37.61, label:'Moscow' },
+        { name:'Kyiv', lat:50.45, lng:30.52, label:'Kyiv' },
+        { name:'Taiwan', lat:23.7, lng:121.0, label:'Taiwan' },
+        { name:'China', lat:35.0, lng:103.0, label:'China' },
+        { name:'Beijing', lat:39.90, lng:116.40, label:'Beijing' },
+        { name:'Israel', lat:31.5, lng:34.8, label:'Israel' },
+        { name:'Iran', lat:32.0, lng:53.0, label:'Iran' },
+        { name:'Gaza', lat:31.4, lng:34.4, label:'Gaza' },
+        { name:'Lebanon', lat:33.85, lng:35.86, label:'Lebanon' },
+        { name:'Syria', lat:34.8, lng:38.99, label:'Syria' },
+        { name:'Yemen', lat:15.5, lng:48.5, label:'Yemen' },
+        { name:'Gulf', lat:27.5, lng:51.0, label:'Persian Gulf' },
+        { name:'Korea', lat:38.0, lng:127.5, label:'Korean Peninsula' },
+        { name:'Pyongyang', lat:39.01, lng:125.74, label:'Pyongyang' },
+        { name:'India', lat:22.0, lng:79.0, label:'India' },
+        { name:'Pakistan', lat:30.0, lng:70.0, label:'Pakistan' },
+        { name:'Sudan', lat:15.5, lng:30.0, label:'Sudan' },
+        { name:'Venezuela', lat:7.0, lng:-66.0, label:'Venezuela' },
+        { name:'Mexico', lat:23.0, lng:-102.0, label:'Mexico' },
+        { name:'Washington', lat:38.89, lng:-77.03, label:'Washington D.C.' },
+        { name:'NATO', lat:50.85, lng:4.35, label:'NATO HQ (Brussels)' },
+        { name:'Chile', lat:-33.45, lng:-70.65, label:'Chile' },
+    ];
+    const eventMarkerRegistry = [];
+
+    const OPENSKY_URL = 'https://opensky-network.org/api/states/all';
+    const OPENSKY_REGION = { lamin: -60, lomin: -170, lamax: 75, lomax: 170 };
+    const MAX_AIRCRAFT_RENDERED = 120;
+    const AIRCRAFT_BASE_INTERVAL_MS = 45000;
+    const AIRCRAFT_MAX_INTERVAL_MS = 5 * 60 * 1000;
+    let aircraftMarkers = [];
+    let aircraftFailStreak = 0;
+    let aircraftTimer = null;
+
+    const USGS_QUAKE_URL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson';
+    let quakeMarkers = [];
+
+    const layerState = { conflict: true, targets: true, safezones: true, events: true, milnuke: true, quakes: true, planes: true };
+    const layerGroups = {};
+    let map = null;
+
+    function renderGeoFreshness() {
+        const rev = new Date(GEO_DATASET_REVISION + 'T00:00:00Z');
+        const next = new Date(rev.getTime() + GEO_REVIEW_INTERVAL_DAYS * 86400000);
+        document.getElementById('geoRevLabel').textContent = GEO_DATASET_REVISION;
+        document.getElementById('geoNextLabel').textContent = next.toISOString().slice(0,10);
+    }
+
+    function renderSafeZoneCard() {
+        const container = document.getElementById('safezoneList');
+        container.innerHTML = safeZones.map(z => `
+            <div class="safezone-item">
+                <div class="safezone-rank">#${z.rank}</div>
+                <div>
+                    <span class="safezone-name">${z.name}</span>
+                    <span class="safezone-score">SURVIVABILITY: ${z.score}</span>
+                    <span class="safezone-why">${z.why}</span>
+                    <span class="safezone-caveat">&#9888; ${z.caveat}</span>
+                </div>
             </div>
-        </div>
-    `).join('');
-}
+        `).join('');
+    }
 
-// ============================================================
-// RISK CALCULATIONS
-// ============================================================
-function highlightDefconLegend(level) {
-    for (let i = 1; i <= 5; i++) {
-        const el = document.getElementById('legend-' + i);
-        if (!el) continue;
-        el.className = 'defcon-row';
-        if (i === level) {
-            const t = DEFCON_THRESHOLDS.find(d => d.level === level);
-            el.classList.add(t ? t.legendClass : 'active');
+    // Persistence: load saved layer visibility before first paint so the
+    // map comes up exactly as the user left it last session.
+    function loadPersistedLayerState() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('qrd_layer_state') || 'null');
+            if (saved && typeof saved === 'object') {
+                Object.keys(layerState).forEach(k => {
+                    if (typeof saved[k] === 'boolean') layerState[k] = saved[k];
+                });
+            }
+        } catch (e) { /* corrupted/missing — fall back to defaults silently */ }
+    }
+
+    function persistLayerState() {
+        try { localStorage.setItem('qrd_layer_state', JSON.stringify(layerState)); }
+        catch (e) { console.warn('localStorage save failed', e); }
+    }
+
+    function toggleLayer(name) {
+        if (!layerGroups[name]) return;
+        layerState[name] = !layerState[name];
+        const btn = document.getElementById('btn-' + name);
+        if (layerState[name]) {
+            layerGroups[name].addTo(map);
+            if (btn) btn.style.opacity = '1';
+        } else {
+            map.removeLayer(layerGroups[name]);
+            if (btn) btn.style.opacity = '0.35';
         }
+        persistLayerState();
     }
-}
 
-function runRiskCalculations() {
-    const n = FIXED_VECTORS.nuke, g = FIXED_VECTORS.geo, c = FIXED_VECTORS.climate;
-    const climateImpactModifier = c * 0.18;
-    const absoluteThreatScore = (n * 0.40) + ((g + climateImpactModifier) * 0.35) + (c * 0.25);
-    const clampedScore = Math.min(100, Math.max(0, absoluteThreatScore));
-    let s2m = Math.max(0, Math.round(600 - (clampedScore / 100) * 600));
-    document.getElementById('clockMetric').innerText = s2m + 's';
-    document.getElementById('clockHand').style.transform = `rotate(${-(s2m * 0.1)}deg)`;
-
-    let matched = DEFCON_THRESHOLDS[DEFCON_THRESHOLDS.length - 1];
-    for (const t of DEFCON_THRESHOLDS) { if (absoluteThreatScore >= t.minScore) { matched = t; break; } }
-    const dMetric = document.getElementById('defconMetric');
-    dMetric.innerText = 'DEFCON ' + matched.level;
-    dMetric.style.color = matched.color;
-    dMetric.style.textShadow = '0 0 16px ' + matched.color;
-    document.getElementById('defconDesc').innerText = DEFCON_DESCRIPTIONS[matched.level];
-    highlightDefconLegend(matched.level);
-}
-
-// ============================================================
-// MAP — LAYER GROUPS + TOGGLE
-// ============================================================
-const layerState = { conflict: true, targets: true, safezones: true, events: true, milnuke: true, quakes: true };
-const layerGroups = {};
-
-function toggleLayer(name) {
-    layerState[name] = !layerState[name];
-    const btn = document.getElementById('btn-' + name);
-    if (layerState[name]) {
-        layerGroups[name].addTo(window.pipboyMap);
-        btn.style.opacity = '1';
-    } else {
-        window.pipboyMap.removeLayer(layerGroups[name]);
-        btn.style.opacity = '0.35';
+    function applyInitialButtonStates() {
+        Object.keys(layerState).forEach(name => {
+            const btn = document.getElementById('btn-' + name);
+            if (btn) btn.style.opacity = layerState[name] ? '1' : '0.35';
+        });
     }
-}
 
-let legendCollapsed = false;
-function toggleLegend() {
-    legendCollapsed = !legendCollapsed;
-    const legend = document.getElementById('mapLegend');
-    const icon = document.getElementById('legendToggleIcon');
-    legend.classList.toggle('collapsed', legendCollapsed);
-    icon.innerHTML = legendCollapsed ? '&#9660;' : '&#9650;';
-}
+    function init() {
+        if (typeof L === 'undefined') { console.warn('Leaflet not loaded'); return; }
+        loadPersistedLayerState();
 
-function initGlobalMap() {
-    if (typeof L === 'undefined') { console.warn('Leaflet not loaded'); return; }
-    const map = L.map('globalMap', { worldCopyJump: true }).setView([20, 10], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    window.pipboyMap = map;
+        // preferCanvas: renders vector layers (markers, circles) onto a
+        // single canvas element instead of one DOM node per marker — keeps
+        // frame rate stable as marker counts grow (heatmap circles +
+        // hotspots + targets + sites + quakes + aircraft, all at once).
+        map = L.map('globalMap', { worldCopyJump: true, preferCanvas: true }).setView([20, 10], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        window.pipboyMap = map; // kept for any external reference / debugging
 
-    // — Conflict hotspots layer
-    const conflictGroup = L.layerGroup();
-    const conflictIcon = L.divIcon({ className: 'pipboy-marker', html: '&#9670;', iconSize: [16,16] });
-    conflictHotspots.forEach(s => {
-        L.marker([s.lat, s.lng], { icon: conflictIcon }).addTo(conflictGroup)
-            .bindPopup(`<strong>${s.name}</strong><br>${s.note}`);
-    });
-    conflictGroup.addTo(map);
-    layerGroups.conflict = conflictGroup;
+        const conflictGroup = L.layerGroup();
+        const conflictIcon = L.divIcon({ className: 'pipboy-marker', html: '&#9670;', iconSize: [16,16] });
+        conflictHotspots.forEach(s => {
+            L.marker([s.lat, s.lng], { icon: conflictIcon }).addTo(conflictGroup)
+                .bindPopup(`<strong>${s.name}</strong><br>${s.note}`);
+        });
+        layerGroups.conflict = conflictGroup;
 
-    // — Primary targets layer
-    const targetGroup = L.layerGroup();
-    const targetIcon  = L.divIcon({ className: 'pipboy-marker-hot', html: '&#9888;', iconSize: [16,16] });
-    primaryTargets.forEach(t => {
-        L.marker([t.lat, t.lng], { icon: targetIcon }).addTo(targetGroup)
-            .bindPopup(`<strong style="color:#ff3b3b">&#9888; ${t.name}</strong><br><span style="font-size:0.8rem">${t.note}</span>`);
-    });
-    targetGroup.addTo(map);
-    layerGroups.targets = targetGroup;
+        const targetGroup = L.layerGroup();
+        const targetIcon = L.divIcon({ className: 'pipboy-marker-hot', html: '&#9888;', iconSize: [16,16] });
+        primaryTargets.forEach(t => {
+            L.marker([t.lat, t.lng], { icon: targetIcon }).addTo(targetGroup)
+                .bindPopup(`<strong style="color:#ff3b3b">&#9888; ${t.name}</strong><br><span style="font-size:0.8rem">${t.note}</span>`);
+        });
+        layerGroups.targets = targetGroup;
 
-    // — Safe zones layer
-    const safeGroup = L.layerGroup();
-    const safeIcon  = L.divIcon({ className: 'pipboy-marker-safe', html: '&#10022;', iconSize: [16,16] });
-    safeZones.forEach(z => {
-        L.marker([z.lat, z.lng], { icon: safeIcon }).addTo(safeGroup)
-            .bindPopup(`
+        const safeGroup = L.layerGroup();
+        const safeIcon = L.divIcon({ className: 'pipboy-marker-safe', html: '&#10022;', iconSize: [16,16] });
+        safeZones.forEach(z => {
+            L.marker([z.lat, z.lng], { icon: safeIcon }).addTo(safeGroup).bindPopup(`
                 <div class="safe-popup">
                     <span class="sp-title">&#10022; #${z.rank} — ${z.name}</span>
                     <span class="sp-score">SURVIVABILITY: ${z.score}</span>
@@ -812,655 +971,882 @@ function initGlobalMap() {
                     <span class="sp-caveat">&#9888; ${z.caveat}</span>
                 </div>
             `);
-    });
-    safeGroup.addTo(map);
-    layerGroups.safezones = safeGroup;
+        });
+        layerGroups.safezones = safeGroup;
 
-    // — Military & civil nuclear sites layer (toggleable)
-    const milGroup = L.layerGroup();
-    const milIcon  = L.divIcon({ className: 'pipboy-marker-mil',  html: '&#9760;', iconSize: [16,16] });
-    const nukeIcon = L.divIcon({ className: 'pipboy-marker-nuke', html: '&#9762;', iconSize: [16,16] });
-    militaryNuclearSites.forEach(s => {
-        const icon = s.type === 'nuke' ? nukeIcon : milIcon;
-        const color = s.type === 'nuke' ? '#ffe14d' : '#ff7a3d';
-        const tag = s.type === 'nuke' ? 'CIVIL NUCLEAR SITE' : 'MILITARY BASE';
-        L.marker([s.lat, s.lng], { icon }).addTo(milGroup)
-            .bindPopup(`
+        const milGroup = L.layerGroup();
+        const milIcon = L.divIcon({ className: 'pipboy-marker-mil', html: '&#9760;', iconSize: [16,16] });
+        const nukeIcon = L.divIcon({ className: 'pipboy-marker-nuke', html: '&#9762;', iconSize: [16,16] });
+        militaryNuclearSites.forEach(s => {
+            const icon = s.type === 'nuke' ? nukeIcon : milIcon;
+            const color = s.type === 'nuke' ? '#ffe14d' : '#ff7a3d';
+            const tag = s.type === 'nuke' ? 'CIVIL NUCLEAR SITE' : 'MILITARY BASE';
+            L.marker([s.lat, s.lng], { icon }).addTo(milGroup).bindPopup(`
                 <div class="info-popup">
                     <span class="ip-title" style="color:${color}">${s.type === 'nuke' ? '&#9762;' : '&#9760;'} ${s.name}</span>
                     <span class="ip-meta">${tag}</span>
                     <span class="ip-body">${s.note}</span>
                 </div>
             `);
-    });
-    milGroup.addTo(map);
-    layerGroups.milnuke = milGroup;
+        });
+        layerGroups.milnuke = milGroup;
 
-    // — Natural disasters layer (live earthquakes via USGS, populated dynamically — see refreshEarthquakes below)
-    const quakeGroup = L.layerGroup();
-    quakeGroup.addTo(map);
-    layerGroups.quakes = quakeGroup;
-    window.pipboyQuakeGroup = quakeGroup;
+        const eventGroup = L.layerGroup();
+        layerGroups.events = eventGroup;
 
-    // — Conflict intensity heatmap (permanent overlay, not part of layerGroups
-    //   toggles — always visible alongside whatever other layers are on, same
-    //   way the base tile layer is always on). Implemented as graduated
-    //   translucent circles rather than a separate heatmap library, so no new
-    //   script dependency is introduced.
-    const heatGroup = L.layerGroup();
-    conflictHeatZones.forEach(z => {
-        const baseRadiusM = 90000 + z.intensity * 260000; // 90km-350km depending on intensity
-        const opacity = 0.10 + z.intensity * 0.22;
-        L.circle([z.lat, z.lng], {
-            radius: baseRadiusM,
-            color: 'var(--danger)',
-            weight: 0,
-            fillColor: '#ff3b3b',
-            fillOpacity: opacity
-        }).addTo(heatGroup).bindPopup(`<strong style="color:#ff3b3b">${z.label}</strong><br><span style="font-size:0.75rem">Conflict intensity: ${Math.round(z.intensity*100)}%</span>`);
-        // tighter, hotter core for high-intensity zones
-        if (z.intensity > 0.6) {
+        const planeGroup = L.layerGroup();
+        layerGroups.planes = planeGroup;
+
+        const quakeGroup = L.layerGroup();
+        layerGroups.quakes = quakeGroup;
+
+        const heatGroup = L.layerGroup();
+        conflictHeatZones.forEach(z => {
+            const baseRadiusM = 90000 + z.intensity * 260000;
+            const opacity = 0.10 + z.intensity * 0.22;
             L.circle([z.lat, z.lng], {
-                radius: baseRadiusM * 0.4,
-                color: 'var(--danger)',
-                weight: 0,
-                fillColor: '#ff3b3b',
-                fillOpacity: opacity * 1.6
-            }).addTo(heatGroup);
-        }
-    });
-    heatGroup.addTo(map);
-    window.pipboyHeatGroup = heatGroup;
+                radius: baseRadiusM, color: 'var(--danger)', weight: 0,
+                fillColor: '#ff3b3b', fillOpacity: opacity
+            }).addTo(heatGroup).bindPopup(`<strong style="color:#ff3b3b">${z.label}</strong><br><span style="font-size:0.75rem">Conflict intensity: ${Math.round(z.intensity*100)}%</span>`);
+            if (z.intensity > 0.6) {
+                L.circle([z.lat, z.lng], {
+                    radius: baseRadiusM * 0.4, color: 'var(--danger)', weight: 0,
+                    fillColor: '#ff3b3b', fillOpacity: opacity * 1.6
+                }).addTo(heatGroup);
+            }
+        });
+        heatGroup.addTo(map); // permanent overlay, not part of the toggle/layerGroups state
 
-    // — News-derived events layer (populated dynamically, see newsEventLayer below)
-    const eventGroup = L.layerGroup();
-    eventGroup.addTo(map);
-    layerGroups.events = eventGroup;
-    window.pipboyEventGroup = eventGroup;
+        const userIcon = L.divIcon({ className: 'pipboy-marker-user', html: '&#9737;', iconSize:[18,18] });
+        window.pipboyUserMarker = L.marker([0,0], { icon: userIcon, opacity:0 }).addTo(map);
 
-    // — User position marker
-    const userIcon = L.divIcon({ className: 'pipboy-marker-user', html: '&#9737;', iconSize:[18,18] });
-    window.pipboyUserMarker = L.marker([0,0], { icon: userIcon, opacity:0 }).addTo(map);
+        // apply persisted/default visibility for every toggleable layer
+        Object.keys(layerGroups).forEach(name => {
+            if (layerState[name]) layerGroups[name].addTo(map);
+        });
+        applyInitialButtonStates();
 
-    setTimeout(() => map.invalidateSize(), 200);
-}
+        setTimeout(() => map.invalidateSize(), 200);
+    }
 
-// ============================================================
-// NEWS-DERIVED MAP EVENTS
-// ------------------------------------------------------------
-// There is no free equivalent of LiveUAmap's curated incident
-// feed. Rather than fabricate incident coordinates, we derive
-// approximate event markers from real aggregated headlines: each
-// headline is scanned for known place names (the same gazetteer
-// used for hotspots/targets, plus a short extra list of frequently
-// newsworthy capitals/regions). When a place name is matched, a
-// transient marker is plotted at that location with the real
-// headline + source + link in its popup. Markers age out after
-// EVENT_TTL_MS so the layer reflects "recent", not "all-time".
-// ============================================================
-const EVENT_TTL_MS = 90 * 60 * 1000; // 90 minutes
-const EVENT_GAZETTEER = [
-    ...conflictHotspots.map(h => ({ name: h.name.split(' ')[0], lat: h.lat, lng: h.lng, label: h.name })),
-    { name:'Ukraine',    lat:49.0,  lng:31.0,  label:'Ukraine' },
-    { name:'Russia',     lat:61.5,  lng:90.0,  label:'Russia' },
-    { name:'Moscow',     lat:55.75, lng:37.61, label:'Moscow' },
-    { name:'Kyiv',       lat:50.45, lng:30.52, label:'Kyiv' },
-    { name:'Taiwan',     lat:23.7,  lng:121.0, label:'Taiwan' },
-    { name:'China',      lat:35.0,  lng:103.0, label:'China' },
-    { name:'Beijing',    lat:39.90, lng:116.40,label:'Beijing' },
-    { name:'Israel',     lat:31.5,  lng:34.8,  label:'Israel' },
-    { name:'Iran',       lat:32.0,  lng:53.0,  label:'Iran' },
-    { name:'Gaza',       lat:31.4,  lng:34.4,  label:'Gaza' },
-    { name:'Lebanon',    lat:33.85, lng:35.86, label:'Lebanon' },
-    { name:'Syria',      lat:34.8,  lng:38.99, label:'Syria' },
-    { name:'Yemen',      lat:15.5,  lng:48.5,  label:'Yemen' },
-    { name:'Gulf',       lat:27.5,  lng:51.0,  label:'Persian Gulf' },
-    { name:'Korea',      lat:38.0,  lng:127.5, label:'Korean Peninsula' },
-    { name:'Pyongyang',  lat:39.01, lng:125.74,label:'Pyongyang' },
-    { name:'India',      lat:22.0,  lng:79.0,  label:'India' },
-    { name:'Pakistan',   lat:30.0,  lng:70.0,  label:'Pakistan' },
-    { name:'Sudan',      lat:15.5,  lng:30.0,  label:'Sudan' },
-    { name:'Venezuela',  lat:7.0,   lng:-66.0, label:'Venezuela' },
-    { name:'Mexico',     lat:23.0,  lng:-102.0,label:'Mexico' },
-    { name:'Washington', lat:38.89, lng:-77.03,label:'Washington D.C.' },
-    { name:'NATO',       lat:50.85, lng:4.35,  label:'NATO HQ (Brussels)' },
-];
-const eventMarkerRegistry = []; // { marker, expiresAt }
-
-function pruneExpiredEventMarkers() {
-    const now = Date.now();
-    for (let i = eventMarkerRegistry.length - 1; i >= 0; i--) {
-        if (eventMarkerRegistry[i].expiresAt <= now) {
-            window.pipboyEventGroup.removeLayer(eventMarkerRegistry[i].marker);
-            eventMarkerRegistry.splice(i, 1);
+    function pruneExpiredEventMarkers() {
+        const now = Date.now();
+        for (let i = eventMarkerRegistry.length - 1; i >= 0; i--) {
+            if (eventMarkerRegistry[i].expiresAt <= now) {
+                layerGroups.events.removeLayer(eventMarkerRegistry[i].marker);
+                eventMarkerRegistry.splice(i, 1);
+            }
         }
     }
-}
 
-function plotNewsEvent(item) {
-    if (!window.pipboyEventGroup) return;
-    const text = item.text || '';
-    const hit = EVENT_GAZETTEER.find(g => text.toLowerCase().includes(g.name.toLowerCase()));
-    if (!hit) return;
-    // jitter slightly so repeated hits on the same place don't fully stack
-    const jitter = () => (Math.random() - 0.5) * 1.4;
-    const eventIcon = L.divIcon({ className: 'pipboy-marker-event', html: '&#9889;', iconSize: [15,15] });
-    const marker = L.marker([hit.lat + jitter(), hit.lng + jitter()], { icon: eventIcon });
-    marker.bindPopup(`
-        <div class="info-popup">
-            <span class="ip-title" style="color:var(--warning)">&#9889; ${hit.label}</span>
-            <span class="ip-meta">${item.source || 'NEWS-FEED'} &middot; ${new Date().toLocaleTimeString()}</span>
-            <span class="ip-body">${text}</span>
-        </div>
-    `);
-    marker.addTo(window.pipboyEventGroup);
-    eventMarkerRegistry.push({ marker, expiresAt: Date.now() + EVENT_TTL_MS });
-}
+    function plotNewsEvent(item) {
+        if (!layerGroups.events) return;
+        const text = item.text || '';
+        const hit = EVENT_GAZETTEER.find(g => text.toLowerCase().includes(g.name.toLowerCase()));
+        if (!hit) return;
+        const jitter = () => (Math.random() - 0.5) * 1.4;
+        const eventIcon = L.divIcon({ className: 'pipboy-marker-event', html: '&#9889;', iconSize: [15,15] });
+        const marker = L.marker([hit.lat + jitter(), hit.lng + jitter()], { icon: eventIcon });
+        marker.bindPopup(`
+            <div class="info-popup">
+                <span class="ip-title" style="color:var(--warning)">&#9889; ${hit.label}</span>
+                <span class="ip-meta">${item.source || 'NEWS-FEED'} &middot; ${new Date().toLocaleTimeString()}</span>
+                <span class="ip-body">${text}</span>
+            </div>
+        `);
+        marker.addTo(layerGroups.events);
+        eventMarkerRegistry.push({ marker, expiresAt: Date.now() + EVENT_TTL_MS });
+    }
 
-// ============================================================
-// GLOBAL MARKET WATCH — Yahoo Finance quote API via CORS proxy
-// ------------------------------------------------------------
-// The original implementation called Stooq's "q/l" quote endpoint
-// directly from the browser. That endpoint isn't a real public
-// API — Stooq has no documented API at all, the q/l URL is a
-// legacy/manual-use pattern, it doesn't send permissive CORS
-// headers for arbitrary origins, and it has tightened against
-// automated access over time. The browser was silently blocking
-// or failing on every call, which is why the card never populated.
-//
-// Fix: use Yahoo Finance's public (undocumented but widely used,
-// stable for years) quote endpoint instead, routed through a free
-// CORS proxy — the same pattern already used elsewhere in this
-// file for RSS (rss2json). corsproxy.io adds the Access-Control-
-// Allow-Origin header Yahoo doesn't send, so fetch() from the
-// browser succeeds instead of being blocked.
-// ============================================================
-const MARKET_CATEGORIES = {
-    indices: [
-        { symbol: '^GSPC',   name: 'S&P 500',    sub: 'US Large Cap' },
-        { symbol: '^DJI',    name: 'Dow Jones',  sub: 'US Industrial' },
-        { symbol: '^IXIC',   name: 'Nasdaq',     sub: 'US Tech-heavy' },
-        { symbol: '^IPSA',   name: 'IPSA',       sub: 'Chile — Bolsa de Santiago' },
-    ],
-    forex: [
-        { symbol: 'CLP=X',     name: 'USD/CLP', sub: 'Dollar — Chilean Peso' },
-        { symbol: 'EURUSD=X',  name: 'EUR/USD', sub: 'Euro — US Dollar' },
-        { symbol: 'JPY=X',     name: 'USD/JPY', sub: 'Dollar — Japanese Yen' },
-        { symbol: 'RUB=X',     name: 'USD/RUB', sub: 'Dollar — Russian Ruble' },
-    ],
-    commodities: [
-        { symbol: 'GC=F',  name: 'Gold',        sub: 'COMEX Futures, $/oz' },
-        { symbol: 'CL=F',  name: 'Crude Oil',   sub: 'WTI Futures, $/bbl' },
-        { symbol: 'SI=F',  name: 'Silver',      sub: 'COMEX Futures, $/oz' },
-        { symbol: 'NG=F',  name: 'Natural Gas', sub: 'NYMEX Futures, $/MMBtu' },
-    ],
-};
-// v7/finance/quote now returns 401 — Yahoo deliberately disabled API-level
-// access to that endpoint ("licenses don't authorize redistribution").
-// v8/finance/chart/{symbol} is a different endpoint that still works without
-// auth (confirmed stable as of 2026) — it's what powers Yahoo's own charts.
-// It takes ONE symbol per call, so we fire one request per ticker in
-// parallel rather than a single batched call.
-const YF_CHART_URL = symbol => `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d`;
-let currentMarketCategory = 'indices';
-
-function setMarketCategory(category) {
-    if (!MARKET_CATEGORIES[category]) return;
-    currentMarketCategory = category;
-    document.querySelectorAll('.market-tab').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.getElementById('tab-' + category);
-    if (activeBtn) activeBtn.classList.add('active');
-    refreshMarkets();
-}
-
-function renderMarketError(tickers, label) {
-    const grid = document.getElementById('marketGrid');
-    if (!grid) return;
-    grid.innerHTML = tickers.map(t => `
-        <div class="ticker-item">
-            <span class="ticker-name">${t.name}</span>
-            <span class="ticker-sub">${t.sub}</span>
-            <span class="ticker-stale">${label}</span>
-        </div>`).join('');
-}
-
-async function fetchOneQuote(symbol) {
-    const data = await fetchViaProxies(YF_CHART_URL(symbol));
-    const result = data?.chart?.result?.[0];
-    if (!result) return null;
-    const price = result.meta?.regularMarketPrice;
-    const prevClose = result.meta?.chartPreviousClose ?? result.meta?.previousClose;
-    if (price == null) return null;
-    const changePercent = (prevClose != null && prevClose !== 0) ? ((price - prevClose) / prevClose) * 100 : null;
-    return { price, changePercent };
-}
-
-async function refreshMarkets() {
-    const grid = document.getElementById('marketGrid');
-    if (!grid) return;
-    const tickers = MARKET_CATEGORIES[currentMarketCategory] || MARKET_CATEGORIES.indices;
-    try {
-        const settled = await Promise.allSettled(tickers.map(t => fetchOneQuote(t.symbol)));
-        const anySucceeded = settled.some(s => s.status === 'fulfilled' && s.value != null);
-        if (!anySucceeded) {
-            const firstRejection = settled.find(s => s.status === 'rejected');
-            const err = new Error('ALL_SYMBOLS_FAILED');
-            err.attempts = firstRejection?.reason?.attempts;
-            throw err;
+    function setUserPosition(lat, lon, label) {
+        if (window.pipboyUserMarker) {
+            window.pipboyUserMarker.setLatLng([lat, lon]).setOpacity(1).bindPopup('YOUR POSITION: ' + label);
         }
+    }
 
-        grid.innerHTML = tickers.map((t, i) => {
-            const outcome = settled[i];
-            const quote = outcome.status === 'fulfilled' ? outcome.value : null;
-            if (!quote) {
+    // ---- Earthquakes (USGS, confirmed CORS-enabled, direct fetch) ------
+    function quakeColor(mag) {
+        if (mag >= 6) return '#ff3b3b';
+        if (mag >= 5) return '#ff7a3d';
+        return '#d97cff';
+    }
+
+    async function refreshEarthquakes() {
+        if (!layerGroups.quakes) return;
+        try {
+            const data = await DataFetcher.direct(USGS_QUAKE_URL);
+            const features = Array.isArray(data.features) ? data.features : [];
+
+            quakeMarkers.forEach(m => layerGroups.quakes.removeLayer(m));
+            quakeMarkers = [];
+
+            features.forEach(f => {
+                const [lon, lat] = f.geometry?.coordinates || [];
+                if (lon == null || lat == null) return;
+                const mag = f.properties?.mag;
+                const place = f.properties?.place || 'Unknown location';
+                const time = f.properties?.time ? new Date(f.properties.time).toLocaleString() : 'n/a';
+                const url = f.properties?.url;
+                const color = quakeColor(mag || 0);
+                const radiusPx = 5 + (mag || 2) * 2.2;
+                const icon = L.divIcon({
+                    className: 'pipboy-marker-quake',
+                    html: `<span style="display:inline-block;width:${radiusPx}px;height:${radiusPx}px;border-radius:50%;border:2px solid ${color};box-shadow:0 0 6px ${color};"></span>`,
+                    iconSize: [radiusPx, radiusPx]
+                });
+                const marker = L.marker([lat, lon], { icon });
+                const linkHtml = url ? `<br><a class="news-link" href="${url}" target="_blank" rel="noopener noreferrer">USGS report &#8599;</a>` : '';
+                marker.bindPopup(`
+                    <div class="info-popup">
+                        <span class="ip-title" style="color:${color}">&#9711; M${mag != null ? mag.toFixed(1) : '?'} — ${place}</span>
+                        <span class="ip-meta">USGS &middot; ${time}</span>
+                        <span class="ip-body">${linkHtml || 'Live earthquake feed, past 24h, magnitude 2.5+'}</span>
+                    </div>
+                `);
+                marker.addTo(layerGroups.quakes);
+                quakeMarkers.push(marker);
+            });
+        } catch (e) {
+            console.warn('USGS earthquake fetch failed, skipping this cycle', e);
+        }
+    }
+
+    // ---- Aircraft (OpenSky, direct fetch, best-effort, no auth) --------
+    // Per explicit decision: no OAuth2 (would require a client_secret
+    // this static file can't hold safely), no proxy-first. Direct,
+    // unauthenticated, anonymous-tier fetch — exactly as OpenSky's public
+    // /states/all endpoint is designed to be called. May occasionally be
+    // empty/rate-limited; that's surfaced in the UI label, not hidden.
+    function buildOpenSkyUrl() {
+        const { lamin, lomin, lamax, lomax } = OPENSKY_REGION;
+        return `${OPENSKY_URL}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
+    }
+
+    function setAircraftStatus(msg) {
+        const el = document.getElementById('aircraftCountLabel');
+        if (el) el.textContent = msg;
+    }
+
+    function scheduleNextAircraftRefresh() {
+        if (aircraftTimer) clearTimeout(aircraftTimer);
+        const backoffMultiplier = Math.min(2 ** aircraftFailStreak, AIRCRAFT_MAX_INTERVAL_MS / AIRCRAFT_BASE_INTERVAL_MS);
+        const delay = Math.min(AIRCRAFT_BASE_INTERVAL_MS * backoffMultiplier, AIRCRAFT_MAX_INTERVAL_MS);
+        aircraftTimer = setTimeout(refreshAircraft, delay);
+    }
+
+    async function refreshAircraft() {
+        if (!layerGroups.planes) return;
+        try {
+            const data = await DataFetcher.direct(buildOpenSkyUrl());
+            const states = Array.isArray(data?.states) ? data.states : [];
+            aircraftFailStreak = 0;
+
+            aircraftMarkers.forEach(m => layerGroups.planes.removeLayer(m));
+            aircraftMarkers = [];
+
+            if (states.length === 0) {
+                setAircraftStatus('0 (feed returned no aircraft this cycle)');
+                scheduleNextAircraftRefresh();
+                return;
+            }
+
+            const inAir = states.filter(s => s[5] != null && s[6] != null && !s[8]);
+            const sampled = inAir.length > MAX_AIRCRAFT_RENDERED
+                ? inAir.filter(() => Math.random() < MAX_AIRCRAFT_RENDERED / inAir.length)
+                : inAir;
+
+            sampled.forEach(s => {
+                const callsign = (s[1] || '').trim() || 'UNKNOWN';
+                const lon = s[5], lat = s[6], heading = s[10] || 0;
+                const altM = s[7]; const velMs = s[9];
+                const icon = L.divIcon({
+                    className: 'pipboy-marker-plane',
+                    html: `<span style="display:inline-block;transform:rotate(${heading}deg);">&#9992;</span>`,
+                    iconSize: [14,14]
+                });
+                const marker = L.marker([lat, lon], { icon });
+                marker.bindPopup(`
+                    <div class="info-popup">
+                        <span class="ip-title" style="color:var(--info)">&#9992; ${callsign}</span>
+                        <span class="ip-meta">OpenSky Network &middot; live ADS-B, best-effort/no-auth</span>
+                        <span class="ip-body">
+                            Altitude: ${altM != null ? Math.round(altM) + ' m' : 'n/a'}<br>
+                            Speed: ${velMs != null ? Math.round(velMs * 3.6) + ' km/h' : 'n/a'}<br>
+                            Heading: ${Math.round(heading)}&deg;
+                        </span>
+                    </div>
+                `);
+                marker.addTo(layerGroups.planes);
+                aircraftMarkers.push(marker);
+            });
+
+            setAircraftStatus(String(sampled.length));
+        } catch (e) {
+            aircraftFailStreak++;
+            const reason = e.message === 'ALL_PROXIES_FAILED' ? 'unreachable (see console)'
+                         : e.message?.startsWith('HTTP_') ? 'feed error (' + e.message.replace('HTTP_','') + ')'
+                         : 'feed unreachable this cycle';
+            setAircraftStatus('0 — ' + reason);
+            console.warn('OpenSky fetch failed:', e.message, '— fail streak:', aircraftFailStreak);
+        }
+        scheduleNextAircraftRefresh();
+    }
+
+    return {
+        init, toggleLayer, layerState, layerGroups,
+        renderGeoFreshness, renderSafeZoneCard,
+        pruneExpiredEventMarkers, plotNewsEvent, setUserPosition,
+        refreshEarthquakes, refreshAircraft,
+        getMap: () => map,
+        // Exposes the real conflictHeatZones dataset (read-only copy) so
+        // other modules — namely StrategicAssessment — can reason about
+        // actual active-conflict intensity instead of guessing at it.
+        getActiveConflicts: () => conflictHeatZones
+            .slice()
+            .sort((a, b) => b.intensity - a.intensity)
+            .map(z => ({ label: z.label, intensity: z.intensity })),
+    };
+})();
+
+
+// ============================================================
+// AlarmManager — news ticker rendering + multi-source RSS
+// aggregation, dedup, and severity classification for both the
+// global feed and the local/Chile-aware feed.
+// ============================================================
+const AlarmManager = (() => {
+    const GLOBAL_SOURCES = [
+        { name: 'BBC World',        url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+        { name: 'Reuters World',    url: 'https://www.reutersagency.com/feed/?best-topics=world&post_type=best' },
+        { name: 'Al Jazeera',       url: 'https://www.aljazeera.com/xml/rss/all.xml' },
+        { name: 'Guardian World',   url: 'https://www.theguardian.com/world/rss' },
+        { name: 'NYT World',        url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+        { name: 'AP Top News',      url: 'https://apnews.com/apf-topnews?format=rss' },
+        { name: 'France 24',        url: 'https://www.france24.com/en/rss' },
+        { name: 'DW World',         url: 'https://rss.dw.com/rdf/rss-en-world' },
+        { name: 'NPR World',        url: 'https://feeds.npr.org/1004/rss.xml' },
+        { name: 'Sky News World',   url: 'https://feeds.skynews.com/feeds/rss/world.xml' },
+        { name: 'CBC World',        url: 'https://www.cbc.ca/cmlink/rss-world' },
+        { name: 'ABC News Intl',    url: 'https://abcnews.go.com/abcnews/internationalheadlines' },
+    ];
+    const CHILE_DIRECT_SOURCES = [
+        { name: 'Emol',         url: 'https://www.emol.com/rss/portada.xml' },
+        { name: 'BioBioChile',  url: 'https://www.biobiochile.cl/lista/feed' },
+        { name: 'La Tercera',   url: 'https://www.latercera.com/feed/' },
+        { name: 'CNN Chile',    url: 'https://www.cnnchile.com/feed/' },
+        { name: '24Horas',      url: 'https://www.24horas.cl/rss/portada' },
+    ];
+    const LOCAL_SECURITY_TERMS = ['amenaza de bomba', 'emergencia', 'alerta de seguridad'];
+    const POLL_MS = 5 * 60 * 1000;
+
+    const breakingAlarms = [
+        { source:"OSINT-EUR",       text:"Air space safety alerts initialized across eastern corridors. Sub-radar interference noted.",               type:"flash-red"    },
+        { source:"PACIFIC-MONITOR", text:"Task force formations track tactical transits inside contested maritime sectors.",                          type:"flash-orange" },
+        { source:"UN-CLIMATE",      text:"Accelerating water scarcity triggers regional resource mobilization orders.",                               type:"flash-orange" },
+        { source:"CYBER-ALARM",     text:"Malicious framework injections target multi-point energy distribution relays.",                             type:"flash-red"    },
+        { source:"MIDEAST-SIG",     text:"Tactical air surveillance defense grids transition into active sweep configurations.",                      type:"flash-red"    },
+        { source:"ARMS-CTRL",       text:"New START expiration leaves zero active US-Russia bilateral nuclear verification protocols.",               type:"flash-red"    },
+        { source:"GULF-INTEL",      text:"US-Iran ceasefire compliance monitoring ongoing — Iranian projectile activity in Gulf sector unconfirmed.", type:"flash-orange" }
+    ];
+    const localMockAlarms = [
+        { source:"LOCAL-SIM", text:"Regional infrastructure monitoring nominal. No anomalies detected in local sector.",  type:"flash-orange" },
+        { source:"LOCAL-SIM", text:"Civil-defense channels report routine status for this sector.",                        type:"flash-orange" },
+        { source:"LOCAL-SIM", text:"No live local feed available — displaying simulated placeholder traffic.",             type:"flash-orange" }
+    ];
+
+    function sev(text) {
+        const lower = text.toLowerCase();
+        return [
+            'strike','attack','missile','nuclear','invasion','war','ceasefire','explosion','killed','troops',
+            'bomb','bombing','threat','shooting','terror','evacuat','hostage','gunman',
+            'bomba','amenaza','ataque','explosi\u00f3n','atentado','tiroteo','evacuaci\u00f3n','emergencia','alerta'
+        ].some(w => lower.includes(w)) ? 'flash-red' : 'flash-orange';
+    }
+
+    function normalizeForDedup(title) {
+        return title.toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '')
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 8)
+            .join(' ');
+    }
+
+    function dedupeItems(items) {
+        const seen = new Set();
+        const out = [];
+        for (const it of items) {
+            const fp = normalizeForDedup(it.text || '');
+            if (seen.has(fp)) continue;
+            seen.add(fp);
+            out.push(it);
+        }
+        return out;
+    }
+
+    function prioritizeSeverity(items) {
+        return items.map((it, i) => ({ it, i }))
+            .sort((a, b) => {
+                const aHot = a.it.type === 'flash-red' ? 0 : 1;
+                const bHot = b.it.type === 'flash-red' ? 0 : 1;
+                return aHot - bHot || a.i - b.i;
+            })
+            .map(x => x.it);
+    }
+
+    function setFeedStatus(id, live, partial) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (live) { el.textContent = '\u25CF ONLINE'; el.className = 'feed-status status-online'; }
+        else if (partial) { el.textContent = '\u25CF PARTIAL'; el.className = 'feed-status status-partial'; }
+        else { el.textContent = '\u25CF OFFLINE — SIMULATED'; el.className = 'feed-status status-offline'; }
+    }
+
+    function injectAlarm(tickerId, getPool) {
+        const ticker = document.getElementById(tickerId);
+        if (!ticker) return;
+        const pool = getPool(); if (!pool.length) return;
+        const a = pool[Math.floor(Math.random() * pool.length)];
+        const el = document.createElement('div');
+        el.className = `news-alarm ${a.type}`;
+        const linkHtml = a.link ? `<br><a class="news-link" href="${a.link}" target="_blank" rel="noopener noreferrer">read source &#8599;</a>` : '';
+        el.innerHTML = `<span class="news-time">[${new Date().toLocaleTimeString()}] - INTEL SOURCE: ${a.source}</span>${a.text}${linkHtml}`;
+        ticker.insertBefore(el, ticker.firstChild);
+        if (ticker.childNodes.length > 8) ticker.removeChild(ticker.lastChild);
+        MapManager.plotNewsEvent(a);
+    }
+
+    let liveCache = [];
+    let lastSourceHealth = { active: 0, total: GLOBAL_SOURCES.length, flaggedCount: 0 };
+    async function refreshGlobal() {
+        const results = await Promise.all(GLOBAL_SOURCES.map(s => DataFetcher.fetchRss(s.url, s.name, sev)));
+        const okResults = results.filter(Boolean);
+        const merged = prioritizeSeverity(dedupeItems(okResults.flat()));
+
+        document.getElementById('sourceCountLabel').textContent = okResults.length;
+        document.getElementById('sourceTotalLabel').textContent = GLOBAL_SOURCES.length;
+        lastSourceHealth = {
+            active: okResults.length,
+            total: GLOBAL_SOURCES.length,
+            flaggedCount: merged.filter(it => it.type === 'flash-red').length,
+        };
+
+        if (merged.length) {
+            liveCache = merged;
+            if (okResults.length === GLOBAL_SOURCES.length) setFeedStatus('globalFeedStatus', true);
+            else setFeedStatus('globalFeedStatus', false, true);
+        } else {
+            setFeedStatus('globalFeedStatus', false);
+        }
+    }
+
+    let detectedLabel = null, detectedCountry = null, localCache = [];
+    function getCoords() {
+        return new Promise((res, rej) => {
+            if (!navigator.geolocation) return rej();
+            navigator.geolocation.getCurrentPosition(p => res({ lat: p.coords.latitude, lon: p.coords.longitude }), rej, { timeout: 8000 });
+        });
+    }
+    async function reverseGeo(lat, lon) {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, { headers: { Accept: 'application/json' } });
+        const d = await r.json(); const a = d.address || {};
+        const city = a.city || a.town || a.village || a.county;
+        const label = [city, a.country].filter(Boolean).join(', ');
+        if (!label) throw new Error('no addr');
+        return { label, lat, lon, country: a.country || null };
+    }
+    async function ipGeo() {
+        const r = await fetch('https://ipapi.co/json/'); const d = await r.json();
+        const label = [d.city, d.country_name].filter(Boolean).join(', ');
+        if (!label) throw new Error('no label');
+        return { label, lat: d.latitude, lon: d.longitude, country: d.country_name || null };
+    }
+    async function detectLoc() {
+        try { const c = await getCoords(); return await reverseGeo(c.lat, c.lon); } catch {}
+        try { return await ipGeo(); } catch {}
+        return null;
+    }
+    function isChile(countryName) { return (countryName || '').toLowerCase().includes('chile'); }
+
+    async function refreshLocal() {
+        if (!detectedLabel) {
+            const loc = await detectLoc();
+            const el = document.getElementById('localSectorLabel');
+            if (loc) {
+                detectedLabel = loc.label;
+                detectedCountry = loc.country;
+                if (el) el.textContent = '— TRACKING: ' + loc.label.toUpperCase();
+                if (loc.lat && loc.lon) MapManager.setUserPosition(loc.lat, loc.lon, loc.label);
+            } else if (el) { el.textContent = '— LOCATION SERVICES UNAVAILABLE'; }
+        }
+        if (!detectedLabel) { setFeedStatus('localFeedStatus', false); return; }
+
+        const countryName = (detectedLabel.split(',').pop() || '').trim();
+        const cityName = detectedLabel.split(',')[0].trim();
+
+        const queries = [
+            { q: detectedLabel, src: 'LOCAL-' + cityName.toUpperCase() },
+            { q: `${countryName} noticias hoy`, src: 'LOCAL-' + countryName.toUpperCase() },
+            ...LOCAL_SECURITY_TERMS.map(term => ({ q: `${countryName} ${term}`, src: 'LOCAL-ALERT-' + countryName.toUpperCase() })),
+        ];
+        const googleNewsFetches = queries.map(({ q, src }) => {
+            const url = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=es-CL&gl=CL&ceid=CL:es`;
+            return DataFetcher.fetchRss(url, src, sev);
+        });
+
+        const directFetches = isChile(detectedCountry || countryName)
+            ? CHILE_DIRECT_SOURCES.map(s => DataFetcher.fetchRss(s.url, s.name, sev))
+            : [];
+
+        const results = await Promise.all([...googleNewsFetches, ...directFetches]);
+        const okResults = results.filter(Boolean);
+        const merged = prioritizeSeverity(dedupeItems(okResults.flat()));
+
+        if (merged.length) { localCache = merged; setFeedStatus('localFeedStatus', true); }
+        else setFeedStatus('localFeedStatus', false);
+    }
+
+    function startTickers() {
+        refreshGlobal().then(() => injectAlarm('newsTicker', () => liveCache.length ? liveCache : breakingAlarms));
+        refreshLocal().then(() => injectAlarm('localTicker', () => localCache.length ? localCache : localMockAlarms));
+
+        setInterval(() => injectAlarm('newsTicker', () => liveCache.length ? liveCache : breakingAlarms), 6000);
+        setInterval(() => injectAlarm('localTicker', () => localCache.length ? localCache : localMockAlarms), 7000);
+        setInterval(refreshGlobal, POLL_MS);
+        setInterval(refreshLocal, POLL_MS);
+    }
+
+    return {
+        startTickers, refreshGlobal, refreshLocal, setFeedStatus,
+        // { active, total, flaggedCount } — real counts from the most recent
+        // global refresh cycle, used by StrategicAssessment to size its
+        // confidence intervals off actual news-source volume.
+        getNewsSourceHealth: () => lastSourceHealth,
+    };
+})();
+
+
+// ============================================================
+// MarketManager — Global Market Watch (Yahoo Finance v8 chart
+// endpoint via the shared proxy chain, since Yahoo doesn't send
+// CORS headers to browsers; kept separate from DataFetcher's
+// generic helpers because of its category/tab state).
+// ============================================================
+const MarketManager = (() => {
+    const MARKET_CATEGORIES = {
+        indices: [
+            { symbol: '^GSPC', name: 'S&P 500',   sub: 'US Large Cap' },
+            { symbol: '^DJI',  name: 'Dow Jones', sub: 'US Industrial' },
+            { symbol: '^IXIC', name: 'Nasdaq',    sub: 'US Tech-heavy' },
+            { symbol: '^IPSA', name: 'IPSA',      sub: 'Chile — Bolsa de Santiago' },
+        ],
+        forex: [
+            { symbol: 'CLP=X',    name: 'USD/CLP', sub: 'Dollar — Chilean Peso' },
+            { symbol: 'EURUSD=X', name: 'EUR/USD', sub: 'Euro — US Dollar' },
+            { symbol: 'JPY=X',    name: 'USD/JPY', sub: 'Dollar — Japanese Yen' },
+            { symbol: 'RUB=X',    name: 'USD/RUB', sub: 'Dollar — Russian Ruble' },
+        ],
+        commodities: [
+            { symbol: 'GC=F', name: 'Gold',        sub: 'COMEX Futures, $/oz' },
+            { symbol: 'CL=F', name: 'Crude Oil',   sub: 'WTI Futures, $/bbl' },
+            { symbol: 'SI=F', name: 'Silver',      sub: 'COMEX Futures, $/oz' },
+            { symbol: 'NG=F', name: 'Natural Gas', sub: 'NYMEX Futures, $/MMBtu' },
+        ],
+    };
+    const YF_CHART_URL = symbol => `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d`;
+    let currentCategory = 'indices';
+
+    // Tracks the average absolute %-change across whichever tickers were
+    // last successfully fetched, regardless of which tab is active. This
+    // is the real "market volatility" signal StrategicAssessment reads —
+    // not a fabricated number. Stays at its last known value (rather than
+    // resetting to null) if a refresh fails, so a transient feed outage
+    // doesn't make the scenario engine think volatility vanished.
+    let lastVolatilityPercent = null;
+    let lastVolatilitySampleSize = 0;
+
+    function recordVolatility(quotes) {
+        const changes = quotes.filter(q => q && q.changePercent != null).map(q => Math.abs(q.changePercent));
+        if (changes.length === 0) return;
+        lastVolatilityPercent = changes.reduce((sum, v) => sum + v, 0) / changes.length;
+        lastVolatilitySampleSize = changes.length;
+    }
+
+    function setCategory(category) {
+        if (!MARKET_CATEGORIES[category]) return;
+        currentCategory = category;
+        document.querySelectorAll('.market-tab').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.getElementById('tab-' + category);
+        if (activeBtn) activeBtn.classList.add('active');
+        refresh();
+    }
+
+    function renderError(tickers, label) {
+        const grid = document.getElementById('marketGrid');
+        if (!grid) return;
+        grid.innerHTML = tickers.map(t => `
+            <div class="ticker-item">
+                <span class="ticker-name">${t.name}</span>
+                <span class="ticker-sub">${t.sub}</span>
+                <span class="ticker-stale">${label}</span>
+            </div>`).join('');
+    }
+
+    async function fetchOneQuote(symbol) {
+        const data = await DataFetcher.viaProxies(YF_CHART_URL(symbol));
+        const result = data?.chart?.result?.[0];
+        if (!result) return null;
+        const price = result.meta?.regularMarketPrice;
+        const prevClose = result.meta?.chartPreviousClose ?? result.meta?.previousClose;
+        if (price == null) return null;
+        const changePercent = (prevClose != null && prevClose !== 0) ? ((price - prevClose) / prevClose) * 100 : null;
+        return { price, changePercent };
+    }
+
+    async function refresh() {
+        const grid = document.getElementById('marketGrid');
+        if (!grid) return;
+        const tickers = MARKET_CATEGORIES[currentCategory] || MARKET_CATEGORIES.indices;
+        try {
+            const settled = await Promise.allSettled(tickers.map(t => fetchOneQuote(t.symbol)));
+            const anySucceeded = settled.some(s => s.status === 'fulfilled' && s.value != null);
+            if (!anySucceeded) {
+                const firstRejection = settled.find(s => s.status === 'rejected');
+                const err = new Error('ALL_SYMBOLS_FAILED');
+                err.attempts = firstRejection?.reason?.attempts;
+                throw err;
+            }
+
+            const quotes = settled.map(s => s.status === 'fulfilled' ? s.value : null);
+            recordVolatility(quotes);
+
+            grid.innerHTML = tickers.map((t, i) => {
+                const outcome = settled[i];
+                const quote = outcome.status === 'fulfilled' ? outcome.value : null;
+                if (!quote) {
+                    return `
+                        <div class="ticker-item">
+                            <span class="ticker-name">${t.name}</span>
+                            <span class="ticker-sub">${t.sub}</span>
+                            <span class="ticker-stale">No data returned for this symbol</span>
+                        </div>`;
+                }
+                const { price, changePercent } = quote;
+                const dir = changePercent == null ? '' : (changePercent >= 0 ? 'up' : 'down');
+                const arrow = dir === 'up' ? '&#9650;' : (dir === 'down' ? '&#9660;' : '');
                 return `
-                    <div class="ticker-item">
+                    <div class="ticker-item ${dir}">
                         <span class="ticker-name">${t.name}</span>
                         <span class="ticker-sub">${t.sub}</span>
-                        <span class="ticker-stale">No data returned for this symbol</span>
+                        <div class="ticker-price-row">
+                            <span class="ticker-price">${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                            <span class="ticker-change ${dir}">${changePercent != null ? arrow + ' ' + Math.abs(changePercent).toFixed(2) + '%' : 'n/a'}</span>
+                        </div>
                     </div>`;
-            }
-            const { price, changePercent } = quote;
-            const dir = changePercent == null ? '' : (changePercent >= 0 ? 'up' : 'down');
-            const arrow = dir === 'up' ? '&#9650;' : (dir === 'down' ? '&#9660;' : '');
-            return `
-                <div class="ticker-item ${dir}">
-                    <span class="ticker-name">${t.name}</span>
-                    <span class="ticker-sub">${t.sub}</span>
-                    <div class="ticker-price-row">
-                        <span class="ticker-price">${price.toLocaleString(undefined, {maximumFractionDigits: 2})}</span>
-                        <span class="ticker-change ${dir}">${changePercent != null ? arrow + ' ' + Math.abs(changePercent).toFixed(2) + '%' : 'n/a'}</span>
-                    </div>
-                </div>`;
-        }).join('');
+            }).join('');
 
-        setFeedStatus('marketFeedStatus', true);
-    } catch (e) {
-        console.warn('Market data fetch failed:', e.message,
-                     e.attempts ? '— per-proxy attempts: ' + e.attempts.join(' | ') : '');
-        setFeedStatus('marketFeedStatus', false);
-        const reason = e.message === 'BAD_PAYLOAD' ? 'Unexpected response format from feed'
-                     : e.message?.startsWith('HTTP_') ? 'Feed error (' + e.message.replace('HTTP_','') + ') — proxy or upstream may be temporarily down'
-                     : 'Feed unreachable';
-        renderMarketError(tickers, reason);
+            AlarmManager.setFeedStatus('marketFeedStatus', true);
+        } catch (e) {
+            console.warn('Market data fetch failed:', e.message, e.attempts ? '— per-proxy attempts: ' + e.attempts.join(' | ') : '');
+            AlarmManager.setFeedStatus('marketFeedStatus', false);
+            const reason = e.message === 'ALL_SYMBOLS_FAILED' ? 'All symbols failed — proxy/upstream may be down'
+                         : 'Feed unreachable';
+            renderError(tickers, reason);
+        }
     }
-}
+
+    return {
+        setCategory, refresh,
+        // { percent, sampleSize, category } | null if no successful fetch yet.
+        // percent is the average |%-change| across last successfully-fetched
+        // tickers — a real, if simple, volatility proxy.
+        getVolatility: () => lastVolatilityPercent == null ? null : {
+            percent: lastVolatilityPercent,
+            sampleSize: lastVolatilitySampleSize,
+            category: currentCategory,
+        },
+    };
+})();
+
 
 // ============================================================
-// NATURAL DISASTERS — live earthquakes via USGS (no API key)
-// ------------------------------------------------------------
-// USGS publishes free, public GeoJSON feeds updated every 5
-// minutes, no key or auth required, CORS-friendly. We use the
-// "past day, magnitude 2.5+" feed as a reasonable balance between
-// global coverage and not flooding the map with thousands of
-// micro-quakes. Marker size/opacity scale with magnitude.
+// StrategicAssessment — Heuristic Scenario Modeling. Does not
+// predict the future; projects three named paths (Status Quo,
+// Escalation, De-escalation) from the real current state of
+// IntelEngine (DEFCON/score), MapManager (active conflict
+// intensities), MarketManager (volatility), and AlarmManager
+// (news-source health, used for confidence sizing).
 //
-// Wildfires / hurricanes / floods: there's no equally simple
-// free+keyless GeoJSON equivalent for these (NASA FIRMS requires
-// a free API key for fire data; NOAA hurricane feeds are seasonal
-// and format-heavy). Left undone rather than faked — same
-// principle as the maritime-traffic stub above. To add later:
-//   - Wildfires: NASA FIRMS (https://firms.modaps.eosdis.nasa.gov/api/)
-//     — free key, simple CSV/GeoJSON, drop into a 'fires' layerGroup
-//     using the same marker pattern as refreshEarthquakes below.
-//   - Hurricanes/cyclones: NOAA NHC GIS feeds (no key, but
-//     seasonal/Atlantic+EPac only) — https://www.nhc.noaa.gov/gis/
+// Performance: this module does NOT run its own polling timer.
+// It registers with IntelEngine.onUpdate(), which only fires when
+// the DEFCON score actually changes (see IntelEngine.refreshAndRender).
+// That keeps re-calculation tied to a real data change rather than
+// duplicating yet another setInterval. render() is also callable
+// directly for the initial paint and after market/news refreshes,
+// where it's similarly cheap (pure arithmetic + one innerHTML write).
 // ============================================================
-const USGS_QUAKE_URL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson';
-let quakeMarkers = [];
+const StrategicAssessment = (() => {
+    const ESCALATION_SPIKE_THRESHOLD = 15; // % — per the brief: ">15% spike in volatility indices"
+    const VOLATILITY_BASELINE_PERCENT = 1.0; // a "calm market day" reference point for indices/forex, used only to scale how alarming a given %-change is — not a market prediction
 
-function quakeColor(mag) {
-    if (mag >= 6) return '#ff3b3b';
-    if (mag >= 5) return '#ff7a3d';
-    return '#d97cff';
-}
+    // ---- Inputs --------------------------------------------------------
+    // Pulls the current state from each module's real public getters
+    // (added alongside this module) rather than re-deriving anything —
+    // StrategicAssessment is a read-only consumer of state that already
+    // exists elsewhere in the app.
+    function gatherInputs() {
+        const intel = IntelEngine.getLastResult() || IntelEngine.calculateDefcon();
+        const conflicts = MapManager.getActiveConflicts ? MapManager.getActiveConflicts() : [];
+        const volatility = MarketManager.getVolatility ? MarketManager.getVolatility() : null;
+        const newsHealth = AlarmManager.getNewsSourceHealth ? AlarmManager.getNewsSourceHealth() : { active: 0, total: 0, flaggedCount: 0 };
+        return { intel, conflicts, volatility, newsHealth };
+    }
 
-async function refreshEarthquakes() {
-    if (!window.pipboyQuakeGroup) return;
-    try {
-        let r = await fetch(USGS_QUAKE_URL);
-        if (!r.ok) throw new Error('usgs http ' + r.status);
-        const data = await r.json();
-        const features = Array.isArray(data.features) ? data.features : [];
+    // ---- Confidence sizing ----------------------------------------------
+    // Confidence is bounded by how much real signal is actually behind a
+    // projection, not a fixed number: more live news sources + a market
+    // quote actually present + more conflict-zone samples all raise it.
+    // This keeps "Confidence: 65%" honestly tied to *this run's* inputs.
+    function estimateConfidence({ conflicts, volatility, newsHealth }) {
+        let confidence = 35; // floor — there is always some baseline uncertainty in any heuristic model
+        if (newsHealth.total > 0) confidence += 25 * (newsHealth.active / newsHealth.total); // up to +25 for full source coverage
+        if (volatility) confidence += 15; // up to +15 for having a live market read at all
+        confidence += Math.min(20, conflicts.length * 2); // up to +20 for conflict-zone sample breadth
+        return Math.max(20, Math.min(90, Math.round(confidence))); // heuristic models should never claim near-certainty
+    }
 
-        quakeMarkers.forEach(m => window.pipboyQuakeGroup.removeLayer(m));
-        quakeMarkers = [];
+    function confidenceNote({ conflicts, volatility, newsHealth }) {
+        const parts = [];
+        parts.push(`${newsHealth.active}/${newsHealth.total} news sources reporting`);
+        parts.push(volatility ? `live ${volatility.category} quotes` : 'no live market read');
+        parts.push(`${conflicts.length} tracked conflict zones`);
+        return 'Based on ' + parts.join(', ') + '.';
+    }
 
-        features.forEach(f => {
-            const [lon, lat] = f.geometry?.coordinates || [];
-            if (lon == null || lat == null) return;
-            const mag = f.properties?.mag;
-            const place = f.properties?.place || 'Unknown location';
-            const time = f.properties?.time ? new Date(f.properties.time).toLocaleString() : 'n/a';
-            const url = f.properties?.url;
-            const color = quakeColor(mag || 0);
-            const radiusPx = 5 + (mag || 2) * 2.2;
-            const icon = L.divIcon({
-                className: 'pipboy-marker-quake',
-                html: `<span style="display:inline-block;width:${radiusPx}px;height:${radiusPx}px;border-radius:50%;border:2px solid ${color};box-shadow:0 0 6px ${color};"></span>`,
-                iconSize: [radiusPx, radiusPx]
-            });
-            const marker = L.marker([lat, lon], { icon });
-            const linkHtml = url ? `<br><a class="news-link" href="${url}" target="_blank" rel="noopener noreferrer">USGS report &#8599;</a>` : '';
-            marker.bindPopup(`
-                <div class="info-popup">
-                    <span class="ip-title" style="color:${color}">&#9711; M${mag != null ? mag.toFixed(1) : '?'} — ${place}</span>
-                    <span class="ip-meta">USGS &middot; ${time}</span>
-                    <span class="ip-body">${linkHtml || 'Live earthquake feed, past 24h, magnitude 2.5+'}</span>
+    // ---- Scenario math ---------------------------------------------------
+    // Stability Score is 0-100, HIGHER = more stable (inverse of IntelEngine's
+    // threat score, which runs the other direction). All three paths start
+    // from the same real current score and are adjusted by real conflict/
+    // market signals — nothing here is randomized or fabricated.
+    function buildStatusQuo({ intel, conflicts, volatility, newsHealth }) {
+        const stability = Math.round(100 - intel.score);
+        const topConflict = conflicts[0];
+        const driver = topConflict
+            ? `Current trajectory holds steady, anchored by sustained friction in ${topConflict.label} (intensity ${Math.round(topConflict.intensity * 100)}%) without a confirmed inflection point.`
+            : `Current trajectory holds steady — DEFCON posture (${intel.defcon.level}) and vector weights show no active inflection signal.`;
+        return {
+            key: 'status_quo',
+            label: 'Status Quo',
+            stability,
+            driver,
+        };
+    }
+
+    function buildEscalation({ intel, conflicts, volatility }) {
+        const topConflict = conflicts[0];
+        const conflictSpike = topConflict ? topConflict.intensity * 100 >= ESCALATION_SPIKE_THRESHOLD : false;
+        const marketSpike = volatility ? volatility.percent >= ESCALATION_SPIKE_THRESHOLD * (VOLATILITY_BASELINE_PERCENT / 1) : false;
+        // Escalation pulls stability down further than Status Quo — magnitude
+        // scales with how far the top conflict's intensity and market
+        // volatility actually sit above their respective spike thresholds,
+        // not a flat arbitrary penalty.
+        const conflictPenalty = topConflict ? Math.min(25, topConflict.intensity * 25) : 10;
+        const volPenalty = volatility ? Math.min(15, (volatility.percent / VOLATILITY_BASELINE_PERCENT) * 3) : 5;
+        const stability = Math.max(0, Math.round((100 - intel.score) - conflictPenalty - volPenalty));
+
+        let driver;
+        if (topConflict && marketSpike) {
+            driver = `Compound risk: escalation in ${topConflict.label} coinciding with a ${volatility.percent.toFixed(1)}% average move across ${volatility.category}.`;
+        } else if (topConflict) {
+            driver = `Primary risk driver: intensifying conflict in ${topConflict.label} (current intensity ${Math.round(topConflict.intensity * 100)}%), the highest-weighted active zone tracked.`;
+        } else if (volatility) {
+            driver = `Primary risk driver: market volatility (${volatility.percent.toFixed(1)}% average move across ${volatility.category}) outpacing geopolitical signals.`;
+        } else {
+            driver = `Primary risk driver: elevated DEFCON posture (${intel.defcon.level}) with no offsetting de-escalation signal detected.`;
+        }
+        return { key: 'escalation', label: 'Escalation', stability, driver, conflictSpike, marketSpike };
+    }
+
+    function buildDeEscalation({ intel, conflicts }) {
+        const weakestConflict = conflicts.length ? conflicts[conflicts.length - 1] : null;
+        // De-escalation credits stability for how much slack exists below the
+        // top conflict's intensity — a wide gap between the most and least
+        // intense tracked zones reads as room for de-escalation; a narrow
+        // one reads as broadly elevated tension with little room to improve.
+        const topIntensity = conflicts.length ? conflicts[0].intensity : 0.5;
+        const slack = weakestConflict ? Math.max(0, topIntensity - weakestConflict.intensity) : 0.2;
+        const stabilityGain = Math.round(slack * 30);
+        const stability = Math.min(100, Math.round((100 - intel.score) + stabilityGain));
+
+        const driver = weakestConflict
+            ? `Improvement path hinges on de-escalation precedent: ${weakestConflict.label} remains the lowest-intensity tracked zone (${Math.round(weakestConflict.intensity * 100)}%), suggesting containment is achievable elsewhere.`
+            : `Improvement path requires a confirmed reduction in DEFCON posture (currently ${intel.defcon.level}) with no tracked conflict zone yet showing that trend.`;
+        return { key: 'de_escalation', label: 'De-escalation', stability, driver };
+    }
+
+    // Pure: takes current module state → three scenario objects + shared
+    // confidence metadata. Safe to call repeatedly; does no I/O itself.
+    function calculateScenarios() {
+        const inputs = gatherInputs();
+        const confidence = estimateConfidence(inputs);
+        const confNote = confidenceNote(inputs);
+        return {
+            statusQuo: { ...buildStatusQuo(inputs), confidence, confidenceNote: confNote },
+            escalation: { ...buildEscalation(inputs), confidence, confidenceNote: confNote },
+            deEscalation: { ...buildDeEscalation(inputs), confidence, confidenceNote: confNote },
+            generatedAt: new Date(),
+        };
+    }
+
+    // ---- Rendering --------------------------------------------------------
+    function scoreColorVar(stability) {
+        if (stability >= 65) return 'var(--success)';
+        if (stability >= 40) return 'var(--warning)';
+        return 'var(--danger)';
+    }
+
+    function renderPanel(scenario) {
+        const color = scoreColorVar(scenario.stability);
+        return `
+            <div class="scenario-panel path-${scenario.key}">
+                <span class="scenario-title">${scenario.label}</span>
+                <div class="scenario-score-row">
+                    <span class="scenario-score" style="color:${color};">${scenario.stability}</span>
+                    <span class="scenario-score-label">STABILITY SCORE<br>/ 100</span>
                 </div>
-            `);
-            marker.addTo(window.pipboyQuakeGroup);
-            quakeMarkers.push(marker);
+                <div class="scenario-bar-track"><div class="scenario-bar-fill" style="width:${scenario.stability}%; background:${color}; color:${color};"></div></div>
+                <span class="scenario-driver"><strong>Key Driver:</strong> ${scenario.driver}</span>
+                <span class="scenario-confidence">Confidence: ${scenario.confidence}% — ${scenario.confidenceNote}</span>
+            </div>
+        `;
+    }
+
+    let lastRenderedAt = null;
+    function render() {
+        const grid = document.getElementById('scenarioGrid');
+        if (!grid) return;
+        const scenarios = calculateScenarios();
+        grid.innerHTML = [scenarios.statusQuo, scenarios.escalation, scenarios.deEscalation]
+            .map(renderPanel).join('');
+        lastRenderedAt = scenarios.generatedAt;
+        const label = document.getElementById('scenarioUpdatedLabel');
+        if (label) label.textContent = '\u25CF UPDATED ' + lastRenderedAt.toLocaleTimeString();
+    }
+
+    function init() {
+        render(); // initial paint from whatever state exists at boot
+        // Re-render only when IntelEngine actually recalculates a changed
+        // score — no independent polling timer for this module.
+        IntelEngine.onUpdate(() => render());
+    }
+
+    return { init, calculateScenarios, render };
+})();
+
+
+// ============================================================
+// UIManager — glue layer: keyboard shortcuts, fullscreen,
+// SITREP PNG export, legend collapse. Depends on MapManager for
+// layer names but owns no domain data itself.
+// ============================================================
+const UIManager = (() => {
+    const KEY_TO_LAYER = {
+        'c': 'conflict', 't': 'targets', 's': 'safezones',
+        'n': 'events', 'm': 'milnuke', 'q': 'quakes', 'a': 'planes',
+    };
+
+    let legendCollapsed = false;
+    function toggleLegend() {
+        legendCollapsed = !legendCollapsed;
+        const legend = document.getElementById('mapLegend');
+        const icon = document.getElementById('legendToggleIcon');
+        legend.classList.toggle('collapsed', legendCollapsed);
+        icon.innerHTML = legendCollapsed ? '&#9660;' : '&#9650;';
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(e => console.warn('Fullscreen request failed', e));
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    // SITREP export: snapshot the whole dashboard to a PNG via html2canvas.
+    // Loaded from CDN in <head>; guarded in case the script failed to load
+    // (offline, CDN blocked) so this never throws into the console silently.
+    async function exportSitrep() {
+        if (typeof html2canvas === 'undefined') {
+            alert('Export unavailable — html2canvas failed to load (check network/CDN access).');
+            return;
+        }
+        const btn = document.getElementById('btn-sitrep');
+        const originalText = btn ? btn.innerHTML : null;
+        if (btn) btn.innerHTML = '&#8987; CAPTURING...';
+        try {
+            const target = document.querySelector('.container');
+            const canvas = await html2canvas(target, {
+                backgroundColor: '#040f08',
+                useCORS: true,
+                scale: 2, // high-resolution per the brief
+            });
+            const link = document.createElement('a');
+            const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+            link.download = `QRD_SITREP_${stamp}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (e) {
+            console.warn('SITREP export failed', e);
+            alert('Export failed — see console for detail.');
+        } finally {
+            if (btn && originalText) btn.innerHTML = originalText;
+        }
+    }
+
+    function bindKeyboard() {
+        document.addEventListener('keydown', (e) => {
+            // ignore keystrokes while typing in an input/textarea, if any are added later
+            const tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+            const key = e.key.toLowerCase();
+            if (KEY_TO_LAYER[key]) {
+                e.preventDefault();
+                MapManager.toggleLayer(KEY_TO_LAYER[key]);
+                return;
+            }
+            if (key === 'f') { e.preventDefault(); toggleFullscreen(); return; }
+            if (key === 'x') { e.preventDefault(); exportSitrep(); return; }
         });
-    } catch (e) {
-        console.warn('USGS earthquake fetch failed, skipping this cycle', e);
-        // leave previous frame's markers in place rather than clearing to blank
     }
-}
 
-
-const breakingAlarms = [
-    { source:"OSINT-EUR",       text:"Air space safety alerts initialized across eastern corridors. Sub-radar interference noted.",               type:"flash-red"    },
-    { source:"PACIFIC-MONITOR", text:"Task force formations track tactical transits inside contested maritime sectors.",                          type:"flash-orange" },
-    { source:"UN-CLIMATE",      text:"Accelerating water scarcity triggers regional resource mobilization orders.",                               type:"flash-orange" },
-    { source:"CYBER-ALARM",     text:"Malicious framework injections target multi-point energy distribution relays.",                             type:"flash-red"    },
-    { source:"MIDEAST-SIG",     text:"Tactical air surveillance defense grids transition into active sweep configurations.",                      type:"flash-red"    },
-    { source:"ARMS-CTRL",       text:"New START expiration leaves zero active US-Russia bilateral nuclear verification protocols.",               type:"flash-red"    },
-    { source:"GULF-INTEL",      text:"US-Iran ceasefire compliance monitoring ongoing — Iranian projectile activity in Gulf sector unconfirmed.", type:"flash-orange" }
-];
-const localMockAlarms = [
-    { source:"LOCAL-SIM", text:"Regional infrastructure monitoring nominal. No anomalies detected in local sector.",  type:"flash-orange" },
-    { source:"LOCAL-SIM", text:"Civil-defense channels report routine status for this sector.",                        type:"flash-orange" },
-    { source:"LOCAL-SIM", text:"No live local feed available — displaying simulated placeholder traffic.",             type:"flash-orange" }
-];
-
-function injectAlarm(tickerId, getPool) {
-    const ticker = document.getElementById(tickerId);
-    if (!ticker) return;
-    const pool = getPool(); if (!pool.length) return;
-    const a = pool[Math.floor(Math.random() * pool.length)];
-    const el = document.createElement('div');
-    el.className = `news-alarm ${a.type}`;
-    const linkHtml = a.link ? `<br><a class="news-link" href="${a.link}" target="_blank" rel="noopener noreferrer">read source &#8599;</a>` : '';
-    el.innerHTML = `<span class="news-time">[${new Date().toLocaleTimeString()}] - INTEL SOURCE: ${a.source}</span>${a.text}${linkHtml}`;
-    ticker.insertBefore(el, ticker.firstChild);
-    if (ticker.childNodes.length > 8) ticker.removeChild(ticker.lastChild);
-
-    // feed the map's news-derived events layer with the same real item
-    plotNewsEvent(a);
-}
-
-function setFeedStatus(id, live, partial) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (live) {
-        el.textContent = '\u25CF ONLINE';
-        el.className = 'feed-status status-online';
-    } else if (partial) {
-        el.textContent = '\u25CF PARTIAL';
-        el.className = 'feed-status status-partial';
-    } else {
-        el.textContent = '\u25CF OFFLINE — SIMULATED';
-        el.className = 'feed-status status-offline';
+    function init() {
+        bindKeyboard();
     }
-}
 
-// ============================================================
-// RSS / LIVE FEEDS — multi-source aggregation + dedup
-// ------------------------------------------------------------
-// Expanded from the original single-feed (BBC) setup to a wider
-// spread of independent international outlets, so one outlet's
-// editorial focus (or an outage) doesn't define the whole ticker.
-// Each source fetched in parallel; failures isolated per-source.
-// Results merged, then deduplicated by a normalized-title
-// fingerprint so the same story breaking across multiple outlets
-// doesn't show up 3-4 times.
-// ============================================================
-const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
-const GLOBAL_SOURCES = [
-    { name: 'BBC World',        url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
-    { name: 'Reuters World',    url: 'https://www.reutersagency.com/feed/?best-topics=world&post_type=best' },
-    { name: 'Al Jazeera',       url: 'https://www.aljazeera.com/xml/rss/all.xml' },
-    { name: 'Guardian World',   url: 'https://www.theguardian.com/world/rss' },
-    { name: 'NYT World',        url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
-    { name: 'AP Top News',      url: 'https://apnews.com/apf-topnews?format=rss' },
-    { name: 'France 24',        url: 'https://www.france24.com/en/rss' },
-    { name: 'DW World',         url: 'https://rss.dw.com/rdf/rss-en-world' },
-    { name: 'NPR World',        url: 'https://feeds.npr.org/1004/rss.xml' },
-    { name: 'Sky News World',   url: 'https://feeds.skynews.com/feeds/rss/world.xml' },
-    { name: 'CBC World',        url: 'https://www.cbc.ca/cmlink/rss-world' },
-    { name: 'ABC News Intl',    url: 'https://abcnews.go.com/abcnews/internationalheadlines' },
-];
-const POLL_MS = 5 * 60 * 1000;
+    return { toggleLegend, toggleFullscreen, exportSitrep, init };
+})();
 
-// Severity keywords checked across English + Spanish, since both global
-// and local (Chile-focused) sources flow through the same classifier.
-function sev(text) {
-    const lower = text.toLowerCase();
-    return [
-        'strike','attack','missile','nuclear','invasion','war','ceasefire','explosion','killed','troops',
-        'bomb','bombing','threat','shooting','terror','evacuat','hostage','gunman',
-        'bomba','amenaza','ataque','explosi\u00f3n','atentado','tiroteo','evacuaci\u00f3n','emergencia','alerta'
-    ].some(w => lower.includes(w)) ? 'flash-red' : 'flash-orange';
-}
-
-function normalizeForDedup(title) {
-    return title.toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '')
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 8)   // fingerprint on the first ~8 significant words
-        .join(' ');
-}
-
-async function fetchRss(url, src) {
-    try {
-        const r = await fetch(RSS2JSON + encodeURIComponent(url));
-        if (!r.ok) throw new Error(r.status);
-        const d = await r.json();
-        if (d.status !== 'ok' || !Array.isArray(d.items)) throw new Error('bad payload');
-        return d.items.slice(0,8).map(i => ({
-            source: src || d.feed?.title || 'LIVE-FEED',
-            text: i.title,
-            link: i.link,
-            type: sev(i.title)
-        }));
-    } catch(e) { console.warn('RSS fail', url, e); return null; }
-}
-
-function dedupeItems(items) {
-    const seen = new Set();
-    const out = [];
-    for (const it of items) {
-        const fp = normalizeForDedup(it.text || '');
-        if (seen.has(fp)) continue;
-        seen.add(fp);
-        out.push(it);
-    }
-    return out;
-}
-
-// Sort so flagged (flash-red) items surface first — a bombing threat or
-// attack shouldn't be buried under routine flash-orange items just
-// because of fetch order. Stable otherwise (preserves source order).
-function prioritizeSeverity(items) {
-    return items.map((it, i) => ({ it, i }))
-        .sort((a, b) => {
-            const aHot = a.it.type === 'flash-red' ? 0 : 1;
-            const bHot = b.it.type === 'flash-red' ? 0 : 1;
-            return aHot - bHot || a.i - b.i;
-        })
-        .map(x => x.it);
-}
-
-let liveCache = [];
-async function refreshGlobal() {
-    const results = await Promise.all(GLOBAL_SOURCES.map(s => fetchRss(s.url, s.name)));
-    const okResults = results.filter(Boolean);
-    const merged = prioritizeSeverity(dedupeItems(okResults.flat()));
-
-    document.getElementById('sourceCountLabel').textContent = okResults.length;
-    document.getElementById('sourceTotalLabel').textContent = GLOBAL_SOURCES.length;
-
-    if (merged.length) {
-        liveCache = merged;
-        if (okResults.length === GLOBAL_SOURCES.length) setFeedStatus('globalFeedStatus', true);
-        else setFeedStatus('globalFeedStatus', false, true); // partial: some sources down, still have data
-    } else {
-        setFeedStatus('globalFeedStatus', false);
-    }
-}
-
-// ============================================================
-// LOCAL / COUNTRY-LEVEL NEWS — multi-query + dedicated outlets
-// ------------------------------------------------------------
-// The original implementation ran exactly one Google News RSS
-// query for "{city}, {country}" — broad enough that travel/
-// lifestyle pieces frequently outranked breaking security news
-// (e.g. a bombing threat) in Google's relevance ranking for that
-// query. Two changes fix this:
-//   1. Several targeted queries run in parallel instead of one
-//      soft query: general country news, plus explicit security/
-//      emergency-terms queries (in Spanish, since this is aimed at
-//      Chile) so hard news surfaces even if it doesn't rank for
-//      the plain city-name search.
-//   2. Direct RSS feeds from major Chilean outlets are added as
-//      independent sources alongside the Google News queries, so
-//      a story doesn't depend on Google's indexing/ranking timing
-//      at all — same multi-source-with-isolated-failure pattern
-//      used for GLOBAL_SOURCES above.
-// ============================================================
-const CHILE_DIRECT_SOURCES = [
-    { name: 'Emol',         url: 'https://www.emol.com/rss/portada.xml' },
-    { name: 'BioBioChile',  url: 'https://www.biobiochile.cl/lista/feed' },
-    { name: 'La Tercera',   url: 'https://www.latercera.com/feed/' },
-    { name: 'CNN Chile',    url: 'https://www.cnnchile.com/feed/' },
-    { name: '24Horas',      url: 'https://www.24horas.cl/rss/portada' },
-];
-const LOCAL_SECURITY_TERMS = ['amenaza de bomba', 'emergencia', 'alerta de seguridad'];
-
-let detectedLabel = null, detectedCountry = null, localCache = [];
-function getCoords() {
-    return new Promise((res,rej) => {
-        if (!navigator.geolocation) return rej();
-        navigator.geolocation.getCurrentPosition(p => res({lat:p.coords.latitude,lon:p.coords.longitude}), rej, {timeout:8000});
-    });
-}
-async function reverseGeo(lat,lon) {
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {headers:{Accept:'application/json'}});
-    const d = await r.json(); const a = d.address||{};
-    const city = a.city||a.town||a.village||a.county;
-    const label = [city, a.country].filter(Boolean).join(', ');
-    if (!label) throw new Error('no addr');
-    return {label,lat,lon,country:a.country||null};
-}
-async function ipGeo() {
-    const r = await fetch('https://ipapi.co/json/'); const d = await r.json();
-    const label = [d.city,d.country_name].filter(Boolean).join(', ');
-    if (!label) throw new Error('no label');
-    return {label, lat:d.latitude, lon:d.longitude, country:d.country_name||null};
-}
-async function detectLoc() {
-    try { const c = await getCoords(); return await reverseGeo(c.lat,c.lon); } catch{}
-    try { return await ipGeo(); } catch{}
-    return null;
-}
-
-function isChile(countryName) {
-    return (countryName || '').toLowerCase().includes('chile');
-}
-
-async function refreshLocal() {
-    if (!detectedLabel) {
-        const loc = await detectLoc();
-        const el = document.getElementById('localSectorLabel');
-        if (loc) {
-            detectedLabel = loc.label;
-            detectedCountry = loc.country;
-            if (el) el.textContent = '— TRACKING: ' + loc.label.toUpperCase();
-            if (loc.lat && loc.lon && window.pipboyUserMarker)
-                window.pipboyUserMarker.setLatLng([loc.lat,loc.lon]).setOpacity(1).bindPopup('YOUR POSITION: '+loc.label);
-        } else { if (el) el.textContent = '— LOCATION SERVICES UNAVAILABLE'; }
-    }
-    if (!detectedLabel) { setFeedStatus('localFeedStatus',false); return; }
-
-    const countryName = (detectedLabel.split(',').pop() || '').trim();
-    const cityName = detectedLabel.split(',')[0].trim();
-
-    // Build the query list: general local news + explicit security/emergency
-    // terms scoped to the country, so a bombing-threat-type story surfaces
-    // even when it wouldn't win a plain "{city}, {country}" relevance query.
-    const queries = [
-        { q: detectedLabel, src: 'LOCAL-' + cityName.toUpperCase() },
-        { q: `${countryName} noticias hoy`, src: 'LOCAL-' + countryName.toUpperCase() },
-        ...LOCAL_SECURITY_TERMS.map(term => ({
-            q: `${countryName} ${term}`,
-            src: 'LOCAL-ALERT-' + countryName.toUpperCase()
-        })),
-    ];
-    const googleNewsFetches = queries.map(({ q, src }) => {
-        const url = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=es-CL&gl=CL&ceid=CL:es`;
-        return fetchRss(url, src);
-    });
-
-    // If we're in Chile, also pull direct outlet RSS feeds in parallel —
-    // independent of Google's indexing, so a hard-news story shows up as
-    // soon as the outlet itself publishes it, same multi-source pattern as
-    // the global ticker.
-    const directFetches = isChile(detectedCountry || countryName)
-        ? CHILE_DIRECT_SOURCES.map(s => fetchRss(s.url, s.name))
-        : [];
-
-    const results = await Promise.all([...googleNewsFetches, ...directFetches]);
-    const okResults = results.filter(Boolean);
-    const merged = prioritizeSeverity(dedupeItems(okResults.flat()));
-
-    if (merged.length) { localCache = merged; setFeedStatus('localFeedStatus', true); }
-    else setFeedStatus('localFeedStatus', false);
-}
-
-// ============================================================
-// MARITIME TRAFFIC — placeholder hook (intentionally disabled)
-// ------------------------------------------------------------
-// Real vessel tracking (MarineTraffic, AISStream, etc.) requires
-// a personal API key with usage limits and terms of service that
-// can't be bundled into a static client-side file. This stub
-// documents exactly where that integration would slot in:
-//
-//   1. Get a free AISStream.io API key: https://aisstream.io
-//   2. Open a WebSocket to wss://stream.aisstream.io/v0/stream
-//   3. Send a subscription message with your API key + bounding box
-//   4. For each PositionReport message, plot a marker into a new
-//      'ships' layerGroup, following the same pattern as the
-//      earthquake/event layers above (L.divIcon + bindPopup)
-//   5. Add a "Live Maritime" button to .map-controls, matching the
-//      existing layer-btn pattern.
-//
-// Left disabled (not stubbed-and-called) so the app makes zero
-// network calls to a service that doesn't have a key configured.
-// ============================================================
-// function refreshVessels() { /* see comment above */ }
 
 // ============================================================
 // BOOT
 // ============================================================
-renderGeoFreshness();
-renderSafeZoneCard();
-runRiskCalculations();
-initGlobalMap();
+MapManager.renderGeoFreshness();
+MapManager.renderSafeZoneCard();
+IntelEngine.refreshAndRender();
+MapManager.init();
+UIManager.init();
+StrategicAssessment.init();
 
-refreshGlobal().then(() => injectAlarm('newsTicker', () => liveCache.length ? liveCache : breakingAlarms));
-refreshLocal().then(()  => injectAlarm('localTicker', () => localCache.length ? localCache : localMockAlarms));
-refreshMarkets();
-refreshEarthquakes();
+AlarmManager.startTickers();
+MarketManager.refresh().then(() => StrategicAssessment.render()); // one extra render once the first real market quote lands, so the card isn't confidence-starved waiting for the next DEFCON change
+MapManager.refreshEarthquakes();
+MapManager.refreshAircraft();
 
-setInterval(() => injectAlarm('newsTicker', () => liveCache.length ? liveCache : breakingAlarms), 6000);
-setInterval(() => injectAlarm('localTicker', () => localCache.length ? localCache : localMockAlarms), 7000);
-setInterval(pruneExpiredEventMarkers, 60000);
-setInterval(refreshGlobal, POLL_MS);
-setInterval(refreshLocal,  POLL_MS);
-setInterval(refreshMarkets, 60000); // markets move slower than news; 1min cadence is plenty
-setInterval(refreshEarthquakes, 90000); // USGS feed itself updates every ~5min; polling more often than that is pointless
+setInterval(() => IntelEngine.refreshAndRender(), 30000); // vectors are currently fixed/locked, but this keeps the hook live for when they're not
+setInterval(MapManager.pruneExpiredEventMarkers, 60000);
+setInterval(MarketManager.refresh, 60000);
+setInterval(MapManager.refreshEarthquakes, 90000);
 </script>
 </body>
 </html>
